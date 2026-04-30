@@ -1,14 +1,14 @@
 # Playwright AI Workflow Playground
 
-A generic TypeScript + Playwright scaffold for experimenting with AI-assisted end-to-end testing workflows across multiple web applications. It is app-agnostic: each app keeps its own profile, page objects, tests, knowledge, and run artifacts.
+A generic TypeScript + Playwright framework for AI-assisted end-to-end testing workflows across multiple web applications. Each app keeps its own profile, page objects, tests, knowledge, and run artifacts. The pipeline runs as 8 pi slash commands with human review gates on page object and test scenario drafts.
 
 ## Prerequisites
 
 - Node.js 18+
 - npm
-- Playwright browsers (`npx playwright install chromium`)
+- A pi agent session (for pipeline slash commands)
 
-## Install
+## Quick Start
 
 ```bash
 npm install
@@ -16,45 +16,119 @@ npx playwright install chromium
 npm run typecheck
 ```
 
-## Serve the example app
+Start the example app:
 
 ```bash
-# Option A
 python3 -m http.server 3000 --directory apps/example
-
-# Option B
-npx serve apps/example -p 3000
 ```
 
-Then open `http://localhost:3000`. The page includes a profile form, status table, and navigation links.
+Open `http://localhost:3000`. The page includes a profile form, status table, and navigation links.
+
+## 8-Step Pipeline
+
+Invoke each step in order within a pi agent session. Type `/pipeline-` and autocomplete shows all commands numbered (1/8) through (8/8).
+
+| # | Command | Args | Gated |
+|---|---------|------|:-----:|
+| 1 | `/pipeline-resolve` | `<app>` | No |
+| 2 | `/pipeline-discover` | `<app> <run>` | No |
+| 3 | `/pipeline-extract-selectors` | `<app> <run>` | No |
+| 4 | `/pipeline-draft-page-object` | `<app> <run>` | **Yes** |
+| 5 | `/pipeline-draft-tests` | `<app> <run>` | **Yes** |
+| 6 | `/pipeline-write-spec` | `<app> <run>` | No |
+| 7 | `/pipeline-run-fix` | `<app> <run>` | No |
+| 8 | `/pipeline-summarize` | `<app> <run>` | No |
+
+**Step 1** generates a run ID (ISO 8601 timestamp). Use it in steps 2–8.
+
+**Steps 4 and 5 are gated**: the AI presents the draft in chat. Reply `approved` to promote to source directories, or give feedback for re-draft (max 3 attempts). Promoted artifacts carry provenance headers.
+
+## Gated Approval Flow
+
+```
+AI drafts page object / test scenarios
+    → presents full text inline
+    → human replies:
+        "approved"           → promoted to src/ or tests/ with provenance header
+        <change feedback>    → AI re-drafts (max 3 cycles)
+```
+
+## Pipeline Run Output
+
+Every run writes canonical artifacts under `results/<app>/<run>/`:
+
+```
+results/example/2026-04-30T093928Z/
+├── pipeline-summary.md
+├── step1-resolve/run-metadata.json
+├── step2-discover/snapshot.yaml, selector-candidates.md
+├── step3-extract-selectors/normalized-selectors.md
+├── step4-draft-page-object/page-object.draft.ts
+├── step5-draft-tests/test-draft.md
+└── step7-run-fix/test-report.md, playwright-report/
+```
+
+After the pipeline completes, run the generated tests directly:
+
+```bash
+npx playwright test tests/example/
+npm run test:headed
+npm run test:debug
+npm run report
+```
+
+## Project Structure
+
+```
+├── apps/<app>/              # App profiles + static pages
+│   └── example/profile.yaml, index.html
+├── adapters/<agent>/        # Agent-specific capabilities
+│   └── pi/capabilities.yaml, README.md
+├── workflows/manifest.yaml  # 8-step neutral pipeline definition
+├── .pi/prompts/             # pi prompt templates (slash commands)
+├── src/
+│   ├── pages/<app>/         # Promoted page objects
+│   ├── fixtures/            # Shared Playwright fixtures
+│   ├── helpers/             # Profile loader, artifact writer, snapshot parser
+│   └── types/               # Shared TypeScript interfaces
+├── tests/<app>/             # Generated Playwright specs
+├── knowledge/<app>/         # Verified observations, rules, selector notes
+├── results/<app>/           # Run artifacts (gitignored)
+├── contracts/               # YAML schemas (profiles, manifest, adapter, locks)
+└── docs/                    # Framework documentation
+```
 
 ## Environment
-
-Copy `.env.example` to `.env` for local overrides:
 
 ```bash
 cp .env.example .env
 ```
 
-The v1 example profile uses `EXAMPLE_BASE_URL=http://localhost:3000`. Never commit real credentials, cookies, tokens, storage state, or customer-specific data.
+`.env.example` documents all variables with safe placeholders. Never commit real credentials, cookies, tokens, storage state, or customer data.
 
-## Add a new app profile
+## Adding a New Application
 
-1. Create `apps/<app>/profile.yaml`.
-2. Use a lowercase slug for `name` (`[a-z0-9-]+`).
-3. Set `baseUrlEnvVar` to the environment variable that will hold the app URL.
-4. Add the same variable to `.env.example` with a safe placeholder.
-5. Keep app-specific page objects in `src/pages/<app>/`, tests in `tests/<app>/`, knowledge in `knowledge/<app>/`, and run output in `results/<app>/`.
+1. Create `apps/<app>/profile.yaml` — only `name` and `baseUrlEnvVar` required.
+2. Add the env var to `.env.example` and `.env`.
+3. Run the pipeline: `/pipeline-resolve <app>` and continue through all 8 steps.
 
-Minimal profile:
+No framework code changes needed.
 
-```yaml
-name: my-app
-baseUrlEnvVar: MY_APP_BASE_URL
-```
+## npm Scripts
 
-Optional fields are documented in `contracts/profile.schema.yaml`.
+| Script | Command |
+|--------|---------|
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run test` | `npx playwright test` |
+| `npm run test:headed` | `npx playwright test --headed` |
+| `npm run test:debug` | `npx playwright test --debug` |
+| `npm run report` | `npx playwright show-report` |
+| `npm run lint` | ESLint placeholder |
 
-## Full pipeline walkthrough
+## Documentation
 
-See `specs/001-ai-e2e-framework/quickstart.md` for the planned 8-step AI workflow walkthrough and pi slash-command flow.
+- Full spec: `specs/001-ai-e2e-framework/spec.md`
+- Quickstart: `specs/001-ai-e2e-framework/quickstart.md`
+- Implementation plan: `specs/001-ai-e2e-framework/plan.md`
+- Design decisions: `DESIGN_DECISIONS.md`
+- pi adapter: `adapters/pi/README.md`
