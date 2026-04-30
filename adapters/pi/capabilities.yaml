@@ -1,0 +1,99 @@
+adapter: pi
+
+capabilities:
+  - step: resolve
+    command_template: |
+      /pipeline-resolve {{app}}
+      
+      Resolve inputs for the {{app}} application:
+      1. Load and validate apps/{{app}}/profile.yaml
+      2. Check that {{baseUrlEnvVar}} is set in .env
+      3. Generate run ID from current ISO 8601 timestamp
+      4. Write run metadata to results/{{app}}/{{run}}/step1-resolve/run-metadata.json
+
+  - step: discover
+    command_template: |
+      /pipeline-discover {{app}} {{run}}
+      
+      Discover the UI of the {{app}} application:
+      1. Navigate to the app's base URL (from {{baseUrlEnvVar}})
+      2. Capture a full Playwright ARIA snapshot
+      3. Write snapshot to results/{{app}}/{{run}}/step2-discover/snapshot.yaml
+      4. Identify all interactive elements and list as selector candidates
+      5. Write selector candidates to results/{{app}}/{{run}}/step2-discover/selector-candidates.md
+      
+      Locator priority: getByRole > getByTestId > getByLabel > getByPlaceholder > getByText > CSS/XPath
+
+  - step: extract-selectors
+    command_template: |
+      /pipeline-extract-selectors {{app}} {{run}}
+      
+      Extract and normalize selectors:
+      1. Read results/{{app}}/{{run}}/step2-discover/snapshot.yaml
+      2. Read results/{{app}}/{{run}}/step2-discover/selector-candidates.md
+      3. Normalize selectors using Playwright locator priority
+      4. Annotate each selector with its priority level and rationale
+      5. Write normalized selectors to results/{{app}}/{{run}}/step3-extract-selectors/normalized-selectors.md
+
+  - step: draft-page-object
+    gated: true
+    command_template: |
+      /pipeline-draft-page-object {{app}} {{run}}
+      
+      Draft a TypeScript page object:
+      1. Read results/{{app}}/{{run}}/step3-extract-selectors/normalized-selectors.md
+      2. Generate a TypeScript page object class using @playwright/test Page
+      3. Use the normalized selectors with proper locator methods
+      4. Write draft to results/{{app}}/{{run}}/step4-draft-page-object/page-object.draft.ts
+      5. Present the draft for human review — do NOT promote to src/pages/{{app}}/ until approved
+
+  - step: draft-tests
+    gated: true
+    command_template: |
+      /pipeline-draft-tests {{app}} {{run}}
+      
+      Draft GWT-style test scenarios:
+      1. Read results/{{app}}/{{run}}/step4-draft-page-object/page-object.draft.ts
+      2. Read knowledge/{{app}}/knowledge.md for app context
+      3. Generate Given-When-Then test scenarios covering all interactive elements
+      4. Write draft to results/{{app}}/{{run}}/step5-draft-tests/test-draft.md
+      5. Present the draft for human review — do NOT proceed to spec writing until approved
+
+  - step: write-spec
+    command_template: |
+      /pipeline-write-spec {{app}} {{run}}
+      
+      Write the Playwright spec:
+      1. Read approved test draft from results/{{app}}/{{run}}/step5-draft-tests/test-draft.md
+      2. Read approved page object from src/pages/{{app}}/{{app}}.page.ts
+      3. Generate a complete Playwright spec using @playwright/test
+      4. Add provenance header: // @provenance runId={{run}} approvedAt=<now> gate=test-draft-review
+      5. Write spec to tests/{{app}}/{{app}}.spec.ts
+      6. Run npm run typecheck to verify compilation
+
+  - step: run-fix
+    command_template: |
+      /pipeline-run-fix {{app}} {{run}}
+      
+      Run tests and fix script bugs:
+      1. Run: npx playwright test tests/{{app}}/ --reporter=html
+      2. For each failure, classify as:
+         - script_bug: fix the spec code
+         - app_bug: report only, do not modify
+         - blocker: report and mark step blocked
+      3. Fix script bugs and re-run (max 3 fix cycles)
+      4. Write test report to results/{{app}}/{{run}}/step7-run-fix/test-report.md
+      5. Ensure HTML report, traces, and screenshots are in results/{{app}}/{{run}}/step7-run-fix/
+
+  - step: summarize
+    command_template: |
+      /pipeline-summarize {{app}} {{run}}
+      
+      Summarize results and update knowledge:
+      1. Read results/{{app}}/{{run}}/step7-run-fix/test-report.md
+      2. Write pipeline summary to results/{{app}}/{{run}}/pipeline-summary.md
+      3. Extract verified observations (selectors that produced passing tests)
+      4. Append verified observations to knowledge/{{app}}/knowledge.md under ## Run {{run}}
+      5. Append actionable rules to knowledge/{{app}}/rules.md under ## Run {{run}}
+      6. Do NOT modify content under ## Human-Curated or previous ## Run headings
+      7. Do NOT duplicate observations already present in the file

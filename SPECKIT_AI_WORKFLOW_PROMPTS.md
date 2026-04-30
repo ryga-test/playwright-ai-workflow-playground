@@ -181,7 +181,7 @@ Expected output: read-only analysis report. Fix issues manually or rerun relevan
 
 ---
 
-## Phase 7 — Implementation (`/implement`)
+## Phase 7 — Implementation Pass 1: US1 (`/implement`) ✅ COMPLETED
 
 ```text
 /implement
@@ -203,11 +203,80 @@ Implementation rules:
 After the US1 pass, summarize changed files, checks run, and any follow-up tasks. Then STOP and wait for the user before proceeding to US2/US3.
 ```
 
-Expected output: implemented framework files and updated `tasks.md` completion state for US1 only.
+**Result**: US1 complete. Phase 1 (T001–T006), Phase 2 (T007–T015), Phase 3 (T016–T021) done. 39 files committed. `npm run typecheck` passes, `npm run lint` passes (placeholder), 4/4 Playwright tests pass against locally served example app. FR-001 through FR-009c verified.
 
 ---
 
-## Optional Phase 8 — First experiment feature (`/specify` again)
+## Phase 8 — Implementation Pass 2: US2 (`/implement`)
+
+```text
+/implement
+Continue implementing tasks.md — complete **US2 only** (Pipeline Workflow Architecture).
+
+**Preconditions**: US1 complete and validated. Phase 4 tasks are unblocked.
+
+Implementation scope:
+- T022: Create workflows/manifest.yaml (8 steps, correct gating, {{app}}/{{run}} placeholders)
+- T023: Create adapters/pi/capabilities.yaml (all 8 capability mappings, gated flags on steps 4/5)
+- T024: Create adapters/pi/README.md (slash-command docs, placeholder resolution, adapter extension guide)
+- T025: Verify manifest completeness (8 steps, gating, placeholder consistency, all capabilities mapped)
+- T026: Verify adapter extensibility (second-adapter addition possible without manifest changes)
+
+Rules:
+- Use contracts/manifest.schema.yaml and contracts/adapter.schema.yaml as the canonical sources.
+- Steps 4 and 5 MUST have gated: true. All other steps gated: false.
+- command_template entries in capabilities.yaml are the canonical prompts for each pipeline step.
+- Keep path placeholders consistent: {{app}}, {{run}} throughout.
+- Clone and strip schema commentary from contracts/ — keep only YAML data in the working files.
+- Do NOT touch any US1 files unless a bug is found.
+
+After US2 completion:
+- Mark T022–T026 as [X] in tasks.md.
+- Run validate step: confirm manifest has exactly 8 steps, confirm adapter maps all 8.
+- Run npm run typecheck (no regressions).
+- Summarize new/changed files.
+- STOP and wait before US3.
+```
+
+Expected output: `workflows/manifest.yaml`, `adapters/pi/capabilities.yaml`, `adapters/pi/README.md`, updated `tasks.md`.
+
+---
+
+## Phase 9 — Implementation Pass 3: US3 (`/implement`)
+
+```text
+/implement
+Continue implementing tasks.md — complete **US3 only** (End-to-End Pipeline Run Against Example App).
+
+**Preconditions**: US1 and US2 complete and validated. Phase 5 tasks are unblocked.
+
+Implementation scope:
+- T027–T029 [P]: Knowledge scaffolding (knowledge/example/knowledge.md, rules.md, selector-notes.md)
+- T030–T032 [P]: Test infrastructure (src/pages/example/README.md, playwright.config update, report config)
+- T033–T042: Pipeline step execution and verification (all 8 steps, gates, overwrite detection, E2E run)
+
+Rules:
+- Knowledge files: append-only under ## Run <run-id> headings, preserve ## Human-Curated sections (FR-019).
+- Gated steps (4, 5): AI presents draft in chat, human replies "approved" to promote. Max 3 re-drafts.
+- Provenance headers on all promoted artifacts (FR-021a): // @provenance runId=... approvedAt=... gate=...
+- Overwrite detection: check existing provenance header, present diff, request re-approval (FR-022).
+- results/ is gitignored — no artifacts committed. All output under results/example/<run>/.
+- Step 7 run-fix: classify failures as script_bug (fix) vs app_bug (report only). Max 3 fix cycles.
+- Step 8 summarize: only verified observations (used in passing test) written to knowledge files.
+- Full E2E (T042): all 8 steps complete, npm run typecheck passes, npx playwright test tests/example/ passes with zero failures, all 7 artifact types present, knowledge files populated.
+
+After US3 completion:
+- Mark T027–T042 as [X] in tasks.md.
+- Run full validation: typecheck, test run, knowledge file integrity, provenance header verification.
+- Summarize all changed files and final pipeline state.
+- STOP before Phase 6 (Polish).
+```
+
+Expected output: knowledge scaffolding, pipeline artifacts under `results/example/<run>/`, promoted page objects and specs, updated `tasks.md`.
+
+---
+
+## Optional Phase 10 — First experiment feature (`/specify` again)
 
 After the framework exists, use a separate feature spec for each target application experiment.
 
