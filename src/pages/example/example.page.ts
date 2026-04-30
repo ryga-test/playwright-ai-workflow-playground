@@ -1,122 +1,145 @@
-// @provenance runId=2026-04-30T093928Z approvedAt=2026-04-30T095710Z gate=page-object-review
+// @provenance runId=2026-04-30T094508Z approvedAt=2026-04-30T12:26:06Z gate=page-object-review
 import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page object for the Example application dashboard.
  *
- * All locators use Priority 1 (`getByRole`) — backed by the ARIA snapshot
- * from step2-discover and normalized in step3-extract-selectors.
+ * All locators follow Playwright priority: getByRole (P1) → getByLabel (P2).
+ * Derived from the ARIA snapshot captured at localhost:3000 and normalized
+ * in step3-extract-selectors.
  *
- * Generated: 2026-04-30T093928Z
+ * Run: 2026-04-30T094508Z
+ * Approved: 2026-04-30T12:26:06Z
  */
 
 export class ExampleDashboardPage {
-  // ── Navigation ──────────────────────────────────────────────────────
+  // ── Page chrome ─────────────────────────────────────────────────────
 
-  /** Primary navigation bar (scoping container) */
+  /** "Workflow Playground Dashboard" — page-level h1 */
+  readonly heading: Locator;
+  /** Primary navigation landmark */
   readonly nav: Locator;
-  /** Dashboard link in primary nav */
+  /** "Dashboard" link in primary nav */
   readonly dashboardLink: Locator;
-  /** Settings link in primary nav */
+  /** "Settings" link in primary nav */
   readonly settingsLink: Locator;
 
-  // ── Profile Form ────────────────────────────────────────────────────
+  // ── Profile Settings ────────────────────────────────────────────────
 
+  /** "Profile Settings" heading (h2) */
+  readonly profileHeading: Locator;
   /** Profile settings form (scoping container) */
   readonly profileForm: Locator;
   /** "Display name" textbox */
   readonly displayNameInput: Locator;
   /** "Email address" textbox */
   readonly emailInput: Locator;
-  /** "Save Changes" submit button */
+  /** "Save Changes" button */
   readonly saveButton: Locator;
-  /** Status message live region (aria-live="polite") */
+  /** Live region status message */
   readonly statusMessage: Locator;
 
-  // ── Status Table ────────────────────────────────────────────────────
+  // ── Application Status ──────────────────────────────────────────────
 
+  /** "Application Status" heading (h2) */
+  readonly statusHeading: Locator;
   /** Application status table */
   readonly statusTable: Locator;
-  /** All rows in the status table (header + data) */
-  readonly statusTableRows: Locator;
+  /** "Name" column header */
+  readonly nameHeader: Locator;
+  /** "Status" column header */
+  readonly statusHeader: Locator;
+  /** All data rows (tbody tr, excluding header) */
+  readonly dataRows: Locator;
 
   // ────────────────────────────────────────────────────────────────────
 
   constructor(public readonly page: Page) {
-    // Navigation
+    // Page chrome
+    this.heading = page.getByRole('heading', {
+      name: 'Workflow Playground Dashboard',
+      level: 1,
+    });
     this.nav = page.getByRole('navigation', { name: 'Primary navigation' });
     this.dashboardLink = page.getByRole('link', { name: 'Dashboard' });
     this.settingsLink = page.getByRole('link', { name: 'Settings' });
 
-    // Profile form
-    this.profileForm = page.getByRole('form', { name: 'Profile settings form' });
-    this.displayNameInput = page.getByRole('textbox', { name: 'Display name' });
-    this.emailInput = page.getByRole('textbox', { name: 'Email address' });
+    // Profile settings
+    this.profileHeading = page.getByRole('heading', {
+      name: 'Profile Settings',
+      level: 2,
+    });
+    this.profileForm = page.getByRole('form', {
+      name: 'Profile settings form',
+    });
+    this.displayNameInput = page.getByLabel('Display name');
+    this.emailInput = page.getByLabel('Email address');
     this.saveButton = page.getByRole('button', { name: 'Save Changes' });
     this.statusMessage = page.getByRole('status');
 
-    // Status table
-    this.statusTable = page.getByRole('table', { name: 'Application status table' });
-    this.statusTableRows = this.statusTable.getByRole('row');
+    // Application status
+    this.statusHeading = page.getByRole('heading', {
+      name: 'Application Status',
+      level: 2,
+    });
+    this.statusTable = page.getByRole('table', {
+      name: 'Application status table',
+    });
+    this.nameHeader = page.getByRole('columnheader', { name: 'Name' });
+    this.statusHeader = page.getByRole('columnheader', { name: 'Status' });
+    this.dataRows = this.statusTable.locator('tbody tr');
   }
 
-  // ── Navigation actions ──────────────────────────────────────────────
+  // ── Navigation ──────────────────────────────────────────────────────
 
-  /** Navigate to the dashboard page. Uses baseURL from playwright.config if set. */
   async goto(): Promise<void> {
     await this.page.goto('/');
   }
 
-  /** Click the Dashboard nav link */
-  async clickDashboard(): Promise<void> {
+  async clickDashboardLink(): Promise<void> {
     await this.dashboardLink.click();
   }
 
-  /** Click the Settings nav link */
-  async clickSettings(): Promise<void> {
+  async clickSettingsLink(): Promise<void> {
     await this.settingsLink.click();
   }
 
-  // ── Form actions ────────────────────────────────────────────────────
+  // ── Form ────────────────────────────────────────────────────────────
 
-  /** Fill the profile form and submit.
-   *  @returns The name that will appear in the status message (or "Unnamed user" if blank). */
-  async submitProfileForm(displayName: string, email: string): Promise<string> {
-    await this.displayNameInput.fill(displayName);
+  /** Fill and submit the profile form. Returns the name shown in the status message. */
+  async submitProfile(name: string, email: string): Promise<string> {
+    await this.displayNameInput.fill(name);
     await this.emailInput.fill(email);
     await this.saveButton.click();
-    return displayName || 'Unnamed user';
+    return name || 'Unnamed user';
   }
 
-  /** Fill only the display name and submit */
-  async fillDisplayName(name: string): Promise<void> {
+  async fillName(name: string): Promise<void> {
     await this.displayNameInput.fill(name);
   }
 
-  /** Fill only the email and submit */
   async fillEmail(email: string): Promise<void> {
     await this.emailInput.fill(email);
   }
 
-  /** Click save without filling any fields */
   async clickSave(): Promise<void> {
     await this.saveButton.click();
   }
 
-  // ── Table queries ───────────────────────────────────────────────────
+  // ── Table ───────────────────────────────────────────────────────────
 
-  /** Get a specific data row by its service name text */
-  rowByService(serviceName: string): Locator {
-    return this.statusTable.getByRole('row', { name: serviceName });
+  /** Find a data row by service name. */
+  row(service: string): Locator {
+    return this.statusTable.getByRole('row', { name: service });
   }
 
-  /** Get a cell within a specific row */
-  cellInRow(row: Locator, cellText: string): Locator {
-    return row.getByRole('cell', { name: cellText });
+  /** Get a cell within a row by text. */
+  cell(row: Locator, text: string): Locator {
+    return row.getByRole('cell', { name: text });
   }
 
-  /** All data rows (excludes the header row) */
-  get dataRows(): Locator {
-    return this.statusTable.locator('tbody tr');
+  /** Get cell at column index within a row. */
+  cellAt(row: Locator, col: number): Locator {
+    return row.locator('td').nth(col);
   }
 }

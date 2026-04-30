@@ -43,6 +43,55 @@ Invoke each step in order within a pi agent session. Type `/pipeline-` and autoc
 
 **Steps 4 and 5 are gated**: the AI presents the draft in chat. Reply `approved` to promote to source directories, or give feedback for re-draft (max 3 attempts). Promoted artifacts carry provenance headers.
 
+## Pipeline Automation Extension
+
+A pi extension (`.pi/extensions/pipeline-runner/`) automates the pipeline so you don't need to invoke each step manually. Non-gated steps chain automatically; gated steps pause for human approval.
+
+### Commands
+
+| Command | Action |
+|---|---|
+| `/pipeline-run <app>` | Starts from step 1, auto-chains through 2→3, pauses at gate |
+| `/pipeline-continue` | Sends `approved` to the agent (promotes gated artifacts), then advances |
+| `/pipeline-status` | Shows current step, run ID, gate approval state |
+| `/pipeline-reset` | Aborts the current pipeline |
+
+### Pipeline Flow
+
+```
+Step 1 (resolve)     ─── auto ──→ 2 (discover) ─── auto ──→ 3 (selectors)
+                                                               │
+                                                    ┌──────────┘
+                                                    ▼
+                                              Step 4 (page object)
+                                              ⏸ GATED — agent presents draft,
+                                                 pauses for human review
+                                                    │
+                                        /pipeline-continue
+                                        → sends "approved"
+                                        → agent promotes to src/pages/
+                                                    │
+                                                    ▼
+                                              Step 5 (draft tests)
+                                              ⏸ GATED — agent presents scenarios,
+                                                 pauses for human review
+                                                    │
+                                        /pipeline-continue
+                                        → sends "approved"
+                                        → agent marks approved
+                                                    │
+                                                    ▼
+                                        Step 6 (write spec) ──→
+                                        Step 7 (run-fix)    ──→
+                                        Step 8 (summarize)  ──→ 🎉 DONE
+```
+
+**How it works:**
+- Listens for `agent_end` to detect when each step completes, then dispatches the next.
+- After step 1, scans `results/<app>/` to extract the run ID for steps 2–8.
+- Pipeline state persists across pi session restarts via `pi.appendEntry`.
+- `/pipeline-continue` sends the `approved` keyword so the agent promotes the page object to `src/pages/` and marks the test draft approved before continuing.
+
 ## Gated Approval Flow
 
 ```

@@ -86,3 +86,60 @@
 - Module resolution: `NodeNext` → imports use `.js` extension or `@pages/*` path alias
 - `baseURL` derived from `EXAMPLE_BASE_URL` env var (or default `http://localhost:3000`)
 - `screenshot: 'only-on-failure'`, `trace: 'retain-on-failure'`
+
+---
+
+## Run 2026-04-30T094508Z
+
+**Source**: Pipeline run — all 8 tests passed (0 failures).
+
+### New Verified Observations (not documented in prior runs)
+
+#### Alternative Input Locator: `getByLabel` (P2)
+- **Display name input**: `getByLabel('Display name')` resolves correctly and is the Playwright-recommended strategy for labeled form inputs.
+- **Email address input**: `getByLabel('Email address')` resolves correctly.
+- Both strategies (`getByRole('textbox', { name })` and `getByLabel()`) work — `getByLabel` is preferred per Playwright docs for inputs with associated `<label>` elements.
+
+#### Table Row: Partial Name Matching
+- `row('Example API')` matches the row using substring/contains semantics — does NOT require the full concatenated accessible name (`'Example API Online'`).
+- Same for `row('Worker Queue')` and `row('Notification Service')`.
+- This is more resilient: adding a 3rd column won't break the row match.
+
+#### Table Cell: Columnar Access via `cellAt()`
+- `cellAt(row, colIndex)` using `row.locator('td').nth(colIndex)` works correctly.
+- Column 0 = Name, Column 1 = Status. Verified via `toHaveText('Online')`, `toHaveText('Healthy')`, `toHaveText('Paused')`.
+
+#### Table Data Rows Count
+- `dataRows` (targeting `tbody tr`) returns 3 — excludes the header row.
+- Contrast: querying `table.getByRole('row')` returns 4 (includes header).
+
+#### Navigation Anchor Link Behavior
+- `clickDashboardLink()` clicks the Dashboard nav link (`href="#dashboard"`) — page scrolls to top, heading remains visible.
+- `clickSettingsLink()` clicks the Settings nav link (`href="#settings"`) — scrolls to Application Status section.
+- `toBeInViewport()` assertion successfully verifies the target section is scrolled into view.
+
+#### Form Field Clear and Re-Submit
+- `.clear()` on inputs works correctly — fields become empty.
+- Re-submitting with new values (`'Charles Babbage'`, `'charles@example.test'`) overwrites the previous status message.
+- `not.toContainText()` assertion verifies the old name is absent from the status after re-submit.
+
+#### Empty Input Assertion
+- `toHaveValue('')` assertion correctly verifies an input is empty on initial page load.
+- More precise than checking placeholder text — validates actual input state.
+
+#### Page Object API Surface (this run)
+| Property | Type | Locator |
+|----------|------|---------|
+| `heading` | Locator | `getByRole('heading', { name: 'Workflow Playground Dashboard', level: 1 })` |
+| `profileHeading` | Locator | `getByRole('heading', { name: 'Profile Settings', level: 2 })` |
+| `statusHeading` | Locator | `getByRole('heading', { name: 'Application Status', level: 2 })` |
+| `nameHeader` | Locator | `getByRole('columnheader', { name: 'Name' })` |
+| `statusHeader` | Locator | `getByRole('columnheader', { name: 'Status' })` |
+| `dataRows` | Locator | `table.locator('tbody tr')` (CSS fallback for iteration) |
+| `submitProfile(name, email)` | Method | Returns the display name (or `'Unnamed user'` if empty) |
+| `fillName(name)` | Method | Fills only the display name input |
+| `fillEmail(email)` | Method | Fills only the email input |
+| `clickDashboardLink()` | Method | Clicks the Dashboard nav link |
+| `clickSettingsLink()` | Method | Clicks the Settings nav link |
+| `row(service)` | Method | Finds a table row by partial service name match |
+| `cellAt(row, col)` | Method | Gets a cell at a column index within a row |
