@@ -1,0 +1,34 @@
+# App Profile Schema
+# Contract for apps/<app>/profile.yaml
+
+# --- Required Fields ---
+
+# name: Unique application slug. Used in directory paths and references.
+# Constraints: lowercase alphanumeric + hyphens only, unique across all profiles.
+# Regex: ^[a-z0-9-]+$
+name: example
+
+# baseUrlEnvVar: Environment variable name that holds the app's base URL.
+# The value is NEVER stored in this file — only the variable name.
+# The framework reads process.env[this.name] at runtime.
+# Constraints: valid env var name (^[A-Z_][A-Z0-9_]*$)
+baseUrlEnvVar: EXAMPLE_BASE_URL
+
+# --- Optional Fields ---
+
+# authMethod: Free-text notes about authentication approach.
+# Common values: "none", "basic-auth", "storage-state", "oauth".
+# No enum restriction — this is documentation for the human and AI.
+authMethod: none
+
+# testTags: List of strings applied as Playwright test tags.
+# Used for test filtering (--grep @smoke).
+testTags:
+  - smoke
+  - demo
+
+# storageStatePath: Path to a Playwright storage state file for
+# authenticated sessions. The path itself is stored, but the file
+# content is gitignored and referenced by environment variable.
+# If not provided, tests run without authentication state.
+storageStatePath: state/example-auth.json

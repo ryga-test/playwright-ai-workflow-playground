@@ -1,0 +1,19 @@
+# App Profile Schema
+# Contract for apps/<app>/profile.yaml
+#
+# Required:
+# - name: unique app slug matching ^[a-z0-9-]+$
+# - baseUrlEnvVar: environment variable name matching ^[A-Z_][A-Z0-9_]*$
+# Optional:
+# - authMethod: free-text authentication notes
+# - testTags: list of strings for test filtering
+# - storageStatePath: path string for gitignored Playwright storage state
+
+name: example
+baseUrlEnvVar: EXAMPLE_BASE_URL
+
+# Optional example fields:
+# authMethod: none
+# testTags:
+#   - smoke
+# storageStatePath: state/example-auth.storage-state.json

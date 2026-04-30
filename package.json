@@ -1,0 +1,25 @@
+{
+  "name": "playwright-ai-workflow-playground",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install": "node -e \"console.log('Dependencies installed via npm install')\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo \"ESLint not configured — skipping\"",
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "report": "npx playwright show-report"
+  },
+  "dependencies": {
+    "@playwright/test": "latest",
+    "@types/js-yaml": "latest",
+    "dotenv": "latest",
+    "js-yaml": "latest",
+    "typescript": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest"
+  }
+}

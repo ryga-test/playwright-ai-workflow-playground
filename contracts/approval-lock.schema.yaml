@@ -1,0 +1,15 @@
+# Approval Lock Schema (v1: defined, not enforced)
+# Contract for results/<app>/<run>/.approval-lock.json
+#
+# This schema is reserved for future automated drift detection.
+# v1 uses manual chat approval and provenance headers instead.
+
+runId: "2026-04-30T143000Z"
+gatedStep: "draft-page-object"
+approvedAt: "2026-04-30T143500Z"
+artifacts:
+  - path: "results/example/2026-04-30T143000Z/step4-draft-page-object/page-object.draft.ts"
+    sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+# gatedStep values: draft-page-object | draft-tests
+# artifacts[].sha256 is a SHA-256 checksum of the locked artifact content.

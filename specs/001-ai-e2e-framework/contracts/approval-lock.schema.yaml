@@ -1,0 +1,38 @@
+# Approval Lock Schema (v1: defined, not enforced)
+# Contract for results/<app>/<run>/.approval-lock.json
+#
+# This schema is defined for future automated drift detection.
+# v1 uses manual chat-based approval with provenance headers instead.
+# The lock file is NOT created during v1 pipeline runs.
+
+# --- Schema ---
+
+# runId: ISO 8601 timestamp of the pipeline run that produced these artifacts
+runId: "2026-04-30T143000Z"
+
+# gatedStep: The manifest step ID that was gated
+# Values: "draft-page-object" | "draft-tests"
+gatedStep: "draft-page-object"
+
+# approvedAt: ISO 8601 timestamp when human approval was granted
+approvedAt: "2026-04-30T143500Z"
+
+# artifacts: Array of locked artifact entries with SHA-256 hashes
+artifacts:
+  - path: "results/example/2026-04-30T143000Z/step4-draft-page-object/page-object.draft.ts"
+    sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+  - path: "results/example/2026-04-30T143000Z/step5-draft-tests/test-draft.md"
+    sha256: "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a"
+
+# --- Future drift detection workflow (post-v1) ---
+#
+# 1. Hash current artifact files
+# 2. Compare against this lock file's sha256 values
+# 3. On mismatch: emit READY_FOR_REAPPROVAL:<reason>
+# 4. Human reviews diff and re-approves or rejects
+#
+# v1 alternative: Provenance headers embedded in promoted artifacts
+#   // @provenance runId=... approvedAt=... gate=...
+#   These are machine-readable and serve the same purpose without
+#   requiring an external lock file.

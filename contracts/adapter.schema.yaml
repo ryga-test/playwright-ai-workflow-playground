@@ -1,0 +1,48 @@
+# Adapter Capabilities Schema
+# Contract for adapters/<agent>/capabilities.yaml
+# Maps neutral manifest capabilities to agent-specific command templates.
+
+adapter: pi
+
+capabilities:
+  - step: resolve
+    command_template: |
+      /pipeline-resolve {{app}}
+      Resolve inputs for {{app}} and write run metadata.
+
+  - step: discover
+    command_template: |
+      /pipeline-discover {{app}} {{run}}
+      Discover the UI and write snapshot plus selector candidates.
+
+  - step: extract-selectors
+    command_template: |
+      /pipeline-extract-selectors {{app}} {{run}}
+      Normalize selectors using locator priority order.
+
+  - step: draft-page-object
+    command_template: |
+      /pipeline-draft-page-object {{app}} {{run}}
+      Draft and present a page object for human approval before promotion.
+    gated: true
+
+  - step: draft-tests
+    command_template: |
+      /pipeline-draft-tests {{app}} {{run}}
+      Draft and present GWT scenarios for human approval before spec writing.
+    gated: true
+
+  - step: write-spec
+    command_template: |
+      /pipeline-write-spec {{app}} {{run}}
+      Write a Playwright spec from approved artifacts.
+
+  - step: run-fix
+    command_template: |
+      /pipeline-run-fix {{app}} {{run}}
+      Run tests, triage failures, and fix script bugs only.
+
+  - step: summarize
+    command_template: |
+      /pipeline-summarize {{app}} {{run}}
+      Summarize results and append verified knowledge.

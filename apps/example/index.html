@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Playwright AI Workflow Example App</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+      }
+      nav a {
+        display: inline-block;
+        margin-right: 1rem;
+      }
+      form,
+      table {
+        margin-top: 1.5rem;
+      }
+      label {
+        display: block;
+        margin: 0.75rem 0;
+      }
+      input {
+        display: block;
+        min-width: 18rem;
+        padding: 0.5rem;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 0.5rem;
+        text-align: left;
+      }
+      #status-message {
+        margin-top: 1rem;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Workflow Playground Dashboard</h1>
+      <nav aria-label="Primary navigation">
+        <a href="#dashboard">Dashboard</a>
+        <a href="#settings">Settings</a>
+      </nav>
+    </header>
+
+    <main id="dashboard">
+      <section aria-labelledby="profile-heading">
+        <h2 id="profile-heading">Profile Settings</h2>
+        <form id="settings-form" aria-label="Profile settings form">
+          <label for="display-name">
+            Display name
+            <input id="display-name" name="displayName" type="text" placeholder="Ada Lovelace" />
+          </label>
+          <label for="email-address">
+            Email address
+            <input id="email-address" name="email" type="email" placeholder="ada@example.test" />
+          </label>
+          <button type="submit">Save Changes</button>
+        </form>
+        <p id="status-message" role="status" aria-live="polite">No changes saved yet.</p>
+      </section>
+
+      <section id="settings" aria-labelledby="table-heading">
+        <h2 id="table-heading">Application Status</h2>
+        <table aria-label="Application status table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Example API</td>
+              <td>Online</td>
+            </tr>
+            <tr>
+              <td>Worker Queue</td>
+              <td>Healthy</td>
+            </tr>
+            <tr>
+              <td>Notification Service</td>
+              <td>Paused</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <script>
+      document.getElementById('settings-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const name = document.getElementById('display-name').value || 'Unnamed user';
+        document.getElementById('status-message').textContent = `Saved changes for ${name}.`;
+      });
+    </script>
+  </body>
+</html>

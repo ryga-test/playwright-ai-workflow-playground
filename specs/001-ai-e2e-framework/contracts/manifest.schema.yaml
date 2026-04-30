@@ -1,0 +1,140 @@
+# Pipeline Manifest Schema
+# Contract for workflows/manifest.yaml
+# Defines the 8-step AI E2E workflow in agent-agnostic terms.
+
+version: "1.0"
+pipeline: ai-e2e-workflow
+
+steps:
+  - id: resolve
+    name: Resolve Inputs
+    order: 1
+    gated: false
+    description: Validate app profile, resolve environment variables, generate run ID
+    inputs: []
+    outputs:
+      - name: run-metadata
+        path: results/{{app}}/{{run}}/step1-resolve/run-metadata.json
+        format: json
+
+  - id: discover
+    name: Discover UI
+    order: 2
+    gated: false
+    description: Capture Playwright ARIA snapshot and identify interactive elements
+    inputs:
+      - name: run-metadata
+        path: results/{{app}}/{{run}}/step1-resolve/run-metadata.json
+        format: json
+    outputs:
+      - name: snapshot
+        path: results/{{app}}/{{run}}/step2-discover/snapshot.yaml
+        format: yaml
+      - name: selector-candidates
+        path: results/{{app}}/{{run}}/step2-discover/selector-candidates.md
+        format: markdown
+
+  - id: extract-selectors
+    name: Extract Selectors
+    order: 3
+    gated: false
+    description: Normalize selector candidates with locator priority annotations
+    inputs:
+      - name: snapshot
+        path: results/{{app}}/{{run}}/step2-discover/snapshot.yaml
+        format: yaml
+      - name: selector-candidates
+        path: results/{{app}}/{{run}}/step2-discover/selector-candidates.md
+        format: markdown
+    outputs:
+      - name: normalized-selectors
+        path: results/{{app}}/{{run}}/step3-extract-selectors/normalized-selectors.md
+        format: markdown
+
+  - id: draft-page-object
+    name: Draft Page Object
+    order: 4
+    gated: true   # <-- HUMAN REVIEW REQUIRED
+    description: Generate TypeScript page object from normalized selectors
+    inputs:
+      - name: normalized-selectors
+        path: results/{{app}}/{{run}}/step3-extract-selectors/normalized-selectors.md
+        format: markdown
+    outputs:
+      - name: page-object-draft
+        path: results/{{app}}/{{run}}/step4-draft-page-object/page-object.draft.ts
+        format: typescript
+
+  - id: draft-tests
+    name: Draft Test Scenarios
+    order: 5
+    gated: true   # <-- HUMAN REVIEW REQUIRED
+    description: Generate GWT-style test scenarios from app knowledge and page objects
+    inputs:
+      - name: page-object-draft
+        path: results/{{app}}/{{run}}/step4-draft-page-object/page-object.draft.ts
+        format: typescript
+      - name: knowledge
+        path: knowledge/{{app}}/knowledge.md
+        format: markdown
+    outputs:
+      - name: test-draft
+        path: results/{{app}}/{{run}}/step5-draft-tests/test-draft.md
+        format: markdown
+
+  - id: write-spec
+    name: Write Playwright Spec
+    order: 6
+    gated: false
+    description: Generate Playwright spec from approved test scenarios and page objects
+    inputs:
+      - name: test-draft
+        path: results/{{app}}/{{run}}/step5-draft-tests/test-draft.md
+        format: markdown
+      - name: page-object
+        path: src/pages/{{app}}/{{app}}.page.ts
+        format: typescript
+    outputs:
+      - name: spec
+        path: tests/{{app}}/{{app}}.spec.ts
+        format: typescript
+
+  - id: run-fix
+    name: Run Tests & Fix Script Bugs
+    order: 7
+    gated: false
+    description: Execute Playwright tests, triage failures, fix script bugs only
+    inputs:
+      - name: spec
+        path: tests/{{app}}/{{app}}.spec.ts
+        format: typescript
+    outputs:
+      - name: test-report
+        path: results/{{app}}/{{run}}/step7-run-fix/test-report.md
+        format: markdown
+      - name: html-report
+        path: results/{{app}}/{{run}}/step7-run-fix/playwright-report/
+        format: html
+      - name: traces
+        path: results/{{app}}/{{run}}/step7-run-fix/traces/
+        format: binary
+
+  - id: summarize
+    name: Summarize & Update Knowledge
+    order: 8
+    gated: false
+    description: Write pipeline summary, update app knowledge with verified observations
+    inputs:
+      - name: test-report
+        path: results/{{app}}/{{run}}/step7-run-fix/test-report.md
+        format: markdown
+    outputs:
+      - name: pipeline-summary
+        path: results/{{app}}/{{run}}/pipeline-summary.md
+        format: markdown
+      - name: knowledge-update
+        path: knowledge/{{app}}/knowledge.md
+        format: markdown
+      - name: rules-update
+        path: knowledge/{{app}}/rules.md
+        format: markdown
