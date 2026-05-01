@@ -74,7 +74,8 @@ function extractRunId(text) {
   return clean(
     reMatch(/\*\*Run\*\*[:\s]+`?([^\s`\n]+)`?/i, text) ||
     reMatch(/#\s*Run:\s*`?([^\s`\n]+)`?/i, text) ||
-    reMatch(/\*\*Run ID\*\*[:\s]+`?([^\s`\n]+)`?/i, text)
+    reMatch(/\*\*Run ID\*\*[:\s]+`?([^\s`\n]+)`?/i, text) ||
+    reMatch(/# Pipeline Summary.*?\/\s*(\d{4}-\d{2}-\d{2}T\d{6}Z)/i, text)
   );
 }
 
@@ -502,13 +503,17 @@ function injectIntoHtml(dashboardData) {
   if (!existsSync(indexPath)) return false;
 
   let html = readFileSync(indexPath, 'utf-8');
-  const placeholder = '/*DASHBOARD_DATA_PLACEHOLDER*/\nwindow.__DASHBOARD_DATA__ = null;';
-  if (!html.includes(placeholder)) return false;
+  const newData = `window.__DASHBOARD_DATA__ = ${JSON.stringify(dashboardData)};`;
 
-  html = html.replace(placeholder,
-    `window.__DASHBOARD_DATA__ = ${JSON.stringify(dashboardData)};`);
-  writeFileSync(indexPath, html, 'utf-8');
-  return true;
+  // Match placeholder or existing injected data
+  const pattern = /window\.__DASHBOARD_DATA__\s*=\s*(?:null|\{["'].*);/;
+  if (pattern.test(html)) {
+    html = html.replace(pattern, newData);
+    writeFileSync(indexPath, html, 'utf-8');
+    return true;
+  }
+
+  return false;
 }
 
 // ── main ─────────────────────────────────────────────────────────────
