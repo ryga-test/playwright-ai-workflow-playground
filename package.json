@@ -10,7 +10,7 @@
     "test": "npx playwright test",
     "test:headed": "npx playwright test --headed",
     "test:debug": "npx playwright test --debug",
-    "report": "xdg-open playwright-report/index.html || npx playwright show-report",
+    "report": "xdg-open playwright-report/index.html",
     "dashboard": "node scripts/generate-dashboard-data.js && xdg-open index.html"
   },
   "dependencies": {
