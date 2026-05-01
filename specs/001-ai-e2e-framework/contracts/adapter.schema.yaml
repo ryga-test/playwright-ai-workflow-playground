@@ -7,12 +7,12 @@ adapter: pi
 capabilities:
   - step: resolve
     command_template: |
-      /pipeline-resolve {{app}}
+      /pipeline-resolve {{app}} {{run}}
       
-      Resolve inputs for the {{app}} application:
-      1. Load and validate apps/{{app}}/profile.yaml
+      Resolve inputs for the {{app}} application using pre-generated run ID **{{run}}**:
+      1. Load and validate apps/{{app}}/profile.yaml (in the worktree)
       2. Check that {{baseUrlEnvVar}} is set in .env
-      3. Generate run ID from current ISO 8601 timestamp
+      3. Use the exact run ID: **{{run}}**. Do not generate a new one.
       4. Write run metadata to results/{{app}}/{{run}}/step1-resolve/run-metadata.json
 
   - step: discover

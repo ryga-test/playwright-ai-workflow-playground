@@ -1,14 +1,18 @@
 adapter: pi
 
+# Each pipeline run creates its own git branch + worktree under worktrees/<app>/<runId>/.
+# The extension automatically handles worktree creation, .env copying, and
+# node_modules symlinking. All file paths below are relative to the worktree.
+
 capabilities:
   - step: resolve
     command_template: |
-      /pipeline-resolve {{app}}
+      /pipeline-resolve {{app}} {{run}}
       
-      Resolve inputs for the {{app}} application:
-      1. Load and validate apps/{{app}}/profile.yaml
+      Resolve inputs for the {{app}} application using the pre-generated run ID **{{run}}**:
+      1. Load and validate apps/{{app}}/profile.yaml (in the worktree)
       2. Check that {{baseUrlEnvVar}} is set in .env
-      3. Generate run ID from current ISO 8601 timestamp
+      3. Use the exact run ID: **{{run}}**. Do not generate a new one.
       4. Write run metadata to results/{{app}}/{{run}}/step1-resolve/run-metadata.json
 
   - step: discover
@@ -67,6 +71,9 @@ capabilities:
       1. Read approved test draft from results/{{app}}/{{run}}/step5-draft-tests/test-draft.md
       2. Read approved page object from src/pages/{{app}}/{{app}}.page.ts
       3. Generate a complete Playwright spec using @playwright/test
+         IMPORTANT: Import test and expect from @fixtures/base.fixture.js
+         (not from @playwright/test) to enable screencast video recording.
+         Example import: import { test, expect } from '@fixtures/base.fixture.js';
       4. Add provenance header: // @provenance runId={{run}} approvedAt=<now> gate=test-draft-review
       5. Write spec to tests/{{app}}/{{app}}.spec.ts
       6. Run npm run typecheck to verify compilation
@@ -75,15 +82,22 @@ capabilities:
     command_template: |
       /pipeline-run-fix {{app}} {{run}}
       
-      Run tests and fix script bugs:
-      1. Run: npx playwright test tests/{{app}}/ --reporter=html
-      2. For each failure, classify as:
+      Run tests and fix script bugs (with screencast video proof):
+      1. Set env var PLAYWRIGHT_RUN_ID={{run}} to enable screencast recording
+      2. Run: PLAYWRIGHT_RUN_ID={{run}} npx playwright test tests/{{app}}/ --reporter=html
+      3. The base fixture auto-records per-test screencast video with action
+         annotations (red dots + labels on clicks/fills) into:
+         results/{{app}}/{{run}}/step7-run-fix/<test-name>.webm
+      4. For each failure, classify as:
          - script_bug: fix the spec code
          - app_bug: report only, do not modify
          - blocker: report and mark step blocked
-      3. Fix script bugs and re-run (max 3 fix cycles)
-      4. Write test report to results/{{app}}/{{run}}/step7-run-fix/test-report.md
-      5. Ensure HTML report, traces, and screenshots are in results/{{app}}/{{run}}/step7-run-fix/
+      5. Fix script bugs and re-run (max 3 fix cycles)
+      6. Write test report to results/{{app}}/{{run}}/step7-run-fix/test-report.md
+      7. Concatenate per-test screencast videos into a single
+         results/{{app}}/{{run}}/step7-run-fix/screencast.webm using ffmpeg
+      8. Ensure HTML report, traces, screenshots, and screencast video are in
+         results/{{app}}/{{run}}/step7-run-fix/
 
   - step: summarize
     command_template: |

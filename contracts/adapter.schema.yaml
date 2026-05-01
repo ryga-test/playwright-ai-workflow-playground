@@ -7,8 +7,9 @@ adapter: pi
 capabilities:
   - step: resolve
     command_template: |
-      /pipeline-resolve {{app}}
-      Resolve inputs for {{app}} and write run metadata.
+      /pipeline-resolve {{app}} {{run}}
+      Resolve inputs for {{app}} using pre-generated run ID {{run}}.
+      All file paths are relative to the isolated git worktree.
 
   - step: discover
     command_template: |
