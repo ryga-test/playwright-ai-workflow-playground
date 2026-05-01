@@ -26,11 +26,9 @@ Open `http://localhost:3000`. The page includes a profile form, status table, an
 
 ## 8-Step Pipeline
 
-Each run creates its own git worktree at `worktrees/<app>/<runId>/`.
-The pipeline automation extension handles this automatically — all commands
-below are invoked by the extension, not manually.
-
-Invoke each step in order within a pi agent session. Type `/pipeline-` and autocomplete shows all commands numbered (1/8) through (8/8).
+Each run creates its own git branch, switches to it, and runs the pipeline
+on that branch. The pipeline automation extension handles this automatically —
+all commands below are invoked by the extension, not manually.
 
 | # | Command | Args | Gated |
 |---|---------|------|:-----:|
@@ -54,20 +52,22 @@ A pi extension (`.pi/extensions/pipeline-runner/`) automates the pipeline so
 you don't need to invoke each step manually. Non-gated steps chain automatically;
 gated steps pause for human approval.
 
-### Per-Run Git Worktree Isolation
+### Per-Run Git Branch Isolation
 
-Each pipeline run creates its own isolated environment:
+Each pipeline run creates its own isolated branch:
 
-1. **Branch**: `pipeline/<app>/<runId>` branched from current HEAD.
-2. **Worktree**: `worktrees/<app>/<runId>/` — a full working directory copy.
-3. **Automatic setup**: `.env` copied in, `node_modules` symlinked.
-4. **Isolated execution**: all pipeline steps read/write/run commands in the
-   worktree, never touching the main working tree.
-5. **Cleanup via `/pipeline-reset`**: removes the worktree and deletes the branch.
+1. **Branch**: `pipeline/<app>/<runId>` is created from current HEAD.
+2. **Switch**: the working tree immediately switches to the new branch.
+3. **Isolated execution**: all pipeline steps run on this branch — results,
+   page objects, specs, tests, and knowledge updates all land on the pipeline
+   branch, never touching your original branch.
+4. **On reset** (`/pipeline-reset`): force-switches back to the original branch
+   and deletes the pipeline branch.
+5. **On completion**: stays on the pipeline branch with all generated artifacts
+   ready to review, commit, and merge.
 
-This means you can run multiple pipelines concurrently for different apps
-without cross-contamination, and completed pipeline artifacts stay on their
-branch for review before merging.
+This means the original branch stays clean, and you can inspect the pipeline's
+full output via `git diff <original-branch>` before merging.
 
 ### Commands
 
@@ -85,8 +85,7 @@ branch for review before merging.
   │
   ├─ Generate runId (ISO 8601)
   ├─ Create git branch: pipeline/<app>/<runId>
-  ├─ Create git worktree: worktrees/<app>/<runId>/
-  ├─ Copy .env, symlink node_modules
+  ├─ Switch to new branch
   │
   ▼
 Step 1 (resolve)     ─── auto ──→ 2 (discover) ─── auto ──→ 3 (selectors)
@@ -115,15 +114,14 @@ Step 1 (resolve)     ─── auto ──→ 2 (discover) ─── auto ──
                                         Step 7 (run-fix)    ──→
                                         Step 8 (summarize)  ──→ 🎉 DONE
                                                               │
-                                              Worktree + branch preserved
-                                              for review and merge
+                                              Still on pipeline branch —
+                                              review, commit, merge
 ```
 
 **How it works:**
-- `/pipeline-run` pre-generates a runId, creates a branch + worktree, then dispatches step 1.
-- Every step dispatch injects a `WORKTREE CONTEXT` header so the agent targets the worktree for all file operations and bash commands.
+- `/pipeline-run` pre-generates a runId, creates a branch, switches to it, then dispatches step 1.
 - Listens for `agent_end` to detect when each step completes, then dispatches the next.
-- After step 1, scans `worktrees/<app>/<runId>/results/<app>/` to verify the run ID.
+- After step 1, scans `results/<app>/` to verify the run ID.
 - Pipeline state persists across pi session restarts via `pi.appendEntry`.
 - `/pipeline-continue` sends the `approved` keyword so the agent promotes the page object to `src/pages/` and marks the test draft approved before continuing.
 
@@ -139,26 +137,28 @@ AI drafts page object / test scenarios
 
 ## Pipeline Run Output
 
-Every run writes canonical artifacts under the worktree at
-`worktrees/<app>/<runId>/results/<app>/<run>/`:
+Every run writes canonical artifacts under `results/<app>/<run>/` (on the
+pipeline branch):
 
 ```
-worktrees/example/2026-05-01T123456Z/
-├── results/example/2026-05-01T123456Z/
-│   ├── pipeline-summary.md
-│   ├── step1-resolve/run-metadata.json
-│   ├── step2-discover/snapshot.yaml, selector-candidates.md
-│   ├── step3-extract-selectors/normalized-selectors.md
-│   ├── step4-draft-page-object/page-object.draft.ts
-│   ├── step5-draft-tests/test-draft.md
-│   └── step7-run-fix/
-│       ├── test-report.md
-│       ├── playwright-report/
-│       └── <test-name>.webm      ← screencast video per test
-├── src/pages/example/            ← promoted page objects
-├── tests/example/                ← generated Playwright specs
-└── knowledge/example/            ← updated knowledge, rules
+results/example/2026-05-01T123456Z/
+├── pipeline-summary.md
+├── step1-resolve/run-metadata.json
+├── step2-discover/snapshot.yaml, selector-candidates.md
+├── step3-extract-selectors/normalized-selectors.md
+├── step4-draft-page-object/page-object.draft.ts
+├── step5-draft-tests/test-draft.md
+└── step7-run-fix/
+    ├── test-report.md
+    ├── playwright-report/
+    └── <test-name>.webm      ← screencast video per test
 ```
+
+Page objects, specs, and knowledge updates also land on the pipeline branch:
+- `src/pages/<app>/<app>.page.ts` — promoted page object
+- `tests/<app>/<app>.spec.ts` — generated Playwright spec
+- `knowledge/<app>/knowledge.md` — updated observations
+- `knowledge/<app>/rules.md` — updated rules
 
 ### Screencast Video Proof (Playwright v1.59+)
 
@@ -200,7 +200,6 @@ npm run report
 ├── .pi/
 │   ├── prompts/             # pi prompt templates (slash commands)
 │   └── extensions/          # pi extensions (pipeline-runner, etc.)
-├── worktrees/<app>/<runId>/ # Isolated worktrees per pipeline run (gitignored)
 ├── src/
 │   ├── pages/<app>/         # Promoted page objects
 │   ├── fixtures/            # Shared Playwright fixtures (screencast, app config)
@@ -208,7 +207,7 @@ npm run report
 │   └── types/               # Shared TypeScript interfaces
 ├── tests/<app>/             # Generated Playwright specs
 ├── knowledge/<app>/         # Verified observations, rules, selector notes
-├── results/<app>/           # Run artifacts (gitignored, legacy; worktree preferred)
+├── results/<app>/           # Run artifacts (gitignored)
 ├── contracts/               # YAML schemas (profiles, manifest, adapter, locks)
 └── docs/                    # Framework documentation
 ```

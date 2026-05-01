@@ -10,7 +10,7 @@ capabilities:
       /pipeline-resolve {{app}} {{run}}
       
       Resolve inputs for the {{app}} application using pre-generated run ID **{{run}}**:
-      1. Load and validate apps/{{app}}/profile.yaml (in the worktree)
+      1. Load and validate apps/{{app}}/profile.yaml
       2. Check that {{baseUrlEnvVar}} is set in .env
       3. Use the exact run ID: **{{run}}**. Do not generate a new one.
       4. Write run metadata to results/{{app}}/{{run}}/step1-resolve/run-metadata.json

@@ -1,18 +1,18 @@
 # Changelog
 
-## 2026-05-01 — Git Worktree Isolation per Pipeline Run
+## 2026-05-01 — Per-Run Git Branch Isolation
 
 ### Added
 
-- **Per-run git worktree isolation**: `/pipeline-run <app>` now creates a dedicated
-  git branch (`pipeline/<app>/<runId>`) and an isolated worktree at
-  `worktrees/<app>/<runId>/`. Each pipeline run operates in a fully isolated
-  working directory, preventing cross-run interference.
-- **Automatic worktree setup**: `.env` and `.env.example` are copied into the
-  worktree, and `node_modules` is symlinked (avoids reinstall).
-- **Worktree cleanup on reset**: `/pipeline-reset` removes the worktree
-  (`git worktree remove --force`) and force-deletes the pipeline branch.
-- **`worktrees/` added to `.gitignore`**.
+- **Per-run git branch isolation**: `/pipeline-run <app>` now creates a dedicated
+  git branch (`pipeline/<app>/<runId>`) from current HEAD, switches to it, and
+  runs all pipeline steps on that branch. Each run has its own isolated commit
+  history; the original branch is untouched.
+- **Automatic branch cleanup on reset**: `/pipeline-reset` force-switches back
+  to the original branch and deletes the pipeline branch.
+- **Completion stays on pipeline branch**: after the pipeline finishes, you're
+  on the pipeline branch with all generated artifacts ready to review, commit,
+  and merge.
 
 ### Changed
 
@@ -21,25 +21,21 @@
   no longer generates its own timestamp.
 - **Step 1 (`/pipeline-resolve <app> <runId>`)** updated to accept the
   pre-generated runId instead of generating one.
-- **Every dispatched step includes a `WORKTREE CONTEXT` header** telling the
-  agent to read/write/run commands relative to the isolated worktree directory.
-  Bash commands are prefixed with `cd <worktree>` instructions.
-- **`PipelineState`** now includes a `worktree` field persisted across session
-  restarts.
-- **`/pipeline-status`** now displays the worktree path.
-- **Completion notification** shows the worktree path and branch name for
-  review and merge.
+- **`PipelineState`** now includes an `originalBranch` field so `/pipeline-reset`
+  knows where to return.
+- **`/pipeline-status`** now displays both the pipeline branch and the original branch.
+- **Completion notification** shows both branch names and a reminder on how to
+  go back or merge.
 
 ### Updated files
 
 | File | Change |
 |------|--------|
-| `.pi/extensions/pipeline-runner/index.ts` | Major rewrite: worktree creation, cleanup, context injection |
+| `.pi/extensions/pipeline-runner/index.ts` | Rewritten: branch creation, checkout, cleanup |
 | `.pi/prompts/pipeline-resolve.md` | Argument hint changed to `<app> <runId>` |
-| `adapters/pi/capabilities.yaml` | Resolve step: pre-generated runId, worktree docs |
+| `adapters/pi/capabilities.yaml` | Resolve step: pre-generated runId |
 | `contracts/adapter.schema.yaml` | Resolve step signature updated |
 | `specs/001-ai-e2e-framework/contracts/adapter.schema.yaml` | Resolve step signature updated |
-| `.gitignore` | Added `worktrees/` |
 
 ## 2026-05-01 — Screencast Video Proof Integration
 

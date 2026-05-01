@@ -2,15 +2,15 @@
  * Pipeline Runner Extension
  *
  * Automates the 8-step E2E test pipeline defined in .pi/prompts/pipeline-*.md.
- * Each pipeline run creates its own git branch + worktree so runs are fully
- * isolated. Pauses at gated steps (4: draft page object, 5: draft tests) for
- * human approval. Non-gated steps chain automatically.
+ * Each pipeline run creates its own git branch, switches to it, and runs the
+ * entire pipeline on that branch. Pauses at gated steps (4: draft page object,
+ * 5: draft tests) for human approval. Non-gated steps chain automatically.
  *
  * Commands:
- *   /pipeline-run <app>    — Start pipeline from step 1
+ *   /pipeline-run <app>    — Start pipeline from step 1 (creates branch, switches)
  *   /pipeline-continue     — Send "approved" to agent and resume after gate
  *   /pipeline-status       — Show current pipeline progress
- *   /pipeline-reset        — Reset / abort the current pipeline, remove worktree
+ *   /pipeline-reset        — Reset / abort, switch back to original branch, delete pipeline branch
  *
  * Pipeline steps:
  *   1. pipeline-resolve            (auto)
@@ -26,7 +26,6 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import * as os from "node:os";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,7 +35,7 @@ interface PipelineState {
   currentStep: number; // 0 = not started, 1-8 = active step
   status: "running" | "paused_gate" | "complete";
   gateApprovals: { step4: boolean; step5: boolean };
-  worktree: string | null; // path to isolated git worktree for this run
+  originalBranch: string | null; // branch to return to on reset
 }
 
 const STEP_NAMES: Record<number, string> = {
@@ -65,41 +64,17 @@ function generateRunId(): string {
   );
 }
 
-/** Check if a git branch exists (local or remote) */
+/** Get the current git branch name */
+async function currentBranch(pi: ExtensionAPI): Promise<string | null> {
+  const r = await pi.exec("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
+  const name = r.stdout.trim();
+  return name || null;
+}
+
+/** Check if a git branch exists (local only) */
 async function branchExists(pi: ExtensionAPI, name: string): Promise<boolean> {
   const r = await pi.exec("git", ["branch", "--list", name]);
   return r.stdout.trim() !== "";
-}
-
-/**
- * Clean up a pipeline worktree and its branch.
- * Never throws — failures are logged to stderr.
- */
-async function removeWorktree(
-  pi: ExtensionAPI,
-  worktreePath: string,
-  branchName: string,
-) {
-  // Remove worktree (prune the administrative files)
-  try {
-    if (fs.existsSync(worktreePath)) {
-      await pi.exec("git", ["worktree", "remove", "--force", worktreePath]);
-    }
-  } catch {
-    // Worktree may already be gone; try pruning
-    try {
-      await pi.exec("git", ["worktree", "prune"]);
-    } catch {
-      // ignore
-    }
-  }
-
-  // Force-delete the branch
-  try {
-    await pi.exec("git", ["branch", "-D", branchName]);
-  } catch {
-    // ignore — branch may already be deleted
-  }
 }
 
 // ── Extension ────────────────────────────────────────────────────────────────
@@ -133,12 +108,11 @@ export default function (pi: ExtensionAPI) {
   // ── Run ID extraction ────────────────────────────────────────────────────
 
   /**
-   * After step 1 completes, scan the worktree's results/<app>/ for
-   * the most recent run directory that contains step1-resolve/run-metadata.json.
-   * Since we pre-generate runId, this is a fallback sanity check.
+   * After step 1 completes, scan results/<app>/ for the most recent
+   * run directory that contains step1-resolve/run-metadata.json.
    */
-  function findRunId(app: string, worktree: string): string | null {
-    const resultsDir = path.join(worktree, "results", app);
+  function findRunId(app: string, cwd: string): string | null {
+    const resultsDir = path.join(cwd, "results", app);
     if (!fs.existsSync(resultsDir)) return null;
 
     let entries: fs.Dirent[];
@@ -175,50 +149,28 @@ export default function (pi: ExtensionAPI) {
   /**
    * Send a pipeline step prompt as a user message to the agent.
    * Sets pendingPipelineStep so agent_end knows to chain.
-   *
-   * All prompts include a worktree header so the agent targets the
-   * isolated worktree for all file operations and bash commands.
    */
   function dispatchStep(step: number) {
     if (!pipeline) return;
 
     const app = pipeline.app;
     const runId = pipeline.runId;
-    const worktree = pipeline.worktree;
     const stepName = STEP_NAMES[step];
-    if (!stepName || !runId || !worktree) return;
+    if (!stepName || !runId) return;
 
-    // Build the worktree header
-    const worktreeHeader = [
-      `## ⚠️ WORKTREE CONTEXT`,
-      ``,
-      `This pipeline run operates in an isolated git worktree at:`,
-      `  **${worktree}**`,
-      ``,
-      `- All file paths below are relative to this worktree.`,
-      `- When using bash, always \`cd ${worktree}\` first (or use absolute paths).`,
-      `- Use \`read\`, \`write\`, \`edit\` with paths relative to \`${worktree}\`.`,
-      `- The worktree is on branch \`pipeline/${app}/${runId}\`.`,
-      ``,
-      `---`,
-      ``,
-    ].join("\n");
-
-    // Build the step-specific prompt (same as before, but with worktree context)
     let message: string;
     if (step === 1) {
-      // Step 1: We pre-generated the runId, so tell the agent to use it directly
+      // Step 1: pre-generated runId; tell the agent to use it directly
       message =
-        worktreeHeader +
         `/pipeline-resolve ${app} ${runId}\n\n` +
         `Resolve inputs for the ${app} application:\n` +
-        `1. Load and validate \`apps/${app}/profile.yaml\` (in the worktree)\n` +
-        `2. Read the profile's \`baseUrlEnvVar\` field and check that env var is set in \`.env\` (the worktree has a copy of .env)\n` +
+        `1. Load and validate \`apps/${app}/profile.yaml\`\n` +
+        `2. Read the profile's \`baseUrlEnvVar\` field and check that env var is set in \`.env\`\n` +
         `3. The run ID is already generated: **${runId}**. Use this exact value.\n` +
         `4. Write run metadata to \`results/${app}/${runId}/step1-resolve/run-metadata.json\` with \`app\`, \`runId\`, \`baseUrl\`, profile validation status\n` +
         `5. Report the run ID clearly — it will be needed for all subsequent steps`;
     } else {
-      message = worktreeHeader + `/${stepName} ${app} ${runId}`;
+      message = `/${stepName} ${app} ${runId}`;
     }
 
     pipeline.currentStep = step;
@@ -233,79 +185,11 @@ export default function (pi: ExtensionAPI) {
     pi.sendUserMessage(message);
   }
 
-  // ── Worktree setup ───────────────────────────────────────────────────────
-
-  /**
-   * Create an isolated worktree for a pipeline run.
-   * Returns { worktree, branchName } or throws.
-   */
-  async function setupWorktree(
-    cwd: string,
-    app: string,
-    runId: string,
-  ): Promise<{ worktree: string; branchName: string }> {
-    const branchName = `pipeline/${app}/${runId}`;
-    const worktree = path.join(cwd, "worktrees", app, runId);
-
-    // Ensure worktrees parent directory exists
-    fs.mkdirSync(path.dirname(worktree), { recursive: true });
-
-    // Check if branch already exists (e.g. from a previous aborted run)
-    if (await branchExists(pi, branchName)) {
-      // Delete the stale branch first
-      await pi.exec("git", ["branch", "-D", branchName]);
-    }
-
-    // Create the worktree with a new branch from current HEAD
-    const addResult = await pi.exec("git", [
-      "worktree",
-      "add",
-      "-b",
-      branchName,
-      worktree,
-      "HEAD",
-    ]);
-
-    if (addResult.code !== 0) {
-      throw new Error(
-        `Failed to create git worktree: ${addResult.stderr || addResult.stdout}`,
-      );
-    }
-
-    // Copy .env into the worktree so the agent can read env vars
-    const envPath = path.join(cwd, ".env");
-    if (fs.existsSync(envPath)) {
-      fs.copyFileSync(envPath, path.join(worktree, ".env"));
-    }
-
-    // Copy .env.example too
-    const envExamplePath = path.join(cwd, ".env.example");
-    if (fs.existsSync(envExamplePath)) {
-      fs.copyFileSync(envExamplePath, path.join(worktree, ".env.example"));
-    }
-
-    // Symlink node_modules to avoid a full install
-    const nodeModulesSrc = path.join(cwd, "node_modules");
-    const nodeModulesDst = path.join(worktree, "node_modules");
-    if (fs.existsSync(nodeModulesSrc) && !fs.existsSync(nodeModulesDst)) {
-      // Use a relative symlink for portability
-      const relative = path.relative(worktree, nodeModulesSrc);
-      try {
-        fs.symlinkSync(relative, nodeModulesDst, "dir");
-      } catch {
-        // If symlink fails (e.g. on some Windows), fall back to copy via cp
-        await pi.exec("cp", ["-a", nodeModulesSrc, nodeModulesDst]);
-      }
-    }
-
-    return { worktree, branchName };
-  }
-
   // ── Commands ─────────────────────────────────────────────────────────────
 
   pi.registerCommand("pipeline-run", {
     description:
-      "Run the E2E test pipeline for an app (pauses at gated steps 4 & 5). Each run creates its own git branch + worktree.",
+      "Run the E2E test pipeline for an app (pauses at gated steps 4 & 5). Each run creates its own git branch and switches to it.",
     handler: async (args, ctx) => {
       const app = args.trim();
       if (!app) {
@@ -324,25 +208,37 @@ export default function (pi: ExtensionAPI) {
 
       // Generate run ID upfront
       const runId = generateRunId();
-      ctx.ui.notify(`📋 Run ID: ${runId}`, "info");
 
-      // Create isolated worktree
-      let worktree: string;
-      let branchName: string;
-      try {
-        const result = await setupWorktree(ctx.cwd, app, runId);
-        worktree = result.worktree;
-        branchName = result.branchName;
-      } catch (err: any) {
+      // Remember the original branch so we can switch back on reset
+      const origBranch = await currentBranch(pi);
+      if (!origBranch) {
+        ctx.ui.notify("Could not determine current git branch.", "error");
+        return;
+      }
+
+      const branchName = `pipeline/${app}/${runId}`;
+
+      // Delete stale branch if it exists from a previous aborted run
+      if (await branchExists(pi, branchName)) {
+        await pi.exec("git", ["branch", "-D", branchName]);
+      }
+
+      // Create new branch from current HEAD and switch to it
+      const checkoutResult = await pi.exec("git", [
+        "checkout", "-b", branchName,
+      ]);
+
+      if (checkoutResult.code !== 0) {
         ctx.ui.notify(
-          `Failed to create worktree: ${err.message}`,
+          `Failed to create/switch to branch "${branchName}": ${checkoutResult.stderr || checkoutResult.stdout}`,
           "error",
         );
         return;
       }
 
       ctx.ui.notify(
-        `🌿 Branch: ${branchName}\n📂 Worktree: ${worktree}`,
+        `📋 Run ID: ${runId}\n` +
+        `🌿 Branch: ${branchName} (switched from ${origBranch})`,
         "info",
       );
 
@@ -352,7 +248,7 @@ export default function (pi: ExtensionAPI) {
         currentStep: 0,
         status: "running",
         gateApprovals: { step4: false, step5: false },
-        worktree,
+        originalBranch: origBranch,
       };
       persistState();
 
@@ -378,16 +274,12 @@ export default function (pi: ExtensionAPI) {
 
       const step = pipeline.currentStep;
 
-      // Determine which next step to dispatch after approval
       let nextDispatchStep: number;
       if (step === 4 && !pipeline.gateApprovals.step4) {
         pipeline.gateApprovals.step4 = true;
-        // After step 4 approval, the agent promotes the page object to src/pages/.
-        // Then dispatch step 5 (which is also gated).
         nextDispatchStep = 5;
       } else if (step === 5 && !pipeline.gateApprovals.step5) {
         pipeline.gateApprovals.step5 = true;
-        // After step 5 approval, dispatch step 6 (non-gated; agent_end will chain).
         nextDispatchStep = 6;
       } else {
         ctx.ui.notify(
@@ -399,10 +291,6 @@ export default function (pi: ExtensionAPI) {
 
       persistState();
 
-      // Instruct the agent that the human has approved the gated step.
-      // The agent will promote artifacts (e.g. move page object to src/pages/)
-      // and then go idle. agent_end will detect pendingGateApproval and
-      // dispatch the next real step.
       pendingGateApproval = { nextDispatchStep };
       pi.sendUserMessage("approved");
 
@@ -448,8 +336,9 @@ export default function (pi: ExtensionAPI) {
 
       const lines = [
         `Pipeline: ${pipeline.app}`,
-        `Run ID:  ${pipeline.runId ?? "(pending — step 1 not yet complete)"}`,
-        `Worktree: ${pipeline.worktree ?? "(none)"}`,
+        `Run ID:  ${pipeline.runId ?? "(pending)"}`,
+        `Branch:  pipeline/${pipeline.app}/${pipeline.runId ?? "?"}`,
+        `Original: ${pipeline.originalBranch ?? "(unknown)"}`,
         `Status:  ${pipeline.status}`,
         `Progress:`,
         ...progressLines,
@@ -460,7 +349,7 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerCommand("pipeline-reset", {
-    description: "Abort the current pipeline and remove its worktree",
+    description: "Abort the current pipeline, switch back to original branch, delete pipeline branch",
     handler: async (_args, ctx) => {
       if (!pipeline) {
         ctx.ui.notify("No pipeline to reset.", "info");
@@ -469,15 +358,33 @@ export default function (pi: ExtensionAPI) {
 
       const app = pipeline.app;
       const runId = pipeline.runId;
-      const worktree = pipeline.worktree;
-      const branchName = runId
+      const origBranch = pipeline.originalBranch;
+      const pipelineBranch = runId
         ? `pipeline/${app}/${runId}`
         : null;
 
-      // Clean up worktree
-      if (worktree && branchName) {
-        ctx.ui.notify("🧹 Removing worktree and branch...", "info");
-        await removeWorktree(pi, worktree, branchName);
+      if (origBranch && pipelineBranch) {
+        ctx.ui.notify(
+          `🧹 Switching back to ${origBranch} and deleting ${pipelineBranch}...`,
+          "info",
+        );
+
+        // Force-switch back to original branch (discard uncommitted pipeline changes)
+        try {
+          await pi.exec("git", ["checkout", "-f", origBranch]);
+        } catch {
+          ctx.ui.notify(
+            `Failed to switch back to ${origBranch}. You may need to do this manually.`,
+            "error",
+          );
+        }
+
+        // Delete the pipeline branch
+        try {
+          await pi.exec("git", ["branch", "-D", pipelineBranch]);
+        } catch {
+          // ignore — branch may already be gone
+        }
       }
 
       pipeline = null;
@@ -485,7 +392,7 @@ export default function (pi: ExtensionAPI) {
       pendingGateApproval = null;
       pi.appendEntry("pipeline-state", null);
 
-      ctx.ui.notify(`Pipeline for "${app}" reset. Worktree removed.`, "info");
+      ctx.ui.notify(`Pipeline for "${app}" reset.`, "info");
     },
   });
 
@@ -499,7 +406,6 @@ export default function (pi: ExtensionAPI) {
       const { nextDispatchStep } = pendingGateApproval;
       pendingGateApproval = null;
 
-      // If the next step is ALSO gated, pause; otherwise auto-chain will handle it
       if (GATED_STEPS.has(nextDispatchStep)) {
         ctx.ui.notify(
           `⏸  Step ${nextDispatchStep}/8 (${STEP_NAMES[nextDispatchStep]}) is GATED — ` +
@@ -519,16 +425,13 @@ export default function (pi: ExtensionAPI) {
     const completedStep = pendingPipelineStep;
     pendingPipelineStep = null;
 
-    // If the pipeline was paused (gate was just sent), do NOT auto-advance.
-    // The agent finished presenting the gated step draft and is now idle.
-    // Wait for human /pipeline-continue (or manual "approved" message).
     if (pipeline.status === "paused_gate") {
       return;
     }
 
-    // After step 1, verify the run ID from the worktree's results directory
-    if (completedStep === 1 && pipeline.runId && pipeline.worktree) {
-      const detectedRunId = findRunId(pipeline.app, pipeline.worktree);
+    // After step 1, verify the run ID from the results directory
+    if (completedStep === 1 && pipeline.runId) {
+      const detectedRunId = findRunId(pipeline.app, ctx.cwd);
       if (detectedRunId) {
         if (detectedRunId !== pipeline.runId) {
           ctx.ui.notify(
@@ -543,7 +446,7 @@ export default function (pi: ExtensionAPI) {
       } else {
         ctx.ui.notify(
           "⚠️ Could not detect run ID from step 1 output. " +
-            "Pipeline paused. Check the worktree and use /pipeline-run to restart.",
+            "Pipeline paused. Check results/<app>/ and use /pipeline-run to restart.",
           "warning",
         );
         pipeline.status = "paused_gate";
@@ -559,14 +462,15 @@ export default function (pi: ExtensionAPI) {
       persistState();
       ctx.ui.notify(
         `🎉 Pipeline complete! All 8 steps finished.\n` +
-          `   Worktree: ${pipeline.worktree}\n` +
-          `   Branch: pipeline/${pipeline.app}/${pipeline.runId}`,
+          `   Branch: pipeline/${pipeline.app}/${pipeline.runId}\n` +
+          `   Original: ${pipeline.originalBranch}\n` +
+          `   Use \`git checkout ${pipeline.originalBranch}\` to go back, ` +
+          `or commit and merge from here.`,
         "success",
       );
       return;
     }
 
-    // If next step is gated, warn the user before dispatching
     if (GATED_STEPS.has(nextStep)) {
       ctx.ui.notify(
         `⏸  Step ${nextStep}/8 (${STEP_NAMES[nextStep]}) is GATED — ` +
@@ -594,7 +498,8 @@ export default function (pi: ExtensionAPI) {
           pipeline = data;
           ctx.ui.notify(
             `📋 Restored pipeline: "${pipeline.app}" at step ${pipeline.currentStep}/8 (${pipeline.status})\n` +
-              `   Worktree: ${pipeline.worktree ?? "(unknown — may be stale)"}`,
+              `   Branch: pipeline/${pipeline.app}/${pipeline.runId ?? "?"}\n` +
+              `   Original: ${pipeline.originalBranch ?? "(unknown)"}`,
             "info",
           );
         }
