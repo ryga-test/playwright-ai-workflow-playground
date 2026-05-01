@@ -114,6 +114,9 @@ steps:
       - name: traces
         path: results/{{app}}/{{run}}/step7-run-fix/traces/
         format: binary
+      - name: screencast-videos
+        path: results/{{app}}/{{run}}/step7-run-fix/
+        format: webm
 
   - id: summarize
     name: Summarize & Update Knowledge

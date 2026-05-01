@@ -143,3 +143,82 @@
 | `clickSettingsLink()` | Method | Clicks the Settings nav link |
 | `row(service)` | Method | Finds a table row by partial service name match |
 | `cellAt(row, col)` | Method | Gets a cell at a column index within a row |
+
+---
+
+## Run 2026-05-01T022310Z
+
+**Source**: Pipeline run — 9/9 tests passed (0 failures).
+
+### New Verified Observations (not documented in prior runs)
+
+#### Serial Form Submissions (S09)
+- Three sequential profile submits (Alan Turing → Grace Hopper → Margaret Hamilton) correctly overwrite the status message each time.
+- After the final submit, `not.toContainText()` confirms neither `'Alan Turing'` nor `'Grace Hopper'` appears in the status — only the most recent submission remains.
+- No stale state leakage across 3 rapid-fire submits.
+
+#### Input Value Retention After Submit (S03)
+- Form inputs retain their filled values after submission. `toHaveValue('Ada Lovelace')` and `toHaveValue('ada@example.test')` both pass after `submitProfile()`.
+- The form's `preventDefault()` handler prevents navigation but does NOT clear input fields. This is distinct from the clear-and-re-submit behavior (S08/R15) which requires explicit `.clear()` calls.
+
+#### Cross-Run Locator Reliability
+- All 15 role-based selectors resolved correctly across 9 tests with zero locator failures.
+- P1 (`getByRole`) remains 100% reliable for this app across 3 consecutive pipeline runs (24 total tests, 0 locator failures).
+
+---
+
+## Run 2026-05-01T025318Z
+
+**Source**: Pipeline run — 9/9 tests passed (1 script bug fixed, 0 app bugs).
+
+### New Verified Observations (not documented in prior runs)
+
+#### Page Object API v2 (`ExampleAppPage`)
+
+This run introduced a redesigned page object with renamed properties and methods:
+
+| v2 Property | v1 Equivalent | Type |
+|-------------|---------------|------|
+| `pageHeading` | `heading` | Locator — h1 |
+| `tableHeading` | `statusHeading` | Locator — "Application Status" h2 |
+| `nameColumnHeader` | `nameHeader` | Locator |
+| `statusColumnHeader` | `statusHeader` | Locator |
+| `settingsForm` | `profileForm` | Locator — form container |
+
+| v2 Method | v1 Equivalent | Behavior |
+|-----------|---------------|----------|
+| `goToDashboard()` | `clickDashboardLink()` | Clicks Dashboard nav link |
+| `goToSettings()` | `clickSettingsLink()` | Clicks Settings nav link |
+| `fillProfileForm(name, email)` | `fillName()` + `fillEmail()` | Fills both inputs in one call |
+| `saveProfile()` | `clickSave()` or implicit in `submitProfile()` | Clicks Save Changes button |
+| `updateProfile(name, email)` | `submitProfile(name, email)` | **Returns full status text**, not just name |
+| `getCell(name)` | `cellAt(row, col)` | Direct cell lookup by accessible name |
+| `getTableRows()` | `dataRows` | Returns `tbody tr` locator (3 data rows) |
+
+#### `updateProfile()` Returns Full Status Text
+- `updateProfile('Ada Lovelace', 'ada@example.test')` returns `"Saved changes for Ada Lovelace."` — the complete `textContent()` of the status element.
+- This differs from v1's `submitProfile()` which returned only the display name.
+- **Assertion guidance**: Use `expect(name).toContain('Ada Lovelace')` rather than `.toBe('Ada Lovelace')`.
+
+#### `getCell()` by Accessible Name
+- `getCell('Example API')` resolves the cell with accessible name "Example API" anywhere in the table.
+- `getCell('Online')` resolves the "Online" status cell.
+- All 6 cells (3 services × 2 statuses) verified across S09.
+- This is a simpler alternative to the row+column pattern (`row() + cellAt()`).
+
+#### Screencast Video Recording
+- The base fixture (`@fixtures/base.fixture.js`) automatically records per-test screencast videos when `PLAYWRIGHT_RUN_ID` is set.
+- Videos include **action annotations** (red dots + labels on clicks/fills) and **chapter overlays** (test name at start, pass/fail status at end).
+- 9 individual `.webm` files generated (~300–500 KB each), concatenated into `screencast.webm` (3.2 MB).
+- Duration: ~73 seconds for all 9 tests.
+
+#### Test Import Pattern
+- Tests import `test` and `expect` from `@fixtures/base.fixture.js` (NOT from `@playwright/test`):
+  ```typescript
+  import { test, expect } from '@fixtures/base.fixture.js';
+  ```
+- This enables the screencast recording, app-level fixtures (`appConfig`), and baseURL resolution.
+
+#### Cross-Run Locator Reliability (4th Run)
+- All 13 page object locators resolved correctly across 9 tests with zero locator failures.
+- P1 (`getByRole`) remains 100% reliable across **4 consecutive pipeline runs** (33 total tests, 0 locator failures).

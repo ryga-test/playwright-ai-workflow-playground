@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-05-01 — Pipeline Reset Robustness Fix
+
+### Fixed
+
+- **`/pipeline-reset` no longer resurrects pipelines on restart**: replaced
+  fragile `null` sentinel with an explicit `status: "aborted"` entry in the
+  session history. Previously, if the session file wasn't flushed before a
+  crash/force-quit, `session_start` would find the stale active pipeline
+  entry and restore it.
+- **`session_start` now verifies git branch before restoring**: even if a
+  stale pipeline state is found in session history, it will only be restored
+  if the current git branch matches the expected `pipeline/<app>/<runId>`
+  branch. Otherwise it warns and suggests a fresh `/pipeline-run`.
+- **`agent_end` guards against async-gap resets**: added null-pipeline
+  checks after `await` points in both gate-approval and auto-advance paths,
+  so a `/pipeline-reset` that fires during the 300ms yield window cannot
+  trigger a dispatch.
+
+### Changed
+
+- **`persistState()` now always writes**, even when `pipeline` is null,
+  preventing session_start from walking past the null entry to an older
+  active one.
+- **`PipelineState.status`** now accepts `"aborted"` as an explicit
+  sentinel value.
+- **Reset handler order**: writes the `"aborted"` sentinel via `persistState()`
+  before clearing the in-memory `pipeline` variable.
+
+### Updated files
+
+| File | Change |
+|------|--------|
+| `.pi/extensions/pipeline-runner/index.ts` | Robust reset, branch verification, async-gap guards |
+
 ## 2026-05-01 — Per-Run Git Branch Isolation
 
 ### Added
