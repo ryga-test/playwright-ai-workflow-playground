@@ -110,3 +110,41 @@
 - **Rule**: After form submission, `.clear()` on inputs works and re-submitting with new values overwrites the status message. The old name is no longer present in the status after re-submit.
 - **Rationale**: The form doesn't clear itself on submit (the status message updates but fields retain values). Tests should verify that manual clearing + re-submit works correctly.
 - **Verified by**: Test S08.
+
+---
+
+## Run 2026-05-01T022310Z
+
+**Source**: Pipeline run — 9/9 tests passed.
+
+### App Behavior Rules
+
+#### R16 — Serial submissions overwrite status without clearing between
+- **Rule**: After multiple sequential form submits without clearing fields between them, the status message always reflects only the most recent submission. Use `not.toContainText()` to assert that names from prior submits are absent.
+- **Rationale**: R15 established that explicit clear + re-submit overwrites the status. R16 extends this: even without clearing, each new submit completely replaces the status text — no concatenation or stale leakage.
+- **Verified by**: Test S09 (3 rapid submits, 2 `not.toContainText` assertions pass).
+
+---
+
+## Run 2026-05-01T025318Z
+
+**Source**: Pipeline run — 9/9 tests passed.
+
+### Page Object API Rules (v2)
+
+#### R17 — `updateProfile()` returns full status text, not just the name
+- **Rule**: `ExampleAppPage.updateProfile(name, email)` returns the complete `textContent()` of the status element (e.g., `"Saved changes for Ada Lovelace."`). Use `expect(result).toContain('Ada Lovelace')` for name assertions, **not** `.toBe('Ada Lovelace')`. This differs from the v1 `submitProfile()` method.
+- **Rationale**: The method awaits `statusMessage.waitFor()` then reads `textContent()`. The status always contains the full sentence with prefix/suffix.
+- **Verified by**: Test S03 (assertion fix cycle 1).
+
+#### R18 — Use `getCell(name)` for direct cell assertions
+- **Rule**: When asserting individual table cell values, use `dashboard.getCell('Example API')` or `dashboard.getCell('Online')` directly. This is simpler than the row+column traversal pattern (`row() + cellAt()`). Each cell is independently locatable by accessible name.
+- **Rationale**: The table has unique cell text per column. `getByRole('cell', { name })` resolves each cell directly without needing row context.
+- **Verified by**: Test S09 (6 cell assertions all pass).
+
+### Import Rules
+
+#### R19 — Import `test`/`expect` from `@fixtures/base.fixture.js`, not `@playwright/test`
+- **Rule**: All test specs must use `import { test, expect } from '@fixtures/base.fixture.js'`. Never import from `@playwright/test` directly. The base fixture provides screencast recording, app-level fixtures, and baseURL resolution.
+- **Rationale**: The base fixture wraps Playwright's `test` with custom fixtures (`appConfig`, `baseURL` resolution) and enables screencast video recording when `PLAYWRIGHT_RUN_ID` is set in the environment. Direct `@playwright/test` imports bypass these features.
+- **Verified by**: All 9 tests passed with screencast video proof.
