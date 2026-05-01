@@ -222,3 +222,25 @@ This run introduced a redesigned page object with renamed properties and methods
 #### Cross-Run Locator Reliability (4th Run)
 - All 13 page object locators resolved correctly across 9 tests with zero locator failures.
 - P1 (`getByRole`) remains 100% reliable across **4 consecutive pipeline runs** (33 total tests, 0 locator failures).
+
+---
+
+## Run 2026-05-01T212504Z
+
+**Source**: Pipeline run — 9/9 tests passed (0 script bugs, 0 app bugs).
+
+### New Verified Observations (not documented in prior runs)
+
+#### Cross-Run Locator Reliability (5th Run)
+- P1 (`getByRole`) remains 100% reliable across **5 consecutive pipeline runs** (42 total tests, 0 locator failures).
+- This is the longest unbroken streak of locator reliability recorded for this app.
+
+#### First Clean Pass — Zero Fix Cycles
+- All 9 tests passed on the first execution with no script bugs requiring fixes.
+- Previous run (2026-05-01T025318Z) required 1 script bug fix. This run needed none,
+  indicating the v2 page object API and test spec patterns are mature and stable.
+
+#### v2 API Consistency (2nd Run)
+- The v2 page object API (`updateProfile()` returning full status text, `getCell()`
+  for direct cell access, `getTableRows()` for `tbody tr`) continues to perform
+  correctly across all 9 tests with no regressions.

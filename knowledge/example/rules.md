@@ -148,3 +148,21 @@
 - **Rule**: All test specs must use `import { test, expect } from '@fixtures/base.fixture.js'`. Never import from `@playwright/test` directly. The base fixture provides screencast recording, app-level fixtures, and baseURL resolution.
 - **Rationale**: The base fixture wraps Playwright's `test` with custom fixtures (`appConfig`, `baseURL` resolution) and enables screencast video recording when `PLAYWRIGHT_RUN_ID` is set in the environment. Direct `@playwright/test` imports bypass these features.
 - **Verified by**: All 9 tests passed with screencast video proof.
+
+---
+
+## Run 2026-05-01T212504Z
+
+**Source**: Pipeline run — 9/9 tests passed (0 fix cycles).
+
+### Existing Rules Re-Validated
+
+No new rules identified. All 19 existing rules (R01–R19) are re-validated by this run:
+- **R01–R04, R10–R12** (locator rules): 0 locator failures across 9 tests
+- **R05, R19** (import rules): TypeScript compilation passes, all 9 tests execute
+- **R06–R07, R15–R16** (app behavior): Form submit, empty-name fallback, re-submit, serial submissions all pass
+- **R08–R09** (infrastructure): Server ran, baseURL resolved correctly
+- **R13–R14** (assertions): `toBeInViewport()`, `toHaveValue()` assertions pass
+- **R17–R18** (v2 API): `updateProfile()` and `getCell()` work correctly
+
+This run marks the **5th consecutive pipeline run** (42 total tests) with 100% rule compliance and 0 locator failures.

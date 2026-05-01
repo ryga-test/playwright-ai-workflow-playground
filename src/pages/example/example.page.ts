@@ -1,4 +1,4 @@
-// @provenance runId=2026-05-01T025318Z approvedAt=2026-05-01T030234Z gate=page-object-review
+// @provenance runId=2026-05-01T212504Z approvedAt=2026-05-02 gate=page-object-review
 import type { Locator, Page } from '@playwright/test';
 
 /**
@@ -123,24 +123,5 @@ export class ExampleAppPage {
    */
   getTableRows(): Locator {
     return this.statusTable.locator('tbody tr');
-  }
-
-  /**
-   * Verify a specific service row exists with an expected status.
-   * @param serviceName - The service cell text (e.g. "Example API").
-   * @param expectedStatus - The expected status cell text (e.g. "Online").
-   */
-  async assertServiceStatus(serviceName: string, expectedStatus: string): Promise<void> {
-    const cell = this.getCell(serviceName);
-    await cell.waitFor({ state: 'visible' });
-
-    // Locate the status cell in the same row as the service cell.
-    // The row contains both cells; we target the row by its
-    // accessible name (concatenated cell texts), then get the
-    // second cell (status).
-    const row = this.page.getByRole('row', {
-      name: new RegExp(serviceName + '\\s+' + expectedStatus),
-    });
-    await row.waitFor({ state: 'visible' });
   }
 }

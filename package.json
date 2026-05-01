@@ -16,11 +16,12 @@
   "dependencies": {
     "@playwright/test": "latest",
     "@types/js-yaml": "latest",
-    "dotenv": "latest",
     "js-yaml": "latest",
     "typescript": "latest"
   },
   "devDependencies": {
-    "@types/node": "latest"
+    "dotenv": "latest",
+    "@types/node": "latest",
+    "fallow": "^2.61.0"
   }
 }
