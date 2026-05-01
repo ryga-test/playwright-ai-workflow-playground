@@ -1,5 +1,40 @@
 # Changelog
 
+## 2026-05-01 — Live Dashboard with Pipeline Data Injection
+
+### Added
+
+- **`index.html` — Self-contained QA dashboard** that renders a visual report
+  (pass rate ring, duration trend, slowest specs, historical signal, artifacts)
+  from the latest pipeline run data. Opens directly in the browser.
+- **`scripts/generate-dashboard-data.js`** — scans `results/example/` for all
+  completed pipeline runs, parses `pipeline-summary.md` and `test-report.md`
+  from each, and builds a structured JSON payload.
+- **`npm run dashboard`** — single command that regenerates the dashboard data,
+  injects it inline into `index.html` (avoiding `file://` CORS restrictions),
+  and opens the result in the default browser.
+- **Per-run duration extraction** from pipeline summaries and test reports,
+  including ms-to-seconds unit normalization and sum-of-per-test fallbacks.
+- **Auto-generated historical comparison** (coverage growth, locator strategy,
+  proof artifacts, fix classification) derived from actual run data trends.
+
+### Changed
+
+- **`index.html`** converted from static hardcoded HTML to a dynamic template
+  that renders all sections from `window.__DASHBOARD_DATA__`. The build script
+  replaces a placeholder with live JSON on each run.
+- **`.gitignore`** now excludes `dashboard-data.js` (auto-generated reference
+  artifact).
+
+### Updated files
+
+| File | Change |
+|------|--------|
+| `index.html` | Rewritten as dynamic dashboard with inline data injection |
+| `scripts/generate-dashboard-data.js` | New: pipeline summary parser + HTML injector |
+| `package.json` | Added `dashboard` script |
+| `.gitignore` | Added `dashboard-data.js` |
+
 ## 2026-05-01 — Pipeline Reset Robustness Fix
 
 ### Fixed

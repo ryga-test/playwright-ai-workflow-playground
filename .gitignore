@@ -7,6 +7,7 @@ node_modules/
 *.storage-state.json
 state/
 playwright-report/
+dashboard-data.js
 allure-report/
 allure-results/
 dist/

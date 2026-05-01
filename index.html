@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Playwright Test Run Dashboard</title>
+  <style>
+    :root {
+      --bg:      oklch(98.5% 0.004 250);
+      --surface: oklch(100% 0 0);
+      --fg:      oklch(22% 0.025 255);
+      --muted:   oklch(51% 0.017 255);
+      --border:  oklch(90% 0.01 250);
+      --accent:  oklch(55% 0.19 255);
+      --success: oklch(55% 0.16 150);
+      --warning: oklch(70% 0.16 75);
+      --danger:  oklch(58% 0.20 28);
+      --track:   oklch(95% 0.006 250);
+
+      --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+      --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --radius: 16px;
+      --gap: 16px;
+      --density: 1;
+    }
+
+    [data-theme="dark"] {
+      --bg: oklch(18% 0.012 255);
+      --surface: oklch(23% 0.014 255);
+      --fg: oklch(94% 0.006 250);
+      --muted: oklch(68% 0.015 250);
+      --border: oklch(34% 0.018 255);
+      --track: oklch(28% 0.012 255);
+      --accent: oklch(70% 0.14 255);
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--bg); color: var(--fg); font-family: var(--font-body); }
+    body { margin: 0; min-height: 100vh; }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(to right, color-mix(in oklch, var(--border), transparent 54%) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in oklch, var(--border), transparent 68%) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: linear-gradient(to bottom, black, transparent 70%);
+      opacity: .32;
+    }
+    [data-theme="dark"] body::before { opacity: .14; }
+
+    .app-shell { width: min(1480px, calc(100vw - 32px)); margin: 0 auto; padding: 24px 0 56px; position: relative; }
+    .topbar {
+      position: sticky; top: 0; z-index: 8;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: calc(14px * var(--density)) 0;
+      background: color-mix(in oklch, var(--bg), transparent 16%);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid color-mix(in oklch, var(--border), transparent 24%);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .mark { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 9px; display: grid; place-items: center; background: var(--surface); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--surface), var(--fg) 4%); }
+    .mark svg { width: 18px; height: 18px; }
+    .brand-text { line-height: 1.1; }
+    .brand-title { font-family: var(--font-display); font-weight: 680; letter-spacing: -.02em; }
+    .brand-subtitle { color: var(--muted); font-size: 12px; font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 66vw; }
+    .top-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .chip, button.chip {
+      border: 1px solid var(--border); background: var(--surface); color: var(--fg); border-radius: 999px;
+      padding: 8px 11px; font-size: 12px; font-family: var(--font-mono); line-height: 1; white-space: nowrap;
+    }
+    button.chip { cursor: pointer; }
+    button.chip[aria-pressed="true"] { border-color: color-mix(in oklch, var(--accent), var(--border) 20%); color: var(--accent); }
+
+    .hero { display: grid; grid-template-columns: minmax(0, 1.28fr) minmax(320px, .72fr); gap: var(--gap); padding: 28px 0 16px; }
+    .panel, .metric, .table-card {
+      border: 1px solid var(--border); border-radius: var(--radius); background: color-mix(in oklch, var(--surface), transparent 0%);
+      box-shadow: 0 1px 1px color-mix(in oklch, var(--fg), transparent 96%);
+    }
+    .panel { padding: calc(22px * var(--density)); }
+    .eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: .12em; font-size: 11px; font-family: var(--font-mono); font-weight: 700; }
+    h1 { margin: 12px 0 14px; font-family: var(--font-display); font-size: clamp(38px, 5vw, 76px); line-height: .92; letter-spacing: -.055em; max-width: 11ch; }
+    .deck { margin: 0; color: var(--muted); font-size: clamp(16px, 1.6vw, 21px); line-height: 1.55; max-width: 760px; text-wrap: pretty; }
+    .hero-foot { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+    .status-pill { display: inline-flex; align-items: center; gap: 7px; border-radius: 999px; padding: 8px 10px; border: 1px solid var(--border); background: color-mix(in oklch, var(--surface), var(--track) 42%); font: 12px/1 var(--font-mono); }
+    .status-dot { width: 7px; height: 7px; border-radius: 999px; box-shadow: 0 0 0 4px color-mix(in oklch, var(--success), transparent 84%); }
+    .status-dot.ok { background: var(--success); }
+    .status-dot.warn { background: var(--warning); }
+    .status-dot.bad { background: var(--danger); }
+    .run-card { display: grid; gap: 18px; }
+    .run-card h2 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
+    .run-id { font-family: var(--font-mono); font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+    .score-ring { width: min(100%, 320px); aspect-ratio: 1; margin: auto; border-radius: 50%; display: grid; place-items: center; position: relative; }
+    .score-ring::after { content: ""; position: absolute; inset: 18px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); }
+    .score-ring span { position: relative; z-index: 1; display: grid; place-items: center; gap: 3px; font-family: var(--font-display); font-weight: 760; font-size: clamp(44px, 7vw, 72px); letter-spacing: -.06em; }
+    .score-ring small { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .02em; }
+
+    .metrics { display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: var(--gap); margin: 16px 0; }
+    .metric { padding: calc(18px * var(--density)); min-height: 128px; display: flex; flex-direction: column; justify-content: space-between; }
+    .metric-label { color: var(--muted); font-size: 12px; font-family: var(--font-mono); }
+    .metric-value { font-family: var(--font-display); font-size: clamp(28px, 3vw, 45px); line-height: .95; letter-spacing: -.05em; font-weight: 760; font-variant-numeric: tabular-nums; }
+    .metric-note { color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .metric.good .metric-value { color: var(--success); }
+    .metric.warn .metric-value { color: var(--warning); }
+
+    .grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(340px, .65fr); gap: var(--gap); align-items: start; }
+    .section-title { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    .section-title h2 { margin: 0; font-family: var(--font-display); font-size: 21px; letter-spacing: -.025em; }
+    .section-title p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .trend { display: grid; gap: 16px; }
+    .trend-row { display: grid; grid-template-columns: 112px 1fr 72px 74px; gap: 14px; align-items: center; font-family: var(--font-mono); font-size: 12px; }
+    .run-label { color: var(--muted); }
+    .bar-track { height: 30px; border-radius: 9px; background: var(--track); overflow: hidden; border: 1px solid color-mix(in oklch, var(--border), transparent 30%); }
+    .bar { height: 100%; width: var(--w); background: linear-gradient(90deg, color-mix(in oklch, var(--accent), white 12%), var(--accent)); border-radius: inherit; position: relative; }
+    .bar::after { content: attr(data-tests); position: absolute; right: 9px; top: 50%; transform: translateY(-50%); color: white; font-weight: 800; font-size: 11px; }
+    .duration { text-align: right; font-variant-numeric: tabular-nums; }
+    .delta { color: var(--muted); text-align: right; }
+    .delta.bad { color: var(--warning); }
+
+    .comparison { display: grid; gap: 10px; }
+    .compare-item { display: grid; grid-template-columns: 20px 1fr auto; gap: 10px; align-items: start; padding: 13px 0; border-top: 1px solid var(--border); }
+    .compare-item:first-child { border-top: 0; padding-top: 0; }
+    .compare-node { width: 10px; height: 10px; border-radius: 999px; background: var(--success); margin-top: 5px; box-shadow: 0 0 0 4px color-mix(in oklch, var(--success), transparent 86%); }
+    .compare-copy b { display: block; font-size: 13px; letter-spacing: -.01em; }
+    .compare-copy span { color: var(--muted); font-size: 12px; line-height: 1.45; display: block; margin-top: 3px; }
+    .compare-meta { font-family: var(--font-mono); color: var(--muted); font-size: 11px; white-space: nowrap; }
+
+    .breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+    .mini-stat { border: 1px solid var(--border); border-radius: 14px; padding: 16px; background: color-mix(in oklch, var(--surface), var(--track) 20%); }
+    .mini-stat .k { font-family: var(--font-mono); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+    .mini-stat .v { margin-top: 10px; font-family: var(--font-display); font-size: 28px; font-weight: 730; letter-spacing: -.04em; }
+    .mini-stat .n { margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; color: var(--muted); font-family: var(--font-mono); font-weight: 600; font-size: 11px; padding: 0 0 10px; }
+    td { padding: calc(13px * var(--density)) 0; border-top: 1px solid var(--border); vertical-align: top; }
+    td.num, th.num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .test-title { max-width: 680px; line-height: 1.35; }
+    .code { font-family: var(--font-mono); color: var(--muted); font-size: 11px; margin-top: 3px; }
+    .pill-pass, .pill-neutral, .pill-warn { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 8px; font: 11px/1 var(--font-mono); border: 1px solid; white-space: nowrap; }
+    .pill-pass { color: var(--success); border-color: color-mix(in oklch, var(--success), transparent 62%); background: color-mix(in oklch, var(--success), transparent 91%); }
+    .pill-neutral { color: var(--muted); border-color: var(--border); background: var(--track); }
+    .pill-warn { color: color-mix(in oklch, var(--warning), var(--fg) 18%); border-color: color-mix(in oklch, var(--warning), transparent 62%); background: color-mix(in oklch, var(--warning), transparent 88%); }
+
+    .artifact-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap); }
+    .artifact { padding: 15px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); min-height: 116px; }
+    .artifact b { display: block; font-size: 13px; }
+    .artifact p { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .path { font-family: var(--font-mono); font-size: 11px; color: var(--muted); word-break: break-word; }
+
+    .insight { border-left: 2px solid var(--accent); padding: 14px 16px; background: color-mix(in oklch, var(--accent), transparent 94%); border-radius: 0 12px 12px 0; color: var(--fg); line-height: 1.55; font-size: 14px; }
+    .footer-note { color: var(--muted); font-family: var(--font-mono); font-size: 11px; margin-top: 24px; }
+
+    .tweaks { position: fixed; right: 18px; bottom: 18px; z-index: 20; display: flex; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 999px; background: color-mix(in oklch, var(--surface), transparent 8%); backdrop-filter: blur(16px); box-shadow: 0 16px 42px color-mix(in oklch, var(--fg), transparent 90%); }
+    .tweaks button { border: 0; border-radius: 999px; padding: 9px 11px; background: transparent; color: var(--muted); cursor: pointer; font-family: var(--font-mono); font-size: 11px; }
+    .tweaks button[aria-pressed="true"] { background: var(--fg); color: var(--surface); }
+
+    .error-banner { border: 1px solid var(--danger); border-radius: var(--radius); padding: 24px; text-align: center; color: var(--danger); margin: 24px 0; }
+    .error-banner p { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 1180px) {
+      .hero, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(3, 1fr); }
+      .artifact-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 760px) {
+      .app-shell { width: min(100% - 20px, 680px); padding-top: 10px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .top-actions { justify-content: flex-start; }
+      .metrics, .breakdown, .artifact-grid { grid-template-columns: 1fr; }
+      .panel { padding: 18px; }
+      .trend-row { grid-template-columns: 82px 1fr 54px; }
+      .trend-row .delta { display: none; }
+      table { font-size: 12px; }
+      th:nth-child(3), td:nth-child(3) { display: none; }
+      .tweaks { left: 50%; right: auto; transform: translateX(-50%); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 17.5 9.5 12l3.5 3.5L20 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 5h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".32"/></svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">Playwright QA Signal</div>
+          <div class="brand-subtitle" id="project-path">/home/ryga/Documents/Playwright_playground</div>
+        </div>
+      </div>
+      <div class="top-actions" aria-label="Run metadata" id="top-chips">
+        <span class="chip">project: example</span>
+        <span class="chip">workers: 1</span>
+        <span class="chip" id="data-source">source: pipeline summaries</span>
+      </div>
+    </header>
+
+    <main id="dashboard-content">
+      <!-- Populated by JS -->
+    </main>
+  </div>
+
+  <div class="tweaks" aria-label="Dashboard display controls">
+    <button id="themeToggle" type="button" aria-pressed="false">dark</button>
+    <button id="densityToggle" type="button" aria-pressed="false">compact</button>
+  </div>
+
+  <script>
+window.__DASHBOARD_DATA__ = {"project":"example","projectPath":"/home/ryga/Documents/Playwright_playground","generatedAt":"2026-05-01T07:39:37.072Z","latest":{"runId":"2026-05-01T025318Z","completedAt":"2026-05-01T030700Z (approximate)","tests":9,"passed":9,"failed":0,"flaky":0,"duration":66,"averageTestDuration":7.33,"assertions":42,"fixCycles":1,"p1Percent":100,"gatesPassed":2,"gatesTotal":2,"allPassing":true,"hasVideo":true,"slowest":[{"name":"Serial submissions (×3)","spec":"tests/example/example.spec.ts","status":"expected","duration":10.7,"line":null},{"name":"Clear and re-submit","spec":"tests/example/example.spec.ts","status":"expected","duration":10.2,"line":null},{"name":"Form submission with valid inputs","spec":"tests/example/example.spec.ts","status":"expected","duration":7.6,"line":null},{"name":"Empty display name fallback","spec":"tests/example/example.spec.ts","status":"expected","duration":7.5,"line":null},{"name":"Settings nav scroll","spec":"tests/example/example.spec.ts","status":"expected","duration":6.6,"line":null}]},"history":[{"runId":"2026-04-30T093928Z","date":"Apr 30 · 09:39","tests":7,"passed":7,"failed":0,"duration":2.2,"fixCycles":0,"hasVideo":false},{"runId":"2026-04-30T094508Z","date":"Apr 30 · 09:45","tests":8,"passed":8,"failed":0,"duration":2.7,"fixCycles":0,"hasVideo":false},{"runId":"2026-04-30T234318Z","date":"Apr 30 · 23:43","tests":10,"passed":10,"failed":0,"duration":17.83,"fixCycles":1,"hasVideo":false},{"runId":"2026-05-01T022310Z","date":"May 01 · 02:23","tests":9,"passed":9,"failed":0,"duration":3.1,"fixCycles":0,"hasVideo":false},{"runId":"2026-05-01T025318Z","date":"May 01 · 02:53","tests":9,"passed":9,"failed":0,"duration":66,"fixCycles":1,"hasVideo":true}],"comparison":[{"title":"Coverage expanded","subtitle":"Suite grew from 7 to 9 scenarios across 5 pipeline runs.","meta":"+2 tests"},{"title":"Locator strategy stabilized","subtitle":"Across 5 runs, P1 role-based locators remain the primary strategy with zero timeout or strict-mode violations.","meta":"P1 only"},{"title":"Proof artifacts available","subtitle":"Latest run includes per-test screencast videos and concatenated proof video with action annotations.","meta":"video"},{"title":"Known risk is test-script logic","subtitle":"2 fix cycles across 5 runs — all were assertion or locator bugs, not application defects.","meta":"script"}],"runCount":5};
+  </script>
+  <script>
+    // ── Theme/Density tweaks ───────────────────────────────────────
+    const TWEAK_DEFAULTS = { darkMode: false, compactDensity: false };
+    const root = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const densityToggle = document.getElementById('densityToggle');
+    const saved = JSON.parse(localStorage.getItem('qa-dashboard-tweaks') || 'null') || TWEAK_DEFAULTS;
+
+    function applyTweaks(next) {
+      root.dataset.theme = next.darkMode ? 'dark' : 'light';
+      root.style.setProperty('--density', next.compactDensity ? '.78' : '1');
+      themeToggle.setAttribute('aria-pressed', String(next.darkMode));
+      densityToggle.setAttribute('aria-pressed', String(next.compactDensity));
+      localStorage.setItem('qa-dashboard-tweaks', JSON.stringify(next));
+    }
+
+    let tweakState = { ...saved };
+    themeToggle.addEventListener('click', () => { tweakState = { ...tweakState, darkMode: !tweakState.darkMode }; applyTweaks(tweakState); });
+    densityToggle.addEventListener('click', () => { tweakState = { ...tweakState, compactDensity: !tweakState.compactDensity }; applyTweaks(tweakState); });
+    applyTweaks(tweakState);
+
+    // ── Dashboard rendering ───────────────────────────────────────
+    (function() {
+      const D = window.__DASHBOARD_DATA__;
+      const main = document.getElementById('dashboard-content');
+
+      if (!D) {
+        main.innerHTML = `<div class="error-banner">
+          <strong>⚠ No dashboard data found</strong>
+          <p>Run <code>node scripts/generate-dashboard-data.js</code> to generate the data file, then refresh.</p>
+        </div>`;
+        return;
+      }
+
+      document.getElementById('project-path').textContent = D.projectPath || 'Unknown';
+      document.getElementById('data-source').textContent =
+        'source: ' + D.runCount + ' pipeline summaries';
+
+      const L = D.latest;
+      const history = D.history || [];
+      const maxDuration = Math.max(1, ...history.map(h => h.duration || 0));
+
+      // ── Helper ──────────────────────────────────────────────────
+      function fmtDuration(s) {
+        if (s == null || s === 0) return '—';
+        if (s < 1) return (s * 1000).toFixed(0) + 'ms';
+        return s.toFixed(1) + 's';
+      }
+
+      function fmtDate(iso) {
+        if (!iso) return 'Unknown';
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return iso;
+        return d.toISOString().replace('T', ' ').replace(/:\d{2}\.\d{3}Z/, '').replace('Z', '') + ' UTC';
+      }
+
+      function passRate() {
+        if (!L.tests) return 0;
+        return Math.round((L.passed / L.tests) * 100);
+      }
+
+      function heroSummaryText() {
+        const pr = passRate();
+        const videoNote = L.hasVideo
+          ? ' Runtime reflects screencast video capture, not application regression.'
+          : '';
+        if (L.failed === 0 && pr === 100) {
+          return `All ${L.tests} tests passed with zero failures or flakes.${videoNote}`;
+        }
+        if (L.failed > 0) {
+          return `${L.passed}/${L.tests} passed — ${L.failed} failure${L.failed > 1 ? 's' : ''} need investigation.${videoNote}`;
+        }
+        return `Pass rate: ${pr}%.${videoNote}`;
+      }
+
+      function heroTitle() {
+        const pr = passRate();
+        if (pr === 100) return 'Clean pass.';
+        if (pr >= 90) return 'Mostly clean.';
+        return 'Needs attention.';
+      }
+
+      function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+      // ── Build HTML ──────────────────────────────────────────────
+      const heroDotClass = L.allPassing ? 'ok' : L.failed > 0 ? 'bad' : 'warn';
+      const heroStatus = L.allPassing ? 'All tests passing' :
+        L.failed > 0 ? `${L.failed} test${L.failed > 1 ? 's' : ''} failing` : 'Tests passing with warnings';
+
+      const html = `
+      <section class="hero" aria-label="Latest run summary">
+        <div class="panel">
+          <div class="eyebrow">Latest run · ${fmtDate(D.generatedAt)}</div>
+          <h1>${heroTitle()}</h1>
+          <p class="deck">${heroSummaryText()}</p>
+          <div class="hero-foot">
+            <span class="status-pill"><span class="status-dot ${heroDotClass}"></span>${heroStatus}</span>
+            ${L.assertions ? `<span class="status-pill">${L.assertions} assertions</span>` : ''}
+            <span class="status-pill">${L.p1Percent ?? 100}% P1 getByRole locators</span>
+            <span class="status-pill">${L.gatesPassed}/${L.gatesTotal} review gates approved</span>
+          </div>
+        </div>
+        <aside class="panel run-card" aria-label="Run health score">
+          <div>
+            <h2>Run health</h2>
+            <div class="run-id">results/${D.project}/${L.runId}</div>
+          </div>
+          <div class="score-ring" style="background:conic-gradient(var(--success) 0 ${passRate()}%, var(--track) 0)" aria-label="${passRate()} percent pass rate">
+            <span>${passRate()}%<small>PASS RATE</small></span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="metrics" aria-label="Key metrics">
+        <div class="metric good"><div class="metric-label">Passed</div><div class="metric-value">${L.passed}</div><div class="metric-note">expected outcomes</div></div>
+        <div class="metric${L.failed > 0 ? ' warn' : ''}"><div class="metric-label">Failed</div><div class="metric-value">${L.failed}</div><div class="metric-note">${L.failed > 0 ? 'app bugs detected' : 'no app bugs detected'}</div></div>
+        <div class="metric"><div class="metric-label">Flaky</div><div class="metric-value">${L.flaky}</div><div class="metric-note">stable in current report</div></div>
+        <div class="metric${L.hasVideo ? ' warn' : ''}"><div class="metric-label">Duration</div><div class="metric-value">${fmtDuration(L.duration)}</div><div class="metric-note">${L.hasVideo ? 'includes video proof' : 'execution wall time'}</div></div>
+        <div class="metric"><div class="metric-label">Average test</div><div class="metric-value">${L.averageTestDuration ? L.averageTestDuration.toFixed(2) + 's' : '—'}</div><div class="metric-note">per-spec mean</div></div>
+        <div class="metric"><div class="metric-label">Fix cycles</div><div class="metric-value">${L.fixCycles}</div><div class="metric-note">assertion/locator fixes</div></div>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <div class="section-title">
+            <div><h2>Duration trend</h2><p>Historical run comparison from pipeline summaries.</p></div>
+            <span class="pill-neutral">${history.length} runs</span>
+          </div>
+          <div class="trend" role="list" aria-label="Historical duration bars">
+            ${history.map((h, i) => {
+              const pct = maxDuration ? Math.max(3, (h.duration / maxDuration) * 100) : 3;
+              const prevDur = i > 0 ? history[i-1].duration : h.duration;
+              const delta = h.duration - prevDur;
+              let deltaClass = '';
+              let deltaText = '';
+              if (i === 0) { deltaText = 'baseline'; }
+              else if (Math.abs(delta) < 0.1) { deltaText = '—'; }
+              else if (delta > 0) { deltaClass = 'bad'; deltaText = '+' + delta.toFixed(1) + 's'; }
+              else { deltaText = '−' + Math.abs(delta).toFixed(1) + 's'; }
+              if (h.hasVideo) { deltaText = 'video on'; deltaClass = 'bad'; }
+              return `<div class="trend-row" role="listitem">
+                <div class="run-label">${h.date}</div>
+                <div class="bar-track"><div class="bar" style="--w:${pct}%" data-tests="${h.tests} tests"></div></div>
+                <div class="duration">${fmtDuration(h.duration)}</div>
+                <div class="delta${deltaClass ? ' ' + deltaClass : ''}">${deltaText}</div>
+              </div>`;
+            }).join('')}
+          </div>
+          <p class="footer-note">Latest test-duration sum: ${fmtDuration(L.duration)}. ${L.hasVideo ? 'Includes screencast video capture overhead.' : ''}</p>
+        </article>
+
+        <aside class="panel">
+          <div class="section-title"><h2>Historical signal</h2><span class="pill-pass">${L.failed} failures now</span></div>
+          <div class="comparison">
+            ${(D.comparison || []).map(c => `
+              <div class="compare-item"><div class="compare-node"></div><div class="compare-copy"><b>${c.title}</b><span>${c.subtitle}</span></div><div class="compare-meta">${c.meta}</div></div>
+            `).join('')}
+          </div>
+        </aside>
+      </section>
+
+      <section class="grid" style="margin-top: var(--gap);">
+        <article class="panel">
+          <div class="section-title">
+            <div><h2>Slowest specs</h2><p>QA attention list for duration tuning.</p></div>
+            <span class="pill-neutral">latest run</span>
+          </div>
+          ${(L.slowest || []).length > 0 ? `
+          <table>
+            <thead><tr><th>Test</th><th>Status</th><th class="num">Duration</th></tr></thead>
+            <tbody>
+              ${L.slowest.map(t => `
+                <tr>
+                  <td><div class="test-title">${esc(t.name)}</div><div class="code">${esc(t.spec)}</div></td>
+                  <td><span class="pill-pass">${t.status}</span></td>
+                  <td class="num">${t.duration ? t.duration.toFixed(2) + 's' : '—'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>` : '<p class="footer-note">No per-test timing data available for this run.</p>'}
+        </article>
+
+        <aside class="panel">
+          <div class="section-title"><h2>Project breakdown</h2><span class="pill-neutral">single project</span></div>
+          <div class="breakdown">
+            <div class="mini-stat"><div class="k">Project</div><div class="v">${D.project}</div><div class="n">Active Playwright project.</div></div>
+            <div class="mini-stat"><div class="k">Pass / fail / flaky</div><div class="v">${L.passed} / ${L.failed} / ${L.flaky}</div><div class="n">No skipped tests in latest report.</div></div>
+            <div class="mini-stat"><div class="k">Browser dimension</div><div class="v">—</div><div class="n">Report labels project as "${D.project}"; no browser name encoded.</div></div>
+            <div class="mini-stat"><div class="k">Workers</div><div class="v">1</div><div class="n">Single-worker execution for deterministic proof capture.</div></div>
+          </div>
+          <div class="insight" style="margin-top: 16px;">Recommendation: split future Playwright projects by browser name if browser comparison is a dashboard requirement. The UI is ready; the source report simply does not contain that axis yet.</div>
+        </aside>
+      </section>
+
+      <section class="panel" style="margin-top: var(--gap);">
+        <div class="section-title"><div><h2>Artifacts and triage</h2><p>What a QA professional can open after reviewing the dashboard.</p></div><span class="pill-pass">complete</span></div>
+        <div class="artifact-grid">
+          <div class="artifact"><b>HTML report</b><p>Playwright HTML report in the latest run folder.</p><p class="path">results/${D.project}/${L.runId}/step7-run-fix/playwright-report/index.html</p></div>
+          <div class="artifact"><b>Screencasts</b><p>${L.hasVideo ? 'Per-test videos and concatenated proof video with action annotations.' : 'Not available — video recording was not enabled for this run.'}</p><p class="path">${L.hasVideo ? 'results/' + D.project + '/' + L.runId + '/step7-run-fix/*.webm' : '—'}</p></div>
+          <div class="artifact"><b>Traces</b><p>${L.failed > 0 ? 'Failure traces captured for debugging.' : 'No failure traces — all tests passed under retain-on-failure.'}</p><p class="path">—</p></div>
+          <div class="artifact"><b>Screenshots</b><p>${L.failed > 0 ? 'Failure screenshots available.' : 'No failure screenshots — all tests passed under only-on-failure.'}</p><p class="path">only-on-failure</p></div>
+        </div>
+      </section>
+      `;
+
+      main.innerHTML = html;
+    })();
+  </script>
+</body>
+</html>
