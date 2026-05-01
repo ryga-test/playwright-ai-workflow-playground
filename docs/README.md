@@ -189,6 +189,26 @@ npm run test:debug
 npm run report
 ```
 
+## QA Dashboard
+
+A self-contained HTML dashboard (`index.html`) visualizes pipeline run results.
+It renders pass rate, duration trend, slowest specs, historical comparison,
+and artifact inventory — all derived from pipeline summaries in `results/`.
+
+```bash
+npm run dashboard
+```
+
+This command:
+
+1. Scans `results/example/` for all completed pipeline runs
+2. Parses `pipeline-summary.md` and `test-report.md` from each
+3. Injects the latest stats inline into `index.html`
+4. Opens the dashboard in your default browser
+
+The dashboard is fully self-contained (no local server needed). Run it after
+each pipeline completion to see updated trends.
+
 ## Project Structure
 
 ```
@@ -237,6 +257,7 @@ No framework code changes needed.
 | `npm run test:headed` | `npx playwright test --headed` |
 | `npm run test:debug` | `npx playwright test --debug` |
 | `npm run report` | `npx playwright show-report` |
+| `npm run dashboard` | Generate dashboard data + open `index.html` in browser |
 | `npm run lint` | ESLint placeholder |
 
 ## Documentation
