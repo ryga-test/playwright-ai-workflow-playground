@@ -1,5 +1,94 @@
 # Changelog
 
+## 2026-05-02 — Fallow Adoption, Refactoring, and Browser Fixes
+
+### Added
+
+- **Fallow codebase intelligence**: installed, configured, and adopted per the
+  [Fallow adoption guide](https://docs.fallow.tools/adoption).
+  - **`.fallowrc.json`** with project policy (`unused-dependencies` → `error`,
+    `unused-exports` → `error`).
+  - **Agent hooks** (`.claude/hooks/fallow-gate.sh`, `.claude/settings.json`)
+    gate every `git commit` / `git push` on `fallow audit`. Only `fail` verdicts
+    block; warns pass through.
+  - **Regression baselines** (`fallow-baselines/`) snapshot existing dead code,
+    health, and duplication counts so audits only flag new issues.
+  - **`npm run fallow`** and **`npm run fallow:health`** not needed — baseline
+    approach via `fallow audit` handles incremental enforcement.
+- **`scripts/open-browser.sh`** — helper that reads the system default browser
+  via `xdg-settings` and launches it with `gtk-launch`, bypassing Flatpak
+  sandbox issues that caused `xdg-open` to silently fall through to secondary
+  handlers (Edge appearing as Chrome).
+
+### Changed
+
+- **`scripts/generate-dashboard-data.js`** — major refactoring (Phase 2):
+  - Split 3 monolithic functions (`parsePipelineSummary` 146-line/75-cyclomatic,
+    `parseTestReport` 58-line/32-cyclomatic, `main` 151-line/27-cyclomatic) into
+    20 focused, single-responsibility functions.
+  - Health score improved from **70 B → 82 B** (+12 points).
+  - Max cyclomatic complexity dropped from **75 → 17** (-77%).
+  - Avg cyclomatic: 4.8 → 3.1 (-35%), P90 cyclomatic: 13 → 7 (-46%).
+  - New `extractRunId` pattern matches newer pipeline-summary heading format.
+- **`injectIntoHtml()`** now uses regex matching on any existing
+  `window.__DASHBOARD_DATA__ = {...}` line, not just a fragile placeholder
+  comment. Injection works on consecutive runs without manual reset.
+- **`package.json` scripts**:
+  - `report` and `dashboard` now use `scripts/open-browser.sh` instead of
+    `xdg-open`, `python3 -m webbrowser`, or `npx playwright show-report`.
+    Respects the system default browser regardless of Flatpak quirks.
+- **`results/example/2026-05-01T212504Z/pipeline-summary.md`** — updated
+  heading format to match the parser's expected `**Run**:` pattern.
+
+### Fixed
+
+- **Dashboard latest run detection**: new pipeline-summary format
+  (`# Pipeline Summary — app / runId`) was not recognized by the parser.
+  Added fallback regex pattern to `extractRunId()` and normalized the
+  summary format.
+- **Browser opens in Chrome/Edge instead of system default**: root cause was
+  Flatpak Zen Browser failing with `CanCreateUserNamespace() EPERM`, causing
+  `xdg-open` to silently fall through to Edge (the next registered text/html
+  handler). Fixed by using `gtk-launch` directly to avoid the fallback chain.
+- **Placeholder injection consumed on first run**: `injectIntoHtml()` only
+  matched the placeholder comment; after first injection, the placeholder
+  was gone and subsequent runs would warn. Fixed with regex matching on any
+  `window.__DASHBOARD_DATA__` assignment.
+
+### Removed
+
+- **`src/helpers/artifact-writer.ts`** — dead file (0% reachable, flagged by Fallow).
+- **`src/helpers/snapshot-parser.ts`** — dead file (0% reachable, also cleared 2 complexity violations).
+- **`ExampleAppPage.assertServiceStatus`** — unused class member never called in tests.
+- **`dotenv` from `dependencies`** → moved to `devDependencies` where it belongs.
+
+### Pipeline Run: 2026-05-01T212504Z
+
+- **9/9 tests passed** (S01–S09), **0 fix cycles** (clean first pass).
+- 5th consecutive pipeline run with **100% P1 (`getByRole`) locator reliability**
+  (42 total tests, 0 locator failures).
+- First run with zero script bugs since the v2 page object API stabilized.
+- Full 8-step workflow: Resolve → Discover → Extract Selectors → Draft Page
+  Object → Draft Tests → Write Spec → Run & Fix → Summarize.
+
+### Updated files
+
+| File | Change |
+|------|--------|
+| `.fallowrc.json` | New: project policy + audit baseline config |
+| `.claude/settings.json` | New: fallow-gate hook registration |
+| `.claude/hooks/fallow-gate.sh` | New: PreToolUse hook for git commit/push gating |
+| `fallow-baselines/*.json` | New: regression baselines for dead-code, health, dupes |
+| `scripts/open-browser.sh` | New: browser launcher with Flatpak support |
+| `scripts/generate-dashboard-data.js` | Refactored: 20 functions, health score 70B→82B |
+| `package.json` | Updated: report/dashboard scripts, dotenv → devDeps |
+| `src/helpers/artifact-writer.ts` | Deleted: dead code |
+| `src/helpers/snapshot-parser.ts` | Deleted: dead code |
+| `src/pages/example/example.page.ts` | Removed `assertServiceStatus` dead method |
+| `knowledge/example/knowledge.md` | Appended: 5th run streak, v2 API consistency |
+| `knowledge/example/rules.md` | Appended: all 19 rules re-validated |
+| `results/example/2026-05-01T212504Z/` | New: full 8-step pipeline artifacts |
+
 ## 2026-05-01 — Live Dashboard with Pipeline Data Injection
 
 ### Added
