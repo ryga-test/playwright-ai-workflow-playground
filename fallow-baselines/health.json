@@ -2,13 +2,16 @@
   "finding_counts": {
     "scripts/generate-dashboard-data.js": {
       "complexity_critical": {
-        "count": 3
+        "count": 1
       },
       "crap_critical": {
+        "count": 2
+      },
+      "crap_high": {
         "count": 5
       },
       "crap_moderate": {
-        "count": 1
+        "count": 9
       }
     },
     "src/helpers/profile-loader.ts": {
@@ -22,6 +25,6 @@
   },
   "runtime_coverage_findings": [],
   "target_keys": [
-    "scripts/generate-dashboard-data.js:complexity"
+    "scripts/generate-dashboard-data.js:untested risk"
   ]
 }
