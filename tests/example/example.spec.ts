@@ -1,115 +1,140 @@
-// @provenance runId=2026-05-01T212504Z approvedAt=2026-05-02 gate=test-draft-review
+// @provenance runId=2026-05-02T061759Z approvedAt=2026-05-02T06:17:59.000Z gate=test-draft-review
 import { test, expect } from '@fixtures/base.fixture.js';
-import { ExampleAppPage } from '@pages/example/example.page.js';
+import { ExamplePage } from '@pages/example/example.page.js';
 
-test.describe('Example App Dashboard', () => {
-  let app: ExampleAppPage;
+test.describe('Example application dashboard', () => {
+  let app: ExamplePage;
 
   test.beforeEach(async ({ page }) => {
-    app = new ExampleAppPage(page);
-    await page.goto('/');
+    app = new ExamplePage(page);
   });
 
-  // ── S01: Page structure — headings ──────────────────────────
+  test('S01 — Page structure and landmarks are visible', async () => {
+    // Given — arrange: navigate, set up preconditions
+    await app.goto();
 
-  test('S01 — page loads with correct headings', async () => {
+    // When — act: page finishes loading
+    // No explicit user action is required for this structure check.
+
+    // Then — assert: verify the expected outcome
     await expect(app.pageHeading).toBeVisible();
-    await expect(app.profileHeading).toBeVisible();
-    await expect(app.tableHeading).toBeVisible();
+    await expect(app.primaryNavigation).toBeVisible();
+    await expect(app.profileSettingsRegion).toBeVisible();
+    await expect(app.applicationStatusRegion).toBeVisible();
   });
 
-  // ── S02: Form structure — all elements present ──────────────
+  test('S02 — Navigation links target their page sections', async () => {
+    // Given — arrange: navigate, set up preconditions
+    await app.goto();
 
-  test('S02 — profile form elements are present', async () => {
-    await expect(app.settingsForm).toBeVisible();
+    // When — act: perform the user action under test
+    await app.openSettingsSection();
+
+    // Then — assert: verify the expected outcome
+    await expect(app.applicationStatusRegion).toBeInViewport();
+
+    // When — act: perform the second navigation action
+    await app.openDashboardSection();
+
+    // Then — assert: verify the second expected outcome
+    await expect(app.profileSettingsRegion).toBeInViewport();
+  });
+
+  test('S03 — Profile form exposes labelled editable fields', async () => {
+    // Given — arrange: navigate, set up preconditions
+    await app.goto();
+
+    // When — act: profile settings form is displayed
+    // No explicit user action is required for this form structure check.
+
+    // Then — assert: verify the expected outcome
+    await expect(app.profileSettingsForm).toBeVisible();
     await expect(app.displayNameInput).toBeVisible();
-    await expect(app.displayNameInput).toHaveAttribute('placeholder', 'Ada Lovelace');
-    await expect(app.emailInput).toBeVisible();
-    await expect(app.emailInput).toHaveAttribute('placeholder', 'ada@example.test');
-    await expect(app.saveButton).toBeVisible();
+    await expect(app.displayNameInput).toHaveValue('');
+    await expect(app.emailAddressInput).toBeVisible();
+    await expect(app.emailAddressInput).toHaveValue('');
+    await expect(app.saveChangesButton).toBeVisible();
     await expect(app.statusMessage).toHaveText('No changes saved yet.');
   });
 
-  // ── S03: Form submit — status updates ───────────────────────
+  test('S04 — User can submit profile details successfully', async () => {
+    // Given — arrange: navigate, set up preconditions
+    await app.goto();
 
-  test('S03 — fill and submit profile form updates status', async () => {
-    const status = await app.updateProfile('Ada Lovelace', 'ada@example.test');
-    expect(status).toContain('Ada Lovelace');
-  });
+    // When — act: perform the user action under test
+    await app.updateProfile('Ada Lovelace', 'ada@example.test');
 
-  // ── S04: Empty display name — fallback behavior ─────────────
-
-  test('S04 — submit with empty display name shows fallback', async () => {
-    const status = await app.updateProfile('', 'ada@example.test');
-    expect(status).toContain('Unnamed user');
-  });
-
-  // ── S05: Input value retention after submit ─────────────────
-
-  test('S05 — form inputs retain values after submit', async () => {
-    await app.fillProfileForm('Ada Lovelace', 'ada@example.test');
-    await app.saveProfile();
-
+    // Then — assert: verify the expected outcome
+    await expect(app.statusMessage).toHaveText('Saved changes for Ada Lovelace.');
     await expect(app.displayNameInput).toHaveValue('Ada Lovelace');
-    await expect(app.emailInput).toHaveValue('ada@example.test');
+    await expect(app.emailAddressInput).toHaveValue('ada@example.test');
   });
 
-  // ── S06: Sequential submissions — only latest persists ──────
+  test('S05 — Empty display name uses the fallback user name', async () => {
+    // Given — arrange: navigate, set up preconditions
+    await app.goto();
 
-  test('S06 — status message updates correctly on sequential submissions', async () => {
-    await app.updateProfile('Alan Turing', 'alan@example.test');
-    await app.updateProfile('Grace Hopper', 'grace@example.test');
-    const status = await app.updateProfile('Margaret Hamilton', 'margaret@example.test');
+    // When — act: perform the user action under test
+    await app.updateProfile('', 'anonymous@example.test');
 
-    expect(status).toContain('Margaret Hamilton');
-    await expect(app.statusMessage).not.toContainText('Alan Turing');
-    await expect(app.statusMessage).not.toContainText('Grace Hopper');
+    // Then — assert: verify the expected outcome
+    await expect(app.statusMessage).toHaveText('Saved changes for Unnamed user.');
   });
 
-  // ── S07: Navigation anchor links ────────────────────────────
+  test('S06 — Re-submitting profile details replaces the previous status', async () => {
+    // Given — arrange: navigate, set up preconditions
+    await app.goto();
+    await app.updateProfile('Ada Lovelace', 'ada@example.test');
 
-  test('S07 — navigation links scroll to target sections', async () => {
-    // Verify both sections are present
-    await expect(app.pageHeading).toBeVisible();
-    await expect(app.tableHeading).toBeVisible();
+    // When — act: perform the user action under test
+    await app.displayNameInput.clear();
+    await app.emailAddressInput.clear();
+    await app.updateProfile('Charles Babbage', 'charles@example.test');
 
-    // Click Settings — verify "Application Status" is in viewport
-    await app.goToSettings();
-    await expect(app.tableHeading).toBeInViewport();
-
-    // Click Dashboard — verify h1 is in viewport
-    await app.goToDashboard();
-    await expect(app.pageHeading).toBeInViewport();
+    // Then — assert: verify the expected outcome
+    await expect(app.statusMessage).toHaveText('Saved changes for Charles Babbage.');
+    await expect(app.statusMessage).not.toContainText('Ada Lovelace');
   });
 
-  // ── S08: Table structure and content ────────────────────────
+  test('S07 — Application status table has expected headers', async () => {
+    // Given — arrange: navigate, set up preconditions
+    await app.goto();
 
-  test('S08 — table contains all expected service rows', async () => {
-    await expect(app.statusTable).toBeVisible();
+    // When — act: Application Status table is displayed
+    // No explicit user action is required for this table header check.
+
+    // Then — assert: verify the expected outcome
+    await expect(app.applicationStatusTable).toBeVisible();
     await expect(app.nameColumnHeader).toBeVisible();
     await expect(app.statusColumnHeader).toBeVisible();
-
-    // Exactly 3 data rows
-    const rows = app.getTableRows();
-    await expect(rows).toHaveCount(3);
-
-    // Verify each row exists by accessible name
-    await expect(app.page.getByRole('row', { name: /Example API\s+Online/ })).toBeVisible();
-    await expect(app.page.getByRole('row', { name: /Worker Queue\s+Healthy/ })).toBeVisible();
-    await expect(app.page.getByRole('row', { name: /Notification Service\s+Paused/ })).toBeVisible();
   });
 
-  // ── S09: getCell() — individual cell access ─────────────────
+  test('S08 — Application status table lists expected service states', async () => {
+    // Given — arrange: navigate, set up preconditions
+    await app.goto();
 
-  test('S09 — getCell() locates individual cells by accessible name', async () => {
-    // Service name cells
-    await expect(app.getCell('Example API')).toBeVisible();
-    await expect(app.getCell('Worker Queue')).toBeVisible();
-    await expect(app.getCell('Notification Service')).toBeVisible();
+    // When — act: Application Status table is displayed
+    // No explicit user action is required for this table row check.
 
-    // Status cells
-    await expect(app.getCell('Online')).toBeVisible();
-    await expect(app.getCell('Healthy')).toBeVisible();
-    await expect(app.getCell('Paused')).toBeVisible();
+    // Then — assert: verify the expected outcome
+    await expect(app.statusRow('Example API', 'Online')).toBeVisible();
+    await expect(app.statusRow('Worker Queue', 'Healthy')).toBeVisible();
+    await expect(app.statusRow('Notification Service', 'Paused')).toBeVisible();
+  });
+
+  test('S09 — Individual status table cells are accessible', async () => {
+    // Given — arrange: navigate, set up preconditions
+    await app.goto();
+
+    // When — act: Application Status table is displayed
+    // No explicit user action is required for this table cell check.
+
+    // Then — assert: verify the expected outcome
+    await expect(app.statusCell('Example API')).toBeVisible();
+    await expect(app.statusCell('Online')).toBeVisible();
+    await expect(app.statusCell('Worker Queue')).toBeVisible();
+    await expect(app.statusCell('Healthy')).toBeVisible();
+    await expect(app.statusCell('Notification Service')).toBeVisible();
+    await expect(app.statusCell('Paused')).toBeVisible();
   });
 });

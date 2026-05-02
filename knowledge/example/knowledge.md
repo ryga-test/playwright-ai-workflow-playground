@@ -244,3 +244,47 @@ This run introduced a redesigned page object with renamed properties and methods
 - The v2 page object API (`updateProfile()` returning full status text, `getCell()`
   for direct cell access, `getTableRows()` for `tbody tr`) continues to perform
   correctly across all 9 tests with no regressions.
+
+---
+
+## Run 2026-05-02T061759Z
+
+**Source**: Pipeline run — 9/9 tests passed after resolving 1 infrastructure blocker (0 script bugs, 0 app bugs).
+
+### New Verified Observations
+
+#### Page Object API v3 (`ExamplePage`)
+
+This run promoted and verified a renamed page object class:
+
+| v3 Property / Method | Type | Verified behavior |
+|---|---|---|
+| `pageHeading` | Locator | h1 "Workflow Playground Dashboard" is visible. |
+| `primaryNavigation` | Locator | Named navigation landmark "Primary navigation" is visible. |
+| `profileSettingsRegion` | Locator | Region "Profile Settings" is visible and targetable. |
+| `applicationStatusRegion` | Locator | Region "Application Status" is visible and targetable. |
+| `profileSettingsForm` | Locator | Form "Profile settings form" is visible. |
+| `displayNameInput` | Locator | Labelled input is visible, empty initially, fillable, clearable, and retains submitted value. |
+| `emailAddressInput` | Locator | Labelled input is visible, empty initially, fillable, clearable, and retains submitted value. |
+| `saveChangesButton` | Locator | Button submits the form. |
+| `statusMessage` | Locator | Status region shows initial, success, fallback, and replacement messages. |
+| `applicationStatusTable` | Locator | Named table is visible. |
+| `statusRow(service, status)` | Method | Resolves full service/status rows by accessible row name. |
+| `statusCell(name)` | Method | Resolves individual table cells by accessible name. |
+
+#### GWT Spec Structure
+
+- All 9 approved GWT scenarios map 1:1 to Playwright `test()` blocks.
+- Each test uses explicit `// Given`, `// When`, and `// Then` sections.
+- Tests import `test` and `expect` from `@fixtures/base.fixture.js`, preserving screencast recording and app fixture behavior.
+
+#### Infrastructure Retry
+
+- Initial test execution failed 9/9 with `net::ERR_CONNECTION_REFUSED` because `http://localhost:3000/` was not serving the app.
+- Starting `python3 -m http.server 3000 --directory apps/example` resolved the blocker.
+- Re-run passed 9/9 without changing app code or test/spec code.
+
+#### Cross-Run Locator Reliability (6th Run)
+
+- All page object locators resolved correctly across 9 tests with zero locator failures.
+- The example app now has 6 consecutive successful pipeline runs with reliable accessible locators after infrastructure is available.

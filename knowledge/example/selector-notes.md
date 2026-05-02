@@ -66,3 +66,34 @@ Per constitutional Principle II, locators follow this priority order:
 - `getByLabel` (P2) was deliberately chosen over `getByRole('textbox')` (P1) for inputs — per Playwright best practice for labeled form fields.
 - `getByRole('row', { name })` uses substring matching — `'Example API'` matches row `'Example API Online'`.
 - CSS fallbacks (P6) are justified: no ARIA-based locator for `tbody tr` iteration or column-index cell access.
+
+---
+
+## Run 2026-05-02T061759Z
+
+### Selector Verification (9/9 passing tests)
+
+| Element | Strategy | Selector | Verified |
+|---|---|---|:---:|
+| Page heading | getByRole (P1) | `getByRole('heading', { name: 'Workflow Playground Dashboard', level: 1 })` | ✅ |
+| Primary nav | getByRole (P1) | `getByRole('navigation', { name: 'Primary navigation' })` | ✅ |
+| Dashboard link | getByRole (P1) | `getByRole('link', { name: 'Dashboard' })` | ✅ |
+| Settings link | getByRole (P1) | `getByRole('link', { name: 'Settings' })` | ✅ |
+| Profile Settings region | getByRole (P1) | `getByRole('region', { name: 'Profile Settings' })` | ✅ |
+| Application Status region | getByRole (P1) | `getByRole('region', { name: 'Application Status' })` | ✅ |
+| Profile form | getByRole (P1) | `getByRole('form', { name: 'Profile settings form' })` | ✅ |
+| Display name input | getByLabel (P3) | `getByLabel('Display name')` | ✅ |
+| Email address input | getByLabel (P3) | `getByLabel('Email address')` | ✅ |
+| Save Changes button | getByRole (P1) | `getByRole('button', { name: 'Save Changes' })` | ✅ |
+| Status message | getByRole (P1) | `getByRole('status')` | ✅ |
+| Application status table | getByRole (P1) | `getByRole('table', { name: 'Application status table' })` | ✅ |
+| Name header | getByRole (P1) | `getByRole('columnheader', { name: 'Name' })` | ✅ |
+| Status header | getByRole (P1) | `getByRole('columnheader', { name: 'Status' })` | ✅ |
+| Status rows | getByRole (P1) | `table.getByRole('row', { name: '<service> <status>' })` | ✅ |
+| Status cells | getByRole (P1) | `table.getByRole('cell', { name })` | ✅ |
+
+### Notes
+
+- No selector failures occurred after the app server was reachable.
+- `getByLabel` remains verified for labelled inputs and was intentionally used by the current page object.
+- No CSS or XPath selectors were needed in this run's spec.

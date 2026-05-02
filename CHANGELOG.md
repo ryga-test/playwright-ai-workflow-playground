@@ -1,5 +1,40 @@
 # Changelog
 
+## 2026-05-02 — Pipeline Autonomy and Run Completion
+
+### Changed
+
+- **Pipeline Step 6 is now autonomous after Step 5 approval**: updated
+  `.pi/prompts/pipeline-write-spec.md` so generated specs with previous
+  provenance are overwritten automatically instead of triggering a third human
+  approval gate.
+- Existing spec overwrites must now preserve safety by writing a diff artifact to
+  `results/<app>/<run>/step6-write-spec/spec.diff` and updating the provenance
+  header with the current run ID.
+- Human approval is now reserved for the intended gated steps only:
+  - Step 4: page object review
+  - Step 5: test draft review
+
+### Pipeline Run: 2026-05-02T061759Z
+
+- **9/9 tests passed** after resolving one infrastructure blocker
+  (`ERR_CONNECTION_REFUSED` because the local static server was not running).
+- **0 script bugs**, **0 app bugs**.
+- Promoted approved `ExamplePage` page object and GWT spec for the example app.
+- Appended verified observations to knowledge files.
+
+### Updated files
+
+| File | Change |
+|------|--------|
+| `.pi/prompts/pipeline-write-spec.md` | Step 6 no longer asks for extra overwrite approval |
+| `src/pages/example/example.page.ts` | Promoted approved page object for run `2026-05-02T061759Z` |
+| `tests/example/example.spec.ts` | Generated GWT spec for run `2026-05-02T061759Z` |
+| `knowledge/example/knowledge.md` | Appended verified run observations |
+| `knowledge/example/rules.md` | Appended autonomous pipeline and infrastructure retry rules |
+| `knowledge/example/selector-notes.md` | Appended selector verification notes |
+| `results/example/2026-05-02T061759Z/` | New: full pipeline artifacts and passing test report |
+
 ## 2026-05-02 — Fallow Adoption, Refactoring, and Browser Fixes
 
 ### Added
