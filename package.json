@@ -10,8 +10,8 @@
     "test": "npx playwright test",
     "test:headed": "npx playwright test --headed",
     "test:debug": "npx playwright test --debug",
-    "report": "scripts/open-browser.sh file://$(realpath playwright-report/index.html)",
-    "dashboard": "node scripts/generate-dashboard-data.js && scripts/open-browser.sh file://$(realpath index.html)"
+    "report": "node scripts/open-report.js",
+    "dashboard": "node scripts/generate-dashboard-data.js --open"
   },
   "dependencies": {
     "@playwright/test": "latest",

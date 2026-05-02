@@ -2,11 +2,12 @@
 // Scans results/example/ pipeline-summary.md files and generates
 // dashboard-data.js — a JS file that sets window.__DASHBOARD_DATA__
 // with the latest and historical test run stats.
-// Usage: node scripts/generate-dashboard-data.js
+// Usage: node scripts/generate-dashboard-data.js [--open]
 
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { openDefaultBrowser } from './open-default-browser.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -540,6 +541,12 @@ function main() {
     console.log(`✅ Data injected into index.html`);
   } else {
     console.warn(`⚠ Placeholder not found in index.html — data NOT injected.`);
+  }
+
+  if (process.argv.includes('--open')) {
+    const dashboardUrl = pathToFileURL(join(ROOT, 'index.html')).href;
+    openDefaultBrowser(dashboardUrl);
+    console.log(`🌐 Opened ${dashboardUrl}`);
   }
 }
 

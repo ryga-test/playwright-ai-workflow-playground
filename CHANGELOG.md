@@ -15,10 +15,14 @@
     health, and duplication counts so audits only flag new issues.
   - **`npm run fallow`** and **`npm run fallow:health`** not needed — baseline
     approach via `fallow audit` handles incremental enforcement.
-- **`scripts/open-browser.sh`** — helper that reads the system default browser
-  via `xdg-settings` and launches it with `gtk-launch`, bypassing Flatpak
-  sandbox issues that caused `xdg-open` to silently fall through to secondary
-  handlers (Edge appearing as Chrome).
+- **Self-contained browser opening in Node scripts** — dashboard/report commands
+  now open the system default browser directly from Node. Linux uses
+  `xdg-settings` + `gtk-launch` when available, with `xdg-open` fallback,
+  avoiding the previous shell helper dependency.
+- **`scripts/open-default-browser.js`** — shared Node helper for opening URLs in
+  the default browser.
+- **`scripts/open-report.js`** — opens `playwright-report/index.html` from Node
+  and reports a clear error if the Playwright HTML report has not been generated.
 
 ### Changed
 
@@ -33,10 +37,15 @@
 - **`injectIntoHtml()`** now uses regex matching on any existing
   `window.__DASHBOARD_DATA__ = {...}` line, not just a fragile placeholder
   comment. Injection works on consecutive runs without manual reset.
+- **`scripts/generate-dashboard-data.js`** now supports `--open`, making
+  `npm run dashboard` regenerate/inject dashboard data and open `index.html`
+  without calling an external shell helper.
 - **`package.json` scripts**:
-  - `report` and `dashboard` now use `scripts/open-browser.sh` instead of
-    `xdg-open`, `python3 -m webbrowser`, or `npx playwright show-report`.
-    Respects the system default browser regardless of Flatpak quirks.
+  - `dashboard` now runs `node scripts/generate-dashboard-data.js --open`.
+  - `report` now runs `node scripts/open-report.js`.
+  - Both commands are self-contained and no longer depend on
+    `scripts/open-browser.sh`, `xdg-open`, `python3 -m webbrowser`, or
+    `npx playwright show-report`.
 - **`results/example/2026-05-01T212504Z/pipeline-summary.md`** — updated
   heading format to match the parser's expected `**Run**:` pattern.
 
@@ -49,7 +58,8 @@
 - **Browser opens in Chrome/Edge instead of system default**: root cause was
   Flatpak Zen Browser failing with `CanCreateUserNamespace() EPERM`, causing
   `xdg-open` to silently fall through to Edge (the next registered text/html
-  handler). Fixed by using `gtk-launch` directly to avoid the fallback chain.
+  handler). Fixed by resolving the default browser and using `gtk-launch`
+  directly from Node to avoid the fallback chain.
 - **Placeholder injection consumed on first run**: `injectIntoHtml()` only
   matched the placeholder comment; after first injection, the placeholder
   was gone and subsequent runs would warn. Fixed with regex matching on any
@@ -61,6 +71,8 @@
 - **`src/helpers/snapshot-parser.ts`** — dead file (0% reachable, also cleared 2 complexity violations).
 - **`ExampleAppPage.assertServiceStatus`** — unused class member never called in tests.
 - **`dotenv` from `dependencies`** → moved to `devDependencies` where it belongs.
+- **`scripts/open-browser.sh`** — removed after `report` and `dashboard` became
+  self-contained Node commands.
 
 ### Pipeline Run: 2026-05-01T212504Z
 
@@ -79,9 +91,11 @@
 | `.claude/settings.json` | New: fallow-gate hook registration |
 | `.claude/hooks/fallow-gate.sh` | New: PreToolUse hook for git commit/push gating |
 | `fallow-baselines/*.json` | New: regression baselines for dead-code, health, dupes |
-| `scripts/open-browser.sh` | New: browser launcher with Flatpak support |
-| `scripts/generate-dashboard-data.js` | Refactored: 20 functions, health score 70B→82B |
-| `package.json` | Updated: report/dashboard scripts, dotenv → devDeps |
+| `scripts/open-default-browser.js` | New: shared self-contained browser opener |
+| `scripts/open-report.js` | New: self-contained report opener |
+| `scripts/open-browser.sh` | Deleted: replaced by self-contained Node opener |
+| `scripts/generate-dashboard-data.js` | Refactored: 20 functions, health score 70B→82B; added `--open` |
+| `package.json` | Updated: self-contained report/dashboard scripts, dotenv → devDeps |
 | `src/helpers/artifact-writer.ts` | Deleted: dead code |
 | `src/helpers/snapshot-parser.ts` | Deleted: dead code |
 | `src/pages/example/example.page.ts` | Removed `assertServiceStatus` dead method |
