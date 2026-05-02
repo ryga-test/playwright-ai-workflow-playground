@@ -166,3 +166,28 @@ No new rules identified. All 19 existing rules (R01–R19) are re-validated by t
 - **R17–R18** (v2 API): `updateProfile()` and `getCell()` work correctly
 
 This run marks the **5th consecutive pipeline run** (42 total tests) with 100% rule compliance and 0 locator failures.
+
+---
+
+## Run 2026-05-02T061759Z
+
+**Source**: Pipeline run — 9/9 tests passed after resolving 1 infrastructure blocker.
+
+### Pipeline Rules
+
+#### R20 — Only Steps 4 and 5 are human-gated
+- **Rule**: The pipeline should run autonomously except for the page object review gate (Step 4) and test draft review gate (Step 5). Step 6 may overwrite prior generated specs after Step 5 approval, but must record a diff artifact when replacing a provenance-bearing spec.
+- **Rationale**: Step 5 approval authorizes spec generation. Adding another overwrite approval gate blocks autonomous execution unnecessarily.
+- **Verified by**: Step 6 prompt updated during this run; proposed spec promoted after approval and typechecked successfully.
+
+#### R21 — Treat `ERR_CONNECTION_REFUSED` as infrastructure, not a script bug
+- **Rule**: If every test fails at `page.goto('/')` with `net::ERR_CONNECTION_REFUSED`, classify as `blocker`/infrastructure and start or restart the app server. Do not modify app or spec code.
+- **Rationale**: The failure occurs before selectors or assertions execute; the app is unreachable at the configured base URL.
+- **Verified by**: Cycle 0 failed 9/9; cycle 1 passed 9/9 after starting the static server.
+
+### Page Object Rules
+
+#### R22 — Use `ExamplePage` API for the current generated spec
+- **Rule**: Current specs should import `ExamplePage` from `@pages/example/example.page.js` and use its API (`goto`, `openSettingsSection`, `openDashboardSection`, `updateProfile`, `statusRow`, `statusCell`).
+- **Rationale**: This API was generated from the current run's approved selectors and verified by all 9 passing tests.
+- **Verified by**: Tests S01–S09.

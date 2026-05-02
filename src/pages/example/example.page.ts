@@ -1,127 +1,99 @@
-// @provenance runId=2026-05-01T212504Z approvedAt=2026-05-02 gate=page-object-review
+// @provenance runId=2026-05-02T061759Z approvedAt=2026-05-02T00:00:00.000Z gate=page-object-review
 import type { Locator, Page } from '@playwright/test';
 
 /**
- * Page object for the Example App Dashboard.
+ * Page object for the Example application dashboard.
  *
- * Models three page regions:
- *  - Navigation (Dashboard / Settings links)
- *  - Profile Settings Form (inputs, button, status message)
- *  - Application Status Table (column headers, data cells)
- *
- * All selectors use getByRole (P1 priority). The app has full ARIA
- * semantics with no testId attributes, making getByRole the natural
- * and most resilient locator strategy.
+ * Selectors are derived from the normalized selector artifact for run
+ * 2026-05-02T061759Z. The class favors accessible Playwright locators:
+ * getByRole for semantic regions, links, buttons, tables, and status;
+ * getByLabel for labelled form controls.
  */
-export class ExampleAppPage {
-  // ── Navigation ───────────────────────────────────────────────
+export class ExamplePage {
+  readonly pageHeading: Locator;
+  readonly primaryNavigation: Locator;
   readonly dashboardLink: Locator;
   readonly settingsLink: Locator;
+  readonly profileSettingsRegion: Locator;
+  readonly applicationStatusRegion: Locator;
 
-  // ── Profile Settings Form ────────────────────────────────────
-  readonly settingsForm: Locator;
+  readonly profileSettingsForm: Locator;
   readonly displayNameInput: Locator;
-  readonly emailInput: Locator;
-  readonly saveButton: Locator;
+  readonly emailAddressInput: Locator;
+  readonly saveChangesButton: Locator;
   readonly statusMessage: Locator;
 
-  // ── Application Status Table ─────────────────────────────────
-  readonly statusTable: Locator;
+  readonly applicationStatusTable: Locator;
   readonly nameColumnHeader: Locator;
   readonly statusColumnHeader: Locator;
 
-  // ── Page Headings ────────────────────────────────────────────
-  readonly pageHeading: Locator;
-  readonly profileHeading: Locator;
-  readonly tableHeading: Locator;
-
-  constructor(public readonly page: Page) {
-    // Navigation
-    this.dashboardLink = page.getByRole('link', { name: 'Dashboard' });
-    this.settingsLink = page.getByRole('link', { name: 'Settings' });
-
-    // Profile Settings Form
-    this.settingsForm = page.getByRole('form', { name: 'Profile settings form' });
-    this.displayNameInput = page.getByRole('textbox', { name: 'Display name' });
-    this.emailInput = page.getByRole('textbox', { name: 'Email address' });
-    this.saveButton = page.getByRole('button', { name: 'Save Changes' });
-    this.statusMessage = page.getByRole('status');
-
-    // Application Status Table
-    this.statusTable = page.getByRole('table', { name: 'Application status table' });
-    this.nameColumnHeader = page.getByRole('columnheader', { name: 'Name' });
-    this.statusColumnHeader = page.getByRole('columnheader', { name: 'Status' });
-
-    // Page Headings
+  constructor(readonly page: Page) {
     this.pageHeading = page.getByRole('heading', {
       name: 'Workflow Playground Dashboard',
       level: 1,
     });
-    this.profileHeading = page.getByRole('heading', {
+    this.primaryNavigation = page.getByRole('navigation', {
+      name: 'Primary navigation',
+    });
+    this.dashboardLink = page.getByRole('link', { name: 'Dashboard' });
+    this.settingsLink = page.getByRole('link', { name: 'Settings' });
+    this.profileSettingsRegion = page.getByRole('region', {
       name: 'Profile Settings',
-      level: 2,
     });
-    this.tableHeading = page.getByRole('heading', {
+    this.applicationStatusRegion = page.getByRole('region', {
       name: 'Application Status',
-      level: 2,
     });
+
+    this.profileSettingsForm = page.getByRole('form', {
+      name: 'Profile settings form',
+    });
+    this.displayNameInput = page.getByLabel('Display name');
+    this.emailAddressInput = page.getByLabel('Email address');
+    this.saveChangesButton = page.getByRole('button', {
+      name: 'Save Changes',
+    });
+    this.statusMessage = page.getByRole('status');
+
+    this.applicationStatusTable = page.getByRole('table', {
+      name: 'Application status table',
+    });
+    this.nameColumnHeader = page.getByRole('columnheader', { name: 'Name' });
+    this.statusColumnHeader = page.getByRole('columnheader', { name: 'Status' });
   }
 
-  // ── Navigation Actions ───────────────────────────────────────
+  async goto(): Promise<void> {
+    await this.page.goto('/');
+  }
 
-  /** Navigate to the Dashboard section. */
-  async goToDashboard(): Promise<void> {
+  async openDashboardSection(): Promise<void> {
     await this.dashboardLink.click();
   }
 
-  /** Navigate to the Settings section. */
-  async goToSettings(): Promise<void> {
+  async openSettingsSection(): Promise<void> {
     await this.settingsLink.click();
   }
 
-  // ── Form Actions ─────────────────────────────────────────────
-
-  /**
-   * Fill the profile settings form.
-   * @param displayName - Value for the display name field.
-   * @param email - Value for the email address field.
-   */
-  async fillProfileForm(displayName: string, email: string): Promise<void> {
+  async fillProfile(displayName: string, emailAddress: string): Promise<void> {
     await this.displayNameInput.fill(displayName);
-    await this.emailInput.fill(email);
+    await this.emailAddressInput.fill(emailAddress);
   }
 
-  /** Submit the profile settings form. */
   async saveProfile(): Promise<void> {
-    await this.saveButton.click();
+    await this.saveChangesButton.click();
   }
 
-  /**
-   * Convenience: fill the form and submit in one call.
-   * @returns The status message text after submission.
-   */
-  async updateProfile(displayName: string, email: string): Promise<string> {
-    await this.fillProfileForm(displayName, email);
+  async updateProfile(displayName: string, emailAddress: string): Promise<void> {
+    await this.fillProfile(displayName, emailAddress);
     await this.saveProfile();
-    await this.statusMessage.waitFor({ state: 'visible' });
-    return (await this.statusMessage.textContent()) ?? '';
   }
 
-  // ── Table Helpers ────────────────────────────────────────────
-
-  /**
-   * Get a data cell by its text content.
-   * Useful for asserting individual cell values.
-   */
-  getCell(name: string): Locator {
-    return this.page.getByRole('cell', { name });
+  statusRow(serviceName: string, status: string): Locator {
+    return this.applicationStatusTable.getByRole('row', {
+      name: `${serviceName} ${status}`,
+    });
   }
 
-  /**
-   * Get all data rows from the status table body.
-   * Each row contains two cells: [serviceName, status].
-   */
-  getTableRows(): Locator {
-    return this.statusTable.locator('tbody tr');
+  statusCell(name: string): Locator {
+    return this.applicationStatusTable.getByRole('cell', { name });
   }
 }

@@ -7,9 +7,11 @@ Write the Playwright spec (only after both review gates are approved):
 1. Read the approved test draft from `results/$1/$2/step5-draft-tests/test-draft.md`
 2. Read the approved page object from `src/pages/$1/$1.page.ts`
 3. **Check for existing spec**: if `tests/$1/$1.spec.ts` exists with a provenance header from a previous run:
-   - Present a diff of proposed changes to the human
-   - Request explicit re-approval before overwriting
-   - On re-approval, update the provenance header with the new run ID
+   - Generate the proposed replacement spec from the approved Step 5 draft
+   - Write a diff artifact to `results/$1/$2/step6-write-spec/spec.diff`
+   - Overwrite `tests/$1/$1.spec.ts` automatically; Step 5 approval authorizes spec generation
+   - Update the provenance header with the new run ID
+   - Do **not** request another human approval in this step
 4. Generate a complete Playwright spec using `@playwright/test` in **Given-When-Then (GWT) format**:
    - Each `test()` block MUST follow the `test.describe` / `test` pattern
    - Every test body MUST be structured as three clearly commented sections:
