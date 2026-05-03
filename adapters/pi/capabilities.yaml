@@ -73,9 +73,10 @@ capabilities:
          IMPORTANT: Import test and expect from @fixtures/base.fixture.js
          (not from @playwright/test) to enable screencast video recording.
          Example import: import { test, expect } from '@fixtures/base.fixture.js';
-      4. Add provenance header: // @provenance runId={{run}} approvedAt=<now> gate=test-draft-review
-      5. Write spec to tests/{{app}}/{{app}}.spec.ts
-      6. Run npm run typecheck to verify compilation
+      4. If tests/{{app}}/{{app}}.spec.ts already exists, write the proposed diff to results/{{app}}/{{run}}/step6-write-spec/spec.diff
+      5. Overwrite tests/{{app}}/{{app}}.spec.ts automatically; do not request another human approval in Step 6
+      6. Add/update provenance header: // @provenance runId={{run}} approvedAt=<now> gate=test-draft-review
+      7. Run npm run typecheck to verify compilation
 
   - step: run-fix
     command_template: |

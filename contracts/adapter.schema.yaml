@@ -35,7 +35,7 @@ capabilities:
   - step: write-spec
     command_template: |
       /pipeline-write-spec {{app}} {{run}}
-      Write a Playwright spec from approved artifacts.
+      Write a Playwright spec from approved artifacts, automatically overwriting any existing spec after recording a diff artifact; do not request Step 6 approval.
 
   - step: run-fix
     command_template: |

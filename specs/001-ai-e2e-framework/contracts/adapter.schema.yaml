@@ -71,9 +71,10 @@ capabilities:
       1. Read approved test draft from results/{{app}}/{{run}}/step5-draft-tests/test-draft.md
       2. Read approved page object from src/pages/{{app}}/{{app}}.page.ts
       3. Generate a complete Playwright spec using @playwright/test
-      4. Add provenance header: // @provenance runId={{run}} approvedAt=<now> gate=test-draft-review
-      5. Write spec to tests/{{app}}/{{app}}.spec.ts
-      6. Run npm run typecheck to verify compilation
+      4. If tests/{{app}}/{{app}}.spec.ts exists, write the proposed diff to results/{{app}}/{{run}}/step6-write-spec/spec.diff
+      5. Overwrite tests/{{app}}/{{app}}.spec.ts automatically without requesting another approval
+      6. Add/update provenance header: // @provenance runId={{run}} approvedAt=<now> gate=test-draft-review
+      7. Run npm run typecheck to verify compilation
 
   - step: run-fix
     command_template: |
