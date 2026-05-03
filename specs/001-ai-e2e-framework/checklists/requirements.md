@@ -30,7 +30,7 @@
 
 - [x] CHK013 — Are the exact source directories where approved page objects and tests are promoted to defined in functional requirements? [Clarity — Resolved: FR-020 specifies `src/pages/<app>/` and `tests/<app>/`]
 - [x] CHK014 — Is there a requirement that promotion must preserve or record the provenance of the artifact? [Completeness — Resolved: FR-021a — provenance header with run ID, timestamp, approving step]
-- [x] CHK015 — Does the spec define what "noting the change" means when a subsequent run would overwrite an approved artifact? [Clarity — Resolved: FR-022 — detect provenance header, present diff, request re-approval]
+- [x] CHK015 — Does the spec define what "noting the change" means when a subsequent run would overwrite an approved artifact? [Clarity — Resolved: FR-022 — page-object overwrites require re-approval; Step 6 spec overwrites are automatic after Step 5 approval and record a diff artifact]
 - [x] CHK016 — Are selector candidate lists subject to the same promotion rules as page objects and test drafts? [Consistency — Resolved: FR-020 explicitly states selectors are NOT gated, remain in results/ as reference]
 
 ## Secrets Handling

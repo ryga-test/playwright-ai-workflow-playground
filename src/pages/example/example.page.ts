@@ -1,13 +1,14 @@
-// @provenance runId=2026-05-02T061759Z approvedAt=2026-05-02T00:00:00.000Z gate=page-object-review
+// @provenance runId=2026-05-03T021118Z approvedAt=2026-05-03T00:00:00.000Z gate=page-object-review
 import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page object for the Example application dashboard.
  *
- * Selectors are derived from the normalized selector artifact for run
- * 2026-05-02T061759Z. The class favors accessible Playwright locators:
- * getByRole for semantic regions, links, buttons, tables, and status;
- * getByLabel for labelled form controls.
+ * Generated from:
+ * results/example/2026-05-03T021118Z/step3-extract-selectors/normalized-selectors.md
+ *
+ * Selector strategy: prefer accessible Playwright locators in priority order
+ * getByRole > getByTestId > getByLabel > getByPlaceholder > getByText > CSS/XPath.
  */
 export class ExamplePage {
   readonly pageHeading: Locator;
@@ -47,8 +48,8 @@ export class ExamplePage {
     this.profileSettingsForm = page.getByRole('form', {
       name: 'Profile settings form',
     });
-    this.displayNameInput = page.getByLabel('Display name');
-    this.emailAddressInput = page.getByLabel('Email address');
+    this.displayNameInput = page.getByRole('textbox', { name: 'Display name' });
+    this.emailAddressInput = page.getByRole('textbox', { name: 'Email address' });
     this.saveChangesButton = page.getByRole('button', {
       name: 'Save Changes',
     });

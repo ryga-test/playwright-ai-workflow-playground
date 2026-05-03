@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-05-03 — Step 6 Automatic Spec Overwrite Contract Sync
+
+### Changed
+
+- **Step 6 overwrite behavior is now specified end-to-end**: pipeline docs, adapter templates, contracts, and validation tasks all state that `/pipeline-write-spec` overwrites `tests/<app>/<app>.spec.ts` automatically after Step 5 approval.
+- Existing spec replacements must still write `results/<app>/<run>/step6-write-spec/spec.diff` and update the spec provenance header with the new run ID.
+- Step 6 must not request a third human approval gate; human approval remains limited to Step 4 page-object review and Step 5 test-draft review.
+
+### Updated files
+
+| File | Change |
+|------|--------|
+| `adapters/pi/capabilities.yaml` | Step 6 now explicitly records diff artifacts and overwrites without approval |
+| `contracts/adapter.schema.yaml` | Adapter contract summary documents automatic Step 6 overwrite behavior |
+| `specs/001-ai-e2e-framework/contracts/adapter.schema.yaml` | Canonical adapter contract example synced with automatic overwrite behavior |
+| `specs/001-ai-e2e-framework/spec.md` | FR-022 now distinguishes page-object re-approval from automatic spec overwrites |
+| `specs/001-ai-e2e-framework/tasks.md` | T039 now validates automatic overwrite instead of re-approval |
+| `specs/001-ai-e2e-framework/checklists/requirements.md` | Checklist note updated to match Step 6 behavior |
+
 ## 2026-05-03 — Automated Knowledge Pruning
 
 ### Added

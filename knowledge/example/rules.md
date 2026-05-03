@@ -191,3 +191,19 @@ This run marks the **5th consecutive pipeline run** (42 total tests) with 100% r
 - **Rule**: Current specs should import `ExamplePage` from `@pages/example/example.page.js` and use its API (`goto`, `openSettingsSection`, `openDashboardSection`, `updateProfile`, `statusRow`, `statusCell`).
 - **Rationale**: This API was generated from the current run's approved selectors and verified by all 9 passing tests.
 - **Verified by**: Tests S01–S09.
+
+---
+
+## Run 2026-05-03T021118Z
+
+**Source**: Pipeline run — 9/9 tests passed (0 fix cycles).
+
+### Existing Rules Re-Validated
+
+No new rules identified. Current rules remain valid for this run:
+- `ExamplePage` API usage (`goto`, section navigation, profile update, status row/cell helpers) passed all scenarios.
+- Specs must continue importing `test` and `expect` from `@fixtures/base.fixture.js` to preserve screencast recording.
+- Role-first locator strategy remains reliable for this app; no fallback locators were required.
+- Serial profile submissions should assert only the latest status remains visible.
+
+No pruning performed: no active rules were contradicted or superseded by this run.
