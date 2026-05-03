@@ -29,6 +29,7 @@ If you only want a basic Playwright starter, this is probably more machinery tha
 - Human approval gates for generated page objects and test drafts
 - Per-run artifacts under `results/<app>/<run>/`
 - App knowledge files under `knowledge/<app>/`
+- Automated six-run pruning for stale knowledge, with archive and audit log
 - A self-contained QA dashboard in `index.html`
 
 ## Requirements
@@ -110,7 +111,7 @@ When the run finishes, you stay on the pipeline branch so you can inspect the di
 | 5 | Draft tests | GWT-style test scenarios | Yes |
 | 6 | Write spec | Playwright spec in `tests/<app>/` | No |
 | 7 | Run and fix | Test report, Playwright report, traces, videos | No |
-| 8 | Summarize | Pipeline summary and knowledge updates | No |
+| 8 | Summarize | Pipeline summary, knowledge updates, active summary, and pruning audit | No |
 
 Selector priority is role, test id, label, placeholder, text, then CSS or XPath as a last resort.
 
@@ -140,7 +141,23 @@ Approved generated code lands in the normal source tree:
 - `knowledge/<app>/knowledge.md`
 - `knowledge/<app>/rules.md`
 
+Step 8 also maintains the active knowledge set:
+
+- `knowledge/<app>/current.md`, compact context for future runs
+- `knowledge/<app>/archive.md`, entries removed from active knowledge
+- `knowledge/<app>/prune-log.md`, evidence for every automated prune
+
 Promoted files include a provenance header with the run ID, approval timestamp, and gate name.
+
+## How knowledge stays current
+
+The pipeline treats knowledge like code: useful when it is current, dangerous when it quietly rots.
+
+Step 8 appends only observations verified by passing Playwright tests. It then checks the app's active knowledge against the last six successful runs. If an entry has been contradicted or superseded across those runs, the agent removes it from the active knowledge file, moves it to `archive.md`, and records the evidence in `prune-log.md`.
+
+A missing mention is not enough to delete something. The agent needs evidence that the old entry is wrong or replaced. `## Human-Curated` sections are never pruned automatically.
+
+Future runs should read `knowledge/<app>/current.md` first, then open the raw files when they need provenance.
 
 ## Run the generated tests yourself
 
@@ -203,7 +220,7 @@ workflows/manifest.yaml  Agent-neutral 8-step workflow
 src/pages/<app>/         Approved page objects
 src/fixtures/            Shared Playwright fixtures
 tests/<app>/             Generated Playwright specs
-knowledge/<app>/         Durable app observations and rules
+knowledge/<app>/         Active knowledge, pruning archive, and audit log
 results/<app>/           Per-run artifacts, gitignored
 contracts/               YAML schemas
 docs/                    Project documentation

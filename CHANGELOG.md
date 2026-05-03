@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-05-03 — Automated Knowledge Pruning
+
+### Added
+
+- **Six-run knowledge pruning policy**: added `knowledge/PRUNING_POLICY.md` so agents can remove stale active knowledge without losing audit history.
+- **Active knowledge summary**: added `knowledge/<app>/current.md` as the compact context future pipeline runs should read first.
+- **Knowledge archive and prune log**: added `knowledge/<app>/archive.md` and `knowledge/<app>/prune-log.md` so pruned entries are moved out of active files and every removal records evidence.
+
+### Changed
+
+- **Step 8 now manages knowledge lifecycle**: `/pipeline-summarize` still appends verified observations, but also checks the last six successful runs for entries that were contradicted or superseded.
+- **Pruning is automated but evidence-gated**: absence from recent runs is not enough to prune. The entry must be contradicted or replaced across the last six successful runs, and human-curated sections remain protected.
+- **Workflow and adapter contracts** now list `current.md`, `archive.md`, and `prune-log.md` as Step 8 knowledge outputs.
+
+### Updated files
+
+| File | Change |
+|------|--------|
+| `knowledge/PRUNING_POLICY.md` | New: six-run automated pruning rules |
+| `knowledge/example/current.md` | New: active knowledge summary placeholder |
+| `knowledge/example/archive.md` | New: archive for pruned entries |
+| `knowledge/example/prune-log.md` | New: audit log for pruning actions |
+| `knowledge/index.md` | Tracks policy and lifecycle files |
+| `adapters/pi/capabilities.yaml` | Step 8 applies pruning and regenerates active summary |
+| `workflows/manifest.yaml` | Step 8 outputs include current knowledge, archive, and prune log |
+| `specs/001-ai-e2e-framework/spec.md` | Added FR-019a for automated archival pruning |
+| `specs/001-ai-e2e-framework/contracts/` | Synced manifest and adapter contract examples |
+
 ## 2026-05-02 — Pipeline Autonomy and Run Completion
 
 ### Changed

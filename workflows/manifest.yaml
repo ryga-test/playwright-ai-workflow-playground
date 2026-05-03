@@ -122,7 +122,7 @@ steps:
     name: Summarize & Update Knowledge
     order: 8
     gated: false
-    description: Write pipeline summary, update app knowledge with verified observations
+    description: Write pipeline summary, update app knowledge with verified observations, and apply six-run archival pruning
     inputs:
       - name: test-report
         path: results/{{app}}/{{run}}/step7-run-fix/test-report.md
@@ -136,4 +136,13 @@ steps:
         format: markdown
       - name: rules-update
         path: knowledge/{{app}}/rules.md
+        format: markdown
+      - name: current-knowledge
+        path: knowledge/{{app}}/current.md
+        format: markdown
+      - name: prune-log
+        path: knowledge/{{app}}/prune-log.md
+        format: markdown
+      - name: archive
+        path: knowledge/{{app}}/archive.md
         format: markdown

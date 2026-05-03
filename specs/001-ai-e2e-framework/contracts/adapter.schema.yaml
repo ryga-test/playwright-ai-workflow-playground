@@ -99,5 +99,11 @@ capabilities:
       3. Extract verified observations (selectors that produced passing tests)
       4. Append verified observations to knowledge/{{app}}/knowledge.md under ## Run {{run}}
       5. Append actionable rules to knowledge/{{app}}/rules.md under ## Run {{run}}
-      6. Do NOT modify content under ## Human-Curated or previous ## Run headings
+      6. Do NOT modify content under ## Human-Curated
       7. Do NOT duplicate observations already present in the file
+      8. Apply knowledge/PRUNING_POLICY.md: if an entry has been contradicted
+         or superseded by the last six successful runs, move it from active
+         knowledge files to knowledge/{{app}}/archive.md and record the action
+         in knowledge/{{app}}/prune-log.md. Absence from recent runs alone is
+         not enough to prune.
+      9. Regenerate knowledge/{{app}}/current.md as the compact active summary
