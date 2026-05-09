@@ -1,16 +1,11 @@
-// @provenance runId=2026-05-09T123839Z approvedAt=2026-05-09T12:43:42.288Z gate=page-object-review
+// @provenance runId=2026-05-09T130009Z approvedAt=2026-05-09T13:14:19.963Z gate=page-object-review
 import type { Locator, Page } from '@playwright/test';
 
 /**
  * Draft page object for the Example application dashboard.
  *
  * Generated from:
- * results/example/2026-05-09T123839Z/step3-extract-selectors/normalized-selectors.md
- *
- * Note: the selector extraction artifact for this run contains no captured
- * selectors because discovery was blocked by a missing base URL. This draft
- * uses accessible selectors inferred from apps/example/index.html and should
- * be reviewed carefully before approval.
+ * results/example/2026-05-09T130009Z/step3-extract-selectors/normalized-selectors.md
  *
  * Selector strategy: prefer accessible Playwright locators in priority order
  * getByRole > getByTestId > getByLabel > getByPlaceholder > getByText > CSS/XPath.
@@ -63,8 +58,8 @@ export class ExamplePage {
     this.applicationStatusTable = page.getByRole('table', {
       name: 'Application status table',
     });
-    this.nameColumnHeader = page.getByRole('columnheader', { name: 'Name' });
-    this.statusColumnHeader = page.getByRole('columnheader', { name: 'Status' });
+    this.nameColumnHeader = this.applicationStatusTable.getByRole('columnheader', { name: 'Name' });
+    this.statusColumnHeader = this.applicationStatusTable.getByRole('columnheader', { name: 'Status' });
   }
 
   async goto(): Promise<void> {

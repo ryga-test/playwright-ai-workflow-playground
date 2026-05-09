@@ -248,3 +248,24 @@ R23 is re-validated with the successful recovery path: once `.env` exists and `E
 - **Rule**: Before running the full example pipeline locally, ensure `.env` exists and contains `EXAMPLE_BASE_URL=http://localhost:3000`.
 - **Rationale**: Step 1 reads the app profile's `baseUrlEnvVar` and records the resolved base URL for downstream browser discovery.
 - **Verified by**: Recovery rerun for `2026-05-09T123839Z` produced resolved Step 1 metadata, Step 2 ARIA snapshot, and Step 3 normalized selectors.
+
+---
+
+## Run 2026-05-09T130009Z
+
+**Source**: Pipeline run — 9/9 tests passed (0 fix cycles).
+
+### Existing Rules Re-Validated
+
+No new rules identified. This run re-validates the current rules for the example app:
+
+- Use the app profile's `baseUrlEnvVar` and `.env` value for `baseURL` resolution.
+- Keep page object navigation URL-relative (`page.goto('/')`).
+- Prefer scoped `getByRole` locators for landmarks, form controls, table rows, and table cells.
+- Scope table row/cell/header queries through `applicationStatusTable` where practical.
+- Use `toHaveValue('')` for empty input assertions.
+- Use `toBeInViewport()` for anchor-link scroll target verification.
+- Treat a missing static server as infrastructure, not an app or test-script bug.
+- Import tests from `@fixtures/base.fixture.js` and page objects through the `@pages/*` alias.
+
+This run confirms the current `ExamplePage` API and generated spec execute cleanly without any script fixes.
