@@ -148,3 +148,36 @@ After adding `.env` with `EXAMPLE_BASE_URL=http://localhost:3000`, Step 2 captur
 | Status table, rows, and cells | scoped `getByRole` | ✅ captured |
 
 No `data-testid`, CSS, or XPath selectors are needed for the current example app coverage.
+
+---
+
+## Run 2026-05-09T130009Z
+
+### Selector Verification (9/9 passing tests)
+
+Fresh discovery and selector extraction completed from the running app at `http://localhost:3000`.
+
+| Element | Strategy | Selector | Verified |
+|---|---|---|:---:|
+| Page heading | getByRole (P1) | `getByRole('heading', { name: 'Workflow Playground Dashboard', level: 1 })` | ✅ |
+| Primary nav | getByRole (P1) | `getByRole('navigation', { name: 'Primary navigation' })` | ✅ |
+| Dashboard link | getByRole (P1) | `getByRole('link', { name: 'Dashboard' })` | ✅ |
+| Settings link | getByRole (P1) | `getByRole('link', { name: 'Settings' })` | ✅ |
+| Profile Settings region | getByRole (P1) | `getByRole('region', { name: 'Profile Settings' })` | ✅ |
+| Application Status region | getByRole (P1) | `getByRole('region', { name: 'Application Status' })` | ✅ |
+| Profile form | getByRole (P1) | `getByRole('form', { name: 'Profile settings form' })` | ✅ |
+| Display name input | getByRole (P1) | `getByRole('textbox', { name: 'Display name' })` | ✅ |
+| Email address input | getByRole (P1) | `getByRole('textbox', { name: 'Email address' })` | ✅ |
+| Save Changes button | getByRole (P1) | `getByRole('button', { name: 'Save Changes' })` | ✅ |
+| Status message | getByRole (P1) | `getByRole('status')` | ✅ |
+| Application status table | getByRole (P1) | `getByRole('table', { name: 'Application status table' })` | ✅ |
+| Name header | scoped getByRole (P1) | `applicationStatusTable.getByRole('columnheader', { name: 'Name' })` | ✅ |
+| Status header | scoped getByRole (P1) | `applicationStatusTable.getByRole('columnheader', { name: 'Status' })` | ✅ |
+| Status rows | scoped getByRole (P1) | `applicationStatusTable.getByRole('row', { name: '<service> <status>' })` | ✅ |
+| Status cells | scoped getByRole (P1) | `applicationStatusTable.getByRole('cell', { name })` | ✅ |
+
+### Notes
+
+- Selector extraction, page object generation, and runtime verification all used fresh artifacts for run `2026-05-09T130009Z`.
+- No selector fallbacks were needed for the generated page object or spec.
+- The table column header locators are now scoped through the named table locator.

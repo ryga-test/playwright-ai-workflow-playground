@@ -363,3 +363,29 @@ No new UI behavior was identified. The current `ExamplePage` page object and 9 G
 - The ARIA snapshot exposes the page heading, primary navigation, Profile Settings region, profile form controls, status region, Application Status region, and status table.
 - All interactive elements and table content are represented by accessible roles and names.
 - No CSS or XPath fallback selectors are required for the current page object/spec coverage.
+
+---
+
+## Run 2026-05-09T130009Z
+
+**Source**: Pipeline run — 9/9 tests passed (0 failures, 0 fix cycles).
+
+### Re-validated Observations
+
+- `.env` contains `EXAMPLE_BASE_URL=http://localhost:3000`, and the app profile resolves this value through `baseUrlEnvVar: EXAMPLE_BASE_URL`.
+- Step 2 captured a fresh ARIA snapshot from the running example app at `http://localhost:3000`.
+- All 9 generated scenarios passed against the current `ExamplePage` page object.
+- All selectors used by the generated spec are accessible role locators; no CSS, XPath, or `data-testid` selectors were required.
+- The profile form starts with empty Display name and Email address inputs and status text `No changes saved yet.`.
+- Saving with `Ada Lovelace` updates the status to `Saved changes for Ada Lovelace.` and preserves the input values.
+- Saving with an empty display name updates the status to `Saved changes for Unnamed user.`.
+- Clearing and re-submitting the profile form replaces the previous status text.
+- The status table contains the verified service/status pairs: Example API/Online, Worker Queue/Healthy, Notification Service/Paused.
+
+### Current Page Object API
+
+- `ExamplePage.goto()` navigates with `page.goto('/')` using Playwright `baseURL`.
+- `openSettingsSection()` and `openDashboardSection()` click the anchor navigation links.
+- `fillProfile()`, `saveProfile()`, and `updateProfile()` cover form interactions.
+- `statusRow(serviceName, status)` scopes row lookup to the application status table.
+- `statusCell(name)` scopes cell lookup to the application status table.

@@ -1,4 +1,4 @@
-// @provenance runId=2026-05-09T123839Z approvedAt=2026-05-09T12:45:55.982Z gate=test-draft-review
+// @provenance runId=2026-05-09T130009Z approvedAt=2026-05-09T13:14:19.963Z gate=test-draft-review
 import { test, expect } from '@fixtures/base.fixture.js';
 import { ExamplePage } from '@pages/example/example.page.js';
 
