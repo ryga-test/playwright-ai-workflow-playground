@@ -314,3 +314,33 @@ This run promoted and verified a renamed page object class:
 
 - All page object locators resolved correctly across 9 tests with zero locator failures.
 - The example app now has 7 consecutive successful pipeline runs with reliable accessible locators after infrastructure is available.
+
+---
+
+## Run 2026-05-09T123839Z
+
+**Source**: Pipeline run — 9/9 tests passed (0 fix cycles, 0 script bugs, 0 app bugs). Steps 2 and 3 were blocked by missing `.env` during discovery, but Step 7 passed after explicitly supplying `EXAMPLE_BASE_URL=http://localhost:3000` and starting the static server.
+
+### Re-validated Observations
+
+No new UI behavior was identified. The current `ExamplePage` page object and 9 GWT scenarios remain valid:
+
+- Page landmarks are visible: h1 "Workflow Playground Dashboard", named primary navigation, Profile Settings region, and Application Status region.
+- Anchor navigation works: Settings targets Application Status; Dashboard targets Profile Settings.
+- Profile form starts with empty Display name and Email address fields and status text "No changes saved yet.".
+- Saving a completed profile updates status to `Saved changes for <display name>.` and retains input values.
+- Saving with an empty display name uses `Unnamed user`.
+- Clearing and re-submitting the form replaces the previous status message.
+- Application Status table exposes Name and Status column headers.
+- Known service rows remain: Example API / Online, Worker Queue / Healthy, Notification Service / Paused.
+- Individual service and status cells remain directly locatable by accessible cell name.
+
+### Pipeline Environment Observation
+
+- A missing `.env` file causes Step 1 to write `baseUrl: null`, blocking browser-based discovery and selector extraction.
+- The Playwright test run can still succeed when `EXAMPLE_BASE_URL=http://localhost:3000` is provided directly in the command environment and the example static server is running.
+
+### Cross-Run Locator Reliability
+
+- All current role-based `ExamplePage` locators resolved correctly across 9 passing tests with zero locator failures.
+- This re-validates the established role-first selector strategy for the example app.

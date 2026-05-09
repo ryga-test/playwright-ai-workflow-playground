@@ -97,3 +97,36 @@ Per constitutional Principle II, locators follow this priority order:
 - No selector failures occurred after the app server was reachable.
 - `getByLabel` remains verified for labelled inputs and was intentionally used by the current page object.
 - No CSS or XPath selectors were needed in this run's spec.
+
+---
+
+## Run 2026-05-09T123839Z
+
+### Selector Verification (9/9 passing tests)
+
+Discovery did not capture a fresh ARIA snapshot because Step 1 had `baseUrl: null`. The promoted page object used selectors inferred from the app HTML and previous verified knowledge; all selectors used by the generated spec passed in Step 7.
+
+| Element | Strategy | Selector | Verified |
+|---|---|---|:---:|
+| Page heading | getByRole (P1) | `getByRole('heading', { name: 'Workflow Playground Dashboard', level: 1 })` | ✅ |
+| Primary nav | getByRole (P1) | `getByRole('navigation', { name: 'Primary navigation' })` | ✅ |
+| Dashboard link | getByRole (P1) | `getByRole('link', { name: 'Dashboard' })` | ✅ |
+| Settings link | getByRole (P1) | `getByRole('link', { name: 'Settings' })` | ✅ |
+| Profile Settings region | getByRole (P1) | `getByRole('region', { name: 'Profile Settings' })` | ✅ |
+| Application Status region | getByRole (P1) | `getByRole('region', { name: 'Application Status' })` | ✅ |
+| Profile form | getByRole (P1) | `getByRole('form', { name: 'Profile settings form' })` | ✅ |
+| Display name input | getByRole (P1) | `getByRole('textbox', { name: 'Display name' })` | ✅ |
+| Email address input | getByRole (P1) | `getByRole('textbox', { name: 'Email address' })` | ✅ |
+| Save Changes button | getByRole (P1) | `getByRole('button', { name: 'Save Changes' })` | ✅ |
+| Status message | getByRole (P1) | `getByRole('status')` | ✅ |
+| Application status table | getByRole (P1) | `getByRole('table', { name: 'Application status table' })` | ✅ |
+| Name header | getByRole (P1) | `getByRole('columnheader', { name: 'Name' })` | ✅ |
+| Status header | getByRole (P1) | `getByRole('columnheader', { name: 'Status' })` | ✅ |
+| Status rows | getByRole (P1) | `table.getByRole('row', { name: '<service> <status>' })` | ✅ |
+| Status cells | getByRole (P1) | `table.getByRole('cell', { name })` | ✅ |
+
+### Notes
+
+- No CSS or XPath selectors were needed by the generated page object or spec.
+- The current page object uses `getByRole('textbox', { name })` for inputs, which passed for both labelled fields.
+- Fresh selector extraction should be rerun once `.env`/`EXAMPLE_BASE_URL` is available so Step 3 artifacts match the verified runtime selectors.

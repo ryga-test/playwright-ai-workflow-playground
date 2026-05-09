@@ -207,3 +207,27 @@ No new rules identified. Current rules remain valid for this run:
 - Serial profile submissions should assert only the latest status remains visible.
 
 No pruning performed: no active rules were contradicted or superseded by this run.
+
+---
+
+## Run 2026-05-09T123839Z
+
+**Source**: Pipeline run — 9/9 tests passed (0 fix cycles). Discovery was blocked by missing `.env`, but execution passed with explicit `EXAMPLE_BASE_URL` and a running static server.
+
+### Existing Rules Re-Validated
+
+No new app-facing rules identified. Current rules remain valid:
+
+- Use `ExamplePage` from `@pages/example/example.page.js` and import `test`/`expect` from `@fixtures/base.fixture.js`.
+- Keep page object navigation as `page.goto('/')`; supply base URL via environment/config rather than hardcoding URLs.
+- Prefer role-based selectors for this app; table rows and cells remain stable with scoped `getByRole` locators.
+- Use `toBeInViewport()` for anchor-link scroll verification.
+- Use `toHaveValue('')` for empty input assertions.
+- Treat a missing/unreachable local server as infrastructure, not as a script bug.
+
+### Pipeline Rule
+
+#### R23 — Resolve must have an actual base URL before discovery
+- **Rule**: If Step 1 metadata contains `baseUrl: null`, do not expect Step 2 discovery or Step 3 selector extraction to produce usable UI artifacts. Create `.env` or supply the required base URL environment variable, rerun resolve, then rerun discovery.
+- **Rationale**: Discovery depends on browser navigation. Without a resolved base URL, the agent can only write blocked/error artifacts.
+- **Verified by**: Step 2 and Step 3 blocked artifacts in this run; Step 7 passed only after `EXAMPLE_BASE_URL=http://localhost:3000` was supplied directly.
