@@ -25,8 +25,8 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'example',
-      testDir: './tests/example',
+      name: profile.name,
+      testDir: `./tests/${profile.name}`,
       use: {
         ...devices['Desktop Chrome'],
         baseURL,

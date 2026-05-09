@@ -1,0 +1,7 @@
+name: automation-in-testing
+baseUrlEnvVar: AUTOMATION_IN_TESTING_BASE_URL
+authMethod: none
+testTags:
+  - smoke
+  - public-demo
+  - read-only
