@@ -130,3 +130,21 @@ Discovery did not capture a fresh ARIA snapshot because Step 1 had `baseUrl: nul
 - No CSS or XPath selectors were needed by the generated page object or spec.
 - The current page object uses `getByRole('textbox', { name })` for inputs, which passed for both labelled fields.
 - Fresh selector extraction should be rerun once `.env`/`EXAMPLE_BASE_URL` is available so Step 3 artifacts match the verified runtime selectors.
+
+---
+
+## Run 2026-05-09T123839Z Recovery Update
+
+### Fresh Selector Extraction Completed
+
+After adding `.env` with `EXAMPLE_BASE_URL=http://localhost:3000`, Step 2 captured a fresh ARIA snapshot and Step 3 normalized selectors.
+
+| Selector area | Strategy | Status |
+|---|---|:---:|
+| Landmarks and headings | `getByRole` | ✅ captured |
+| Navigation links | `getByRole` | ✅ captured |
+| Profile form and controls | `getByRole` | ✅ captured |
+| Status message | `getByRole('status')` | ✅ captured |
+| Status table, rows, and cells | scoped `getByRole` | ✅ captured |
+
+No `data-testid`, CSS, or XPath selectors are needed for the current example app coverage.

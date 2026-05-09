@@ -231,3 +231,20 @@ No new app-facing rules identified. Current rules remain valid:
 - **Rule**: If Step 1 metadata contains `baseUrl: null`, do not expect Step 2 discovery or Step 3 selector extraction to produce usable UI artifacts. Create `.env` or supply the required base URL environment variable, rerun resolve, then rerun discovery.
 - **Rationale**: Discovery depends on browser navigation. Without a resolved base URL, the agent can only write blocked/error artifacts.
 - **Verified by**: Step 2 and Step 3 blocked artifacts in this run; Step 7 passed only after `EXAMPLE_BASE_URL=http://localhost:3000` was supplied directly.
+
+---
+
+## Run 2026-05-09T123839Z Recovery Update
+
+**Source**: Step 1–3 recovery after adding `.env`.
+
+### Existing Rule Re-Validated
+
+R23 is re-validated with the successful recovery path: once `.env` exists and `EXAMPLE_BASE_URL` resolves to `http://localhost:3000`, discovery and selector extraction can produce usable artifacts for the example app.
+
+### Operational Rule
+
+#### R24 — Keep `.env` present for local full-pipeline runs
+- **Rule**: Before running the full example pipeline locally, ensure `.env` exists and contains `EXAMPLE_BASE_URL=http://localhost:3000`.
+- **Rationale**: Step 1 reads the app profile's `baseUrlEnvVar` and records the resolved base URL for downstream browser discovery.
+- **Verified by**: Recovery rerun for `2026-05-09T123839Z` produced resolved Step 1 metadata, Step 2 ARIA snapshot, and Step 3 normalized selectors.

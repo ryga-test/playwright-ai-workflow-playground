@@ -344,3 +344,22 @@ No new UI behavior was identified. The current `ExamplePage` page object and 9 G
 
 - All current role-based `ExamplePage` locators resolved correctly across 9 passing tests with zero locator failures.
 - This re-validates the established role-first selector strategy for the example app.
+
+---
+
+## Run 2026-05-09T123839Z Recovery Update
+
+**Source**: Pipeline recovery after creating `.env` from `.env.example` and rerunning Steps 1–3 artifacts locally.
+
+### Resolved Discovery Blocker
+
+- `.env` now provides `EXAMPLE_BASE_URL=http://localhost:3000`.
+- Step 1 metadata now resolves `baseUrl` to `http://localhost:3000`.
+- Step 2 captured a fresh Playwright ARIA snapshot from the running local static server.
+- Step 3 normalized selector candidates from the fresh snapshot.
+
+### Verified Snapshot Facts
+
+- The ARIA snapshot exposes the page heading, primary navigation, Profile Settings region, profile form controls, status region, Application Status region, and status table.
+- All interactive elements and table content are represented by accessible roles and names.
+- No CSS or XPath fallback selectors are required for the current page object/spec coverage.
