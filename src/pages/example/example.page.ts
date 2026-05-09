@@ -1,11 +1,16 @@
-// @provenance runId=2026-05-03T021118Z approvedAt=2026-05-03T00:00:00.000Z gate=page-object-review
+// @provenance runId=2026-05-09T123839Z approvedAt=2026-05-09T12:43:42.288Z gate=page-object-review
 import type { Locator, Page } from '@playwright/test';
 
 /**
- * Page object for the Example application dashboard.
+ * Draft page object for the Example application dashboard.
  *
  * Generated from:
- * results/example/2026-05-03T021118Z/step3-extract-selectors/normalized-selectors.md
+ * results/example/2026-05-09T123839Z/step3-extract-selectors/normalized-selectors.md
+ *
+ * Note: the selector extraction artifact for this run contains no captured
+ * selectors because discovery was blocked by a missing base URL. This draft
+ * uses accessible selectors inferred from apps/example/index.html and should
+ * be reviewed carefully before approval.
  *
  * Selector strategy: prefer accessible Playwright locators in priority order
  * getByRole > getByTestId > getByLabel > getByPlaceholder > getByText > CSS/XPath.
