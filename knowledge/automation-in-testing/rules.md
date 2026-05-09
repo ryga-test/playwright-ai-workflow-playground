@@ -31,3 +31,25 @@
 ## Runs
 
 *(Populated by pipeline runs.)*
+
+## Run 2026-05-09T135109Z
+
+### R04 — Use exact matching for Book Now/Book now links
+
+- **Rule**: Use `getByRole('link', { name: 'Book Now', exact: true })` for the hero CTA and `getByRole('link', { name: 'Book now', exact: true }).nth(...)` for room booking links.
+- **Rationale**: Playwright role name matching is case-insensitive/fuzzy enough that non-exact `Book Now` can match the repeated room `Book now` links and cause strict-mode failures.
+
+### R05 — Scope duplicate text assertions
+
+- **Rule**: Scope duplicate content assertions to a stable region or section when possible, e.g. use `page.locator('#location').getByText(...)` for location contact text.
+- **Rationale**: Address/contact copy appears in multiple regions including location and footer; unscoped text locators can violate strict mode.
+
+### R06 — Prefer visibility over viewport assertions for hash-anchor navigation
+
+- **Rule**: For same-page anchor navigation on this public site, assert target section visibility instead of `toBeInViewport()` unless viewport position is the behavior under test.
+- **Rationale**: Hash navigation can leave headings outside the viewport ratio expected by Playwright while the section remains present and usable.
+
+### R07 — Keep first-run contact and booking interactions non-submitting
+
+- **Rule**: First-run tests may fill availability/contact fields and inspect reservation hrefs, but should not click room reservation links, submit contact forms, or enter admin credentials.
+- **Rationale**: This preserves the human-curated read-only smoke policy while still validating interactive controls.
