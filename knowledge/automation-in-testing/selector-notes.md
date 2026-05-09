@@ -28,3 +28,20 @@ Per constitutional Principle II, locators follow this priority order:
 ## Findings
 
 *(Populated by pipeline runs.)*
+
+## Run 2026-05-09T135109Z
+
+- Preferred selectors that passed in tests:
+  - `page.getByRole('heading', { name: 'Welcome to Shady Meadows B&B', level: 1 })`
+  - `page.getByRole('navigation')`
+  - `navigation.getByRole('link', { name: 'Rooms' })`, `Booking`, `Amenities`, `Location`, `Contact`, `Admin`
+  - `page.getByRole('link', { name: 'Book Now', exact: true })`
+  - `page.getByRole('link', { name: 'Book now', exact: true }).nth(0..2)` for room links
+  - `page.getByRole('textbox', { name: 'Name' })`, `Email`, `Phone`, `Subject`
+  - `page.getByRole('contentinfo')` for footer scoping
+- Fallback selector that passed:
+  - `page.locator('#description')` for the contact Message textarea because it is unnamed in the captured ARIA snapshot.
+- Selector caveats:
+  - Non-exact `Book Now`/`Book now` locators are ambiguous; use `exact: true`.
+  - Address/contact text appears in multiple regions; scope to `#location` or footer before using text assertions.
+  - Check In and Check Out date inputs were unnamed in the ARIA snapshot; the current page object uses `page.getByRole('textbox').nth(0)` and `.nth(1)`.
