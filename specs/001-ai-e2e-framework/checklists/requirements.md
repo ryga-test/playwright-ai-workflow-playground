@@ -16,7 +16,7 @@
 
 - [x] CHK005 — Is the full lifecycle of a pipeline artifact defined: creation → draft storage → human review → promotion → post-promotion retention? [Completeness — Resolved: FR-017 requires draft artifacts retained in results/ after promotion as immutable record]
 - [x] CHK006 — Are requirements specified for what happens to draft artifacts after they are promoted to source directories (retained, archived, or deleted)? [Completeness — Resolved: FR-017 — drafts retained in results/ as immutable run record]
-- [x] CHK007 — Is the format of each artifact type (UI snapshot, selector candidates, page object draft, test draft, spec, report, summary) specified or constrained? [Clarity — Resolved: FR-017 specifies format per artifact type (YAML for snapshot, Markdown for selectors, TypeScript for page objects/specs, GWT Markdown for drafts)]
+- [x] CHK007 — Is the format of each artifact type (UI snapshot, selector candidates, page object draft, feature draft, scenario coverage, spec, report, summary) specified or constrained? [Clarity — Resolved: FR-017 specifies format per artifact type (YAML for snapshot, Markdown for selectors/coverage, Gherkin for feature drafts, TypeScript for page objects/specs)]
 - [x] CHK008 — Does the spec define how a subsequent pipeline run detects that artifacts from a previous run already exist and how it avoids silent overwrites? [Completeness — Resolved: FR-016 — ISO timestamp run IDs guarantee uniqueness + pre-write existence check]
 
 ## Human Review / Approval Gates
@@ -64,7 +64,7 @@
 ## Measurable Success Criteria
 
 - [x] CHK033 — Is SC-003 ("fully interactive") measurable? [Measurability — Resolved: quantified with minimum element counts (2 inputs, 3 table rows × 2 cols, 2 nav links) + Playwright-interaction verifiability]
-- [x] CHK034 — Is SC-005 ("structurally comparable pipeline artifacts") measurable? [Measurability — Resolved: 3 specific criteria: same 7 artifact files at same paths, same locator priority order, same interactive element coverage]
+- [x] CHK034 — Is SC-005 ("structurally comparable pipeline artifacts") measurable? [Measurability — Resolved: specific criteria: same required artifact files at same paths, same locator priority order, same interactive element coverage, and traceability from generated tests to approved Gherkin scenarios/example rows]
 - [x] CHK035 — Can SC-008 ("without asking for help") be objectively measured? [Measurability — Resolved: quantified as 30-minute timebox, documentation-only (no external help/DESIGN_DECISIONS.md)]
 - [x] CHK036 — Are there success criteria for the two gated review steps specifically? [Completeness — Resolved: SC-006a — ≤1 re-draft cycle per gated artifact, 80% of pipeline runs]
 

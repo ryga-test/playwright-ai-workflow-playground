@@ -11,7 +11,7 @@ Build a generic TypeScript Playwright repository for experimenting with AI-assis
 
 **Language/Version**: TypeScript 5.x (ES2022 target, `strict: true`)
 **Primary Dependencies**: `@playwright/test` (latest stable), `dotenv`, `typescript`
-**Storage**: Filesystem — YAML (profiles, manifest, capabilities), Markdown (prompts, knowledge, reports), TypeScript (page objects, specs, fixtures)
+**Storage**: Filesystem — YAML (profiles, manifest, capabilities), Gherkin (approved feature files), Markdown (prompts, knowledge, reports, scenario coverage), TypeScript (page objects, specs, fixtures)
 **Testing**: `@playwright/test` — framework integration verified via pipeline run against example app (no separate framework test suite per Decision 11)
 **Target Platform**: Node.js 18+ LTS, Linux/macOS (Playwright browser automation)
 **Project Type**: Framework/library — monorepo-lite with cohabitating app instances
@@ -28,7 +28,7 @@ Build a generic TypeScript Playwright repository for experimenting with AI-assis
 | I. Spec-First Workflow | ✅ PASS | This plan is Phase 4 of the canonical sequence (constitution → spec → clarify → checklist → plan). All prior phases completed. |
 | II. Playwright-First E2E Design | ✅ PASS | `@playwright/test` is sole test framework; locator priority (role → testid → label → text → CSS) codified in spec FR-017 selector format and SC-005 comparability criteria. |
 | III. AI Workflow Experimentation | ✅ PASS | Layered architecture: `workflows/manifest.yaml` (neutral) → `adapters/<agent>/capabilities.yaml` (agent-specific). Pi adapter for v1, extensible schema for second agent (FR-015, FR-027). |
-| IV. Human Review Gates | ✅ PASS | Two gated steps (page object draft, test draft) per FR-020. Chat-based approval with exact "approved" keyword, max 3 re-drafts, provenance headers (FR-021, FR-021a). Approval lock schema defined in contracts for future automation. |
+| IV. Human Review Gates | ✅ PASS | Two gated steps (page object draft, Gherkin feature draft) per FR-020. Chat-based approval with exact "approved" keyword, max 3 re-drafts, provenance headers (FR-021, FR-021a). Approval lock schema defined in contracts for future automation. |
 | V. Reproducible Artifacts | ✅ PASS | `results/<app>/<run>/step-<N>-<name>/` with ISO 8601 run IDs (FR-016). All 7 artifact types with explicit formats (FR-017). Deterministic enough for agent comparison (SC-005). |
 | VI. App Isolation | ✅ PASS | Per-app profiles (`apps/<app>/`), page objects (`src/pages/<app>/`), tests (`tests/<app>/`), knowledge (`knowledge/<app>/`), results (`results/<app>/`). Slug naming `[a-z0-9-]+` with uniqueness (FR-009a). Cross-app leakage forbidden (FR-009b). |
 | VII. Safe Secrets Handling | ✅ PASS | `.env.example` documents all variables with placeholders (FR-004). `.gitignore` excludes `.env`, `results/`, storage state, report folders (FR-005). "Secret" explicitly defined in FR-004. |
@@ -87,7 +87,7 @@ specs/001-ai-e2e-framework/
 │       └── snapshot-parser.ts      # Parse Playwright ARIA snapshots for selector extraction
 │
 ├── tests/
-│   └── example/                    # Generated Playwright specs for example app (after approval)
+│   └── example/                    # Approved .feature files and generated Playwright specs for example app
 │
 ├── knowledge/
 │   └── example/
@@ -111,7 +111,10 @@ specs/001-ai-e2e-framework/
 │   └── 001-ai-e2e-framework/
 │
 ├── docs/
-│   └── README.md                   # Framework overview and usage guide
+│   ├── README.md                   # Framework overview and usage guide
+│   ├── gherkin-guidelines.md       # Local Gherkin rules adapted from Automation Panda guidance
+│   └── adr/
+│       └── 0001-gherkin-as-approved-scenario-source.md
 │
 ├── contracts/                      # Schemas (generated in plan phase)
 │   ├── profile.schema.yaml

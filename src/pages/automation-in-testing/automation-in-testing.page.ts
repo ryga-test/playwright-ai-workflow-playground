@@ -1,11 +1,11 @@
-// @provenance runId=2026-05-09T135109Z approvedAt=2026-05-09T13:55:36.908Z gate=page-object-review
+// @provenance runId=2026-05-09T235844Z approvedAt=2026-05-10T00:02:12Z gate=page-object-review
 import type { Locator, Page } from '@playwright/test';
 
 /**
  * Draft page object for the Automation in Testing public demo home page.
  *
  * Generated from:
- * results/automation-in-testing/2026-05-09T135109Z/step3-extract-selectors/normalized-selectors.md
+ * results/automation-in-testing/2026-05-09T235844Z/step3-extract-selectors/normalized-selectors.md
  *
  * Selector strategy: prefer accessible Playwright locators in priority order
  * getByRole > getByTestId > getByLabel > getByPlaceholder > getByText > CSS/XPath.
@@ -133,6 +133,10 @@ export class AutomationInTestingPage {
     await this.navBookingLink.click();
   }
 
+  async openAmenitiesSection(): Promise<void> {
+    await this.navAmenitiesLink.click();
+  }
+
   async openLocationSection(): Promise<void> {
     await this.navLocationLink.click();
   }
@@ -150,6 +154,26 @@ export class AutomationInTestingPage {
     await this.checkOutInput.fill(checkOut);
   }
 
+  async checkAvailability(checkIn: string, checkOut: string): Promise<void> {
+    await this.setStayDates(checkIn, checkOut);
+    await this.checkAvailabilityButton.click();
+  }
+
+  // fallow-ignore-next-line unused-class-member
+  async bookSingleRoom(): Promise<void> {
+    await this.singleRoomBookNowLink.click();
+  }
+
+  // fallow-ignore-next-line unused-class-member
+  async bookDoubleRoom(): Promise<void> {
+    await this.doubleRoomBookNowLink.click();
+  }
+
+  // fallow-ignore-next-line unused-class-member
+  async bookSuiteRoom(): Promise<void> {
+    await this.suiteRoomBookNowLink.click();
+  }
+
   async fillContactForm(contact: {
     name: string;
     email: string;
@@ -162,5 +186,17 @@ export class AutomationInTestingPage {
     await this.contactPhoneInput.fill(contact.phone);
     await this.contactSubjectInput.fill(contact.subject);
     await this.contactMessageInput.fill(contact.message);
+  }
+
+  // fallow-ignore-next-line unused-class-member
+  async submitContactForm(contact: {
+    name: string;
+    email: string;
+    phone: string;
+    subject: string;
+    message: string;
+  }): Promise<void> {
+    await this.fillContactForm(contact);
+    await this.submitContactButton.click();
   }
 }

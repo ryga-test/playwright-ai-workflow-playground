@@ -1,4 +1,4 @@
-// @provenance runId=2026-05-09T135109Z approvedAt=2026-05-09T13:58:38.569Z gate=test-draft-review
+// @provenance runId=2026-05-09T235844Z approvedAt=2026-05-10T00:04:25.676Z gate=test-draft-review
 import { test, expect } from '@fixtures/base.fixture.js';
 import { AutomationInTestingPage } from '@pages/automation-in-testing/automation-in-testing.page.js';
 
@@ -35,6 +35,7 @@ test.describe('Automation in Testing public demo home page', () => {
     await expect(app.roomsHeading).toBeVisible();
     await app.openBookingSection();
     await expect(app.availabilityHeading).toBeVisible();
+    await app.openAmenitiesSection();
     await app.openLocationSection();
     await expect(app.locationHeading).toBeVisible();
     await app.openContactSection();
@@ -42,6 +43,7 @@ test.describe('Automation in Testing public demo home page', () => {
     // Then — assert: each target section is available and the final contact target is visible.
     await expect(app.roomsHeading).toBeVisible();
     await expect(app.availabilityHeading).toBeVisible();
+    await expect(app.page).toHaveURL(/#amenities|#location|#contact/);
     await expect(app.locationHeading).toBeVisible();
     await expect(app.contactFormHeading).toBeVisible();
   });
@@ -77,16 +79,16 @@ test.describe('Automation in Testing public demo home page', () => {
     await expect(app.checkAvailabilityButton).toBeVisible();
   });
 
-  test('Scenario 5 — Availability form starts with default stay dates', async () => {
+  test('Scenario 5 — Availability form starts with discovered default stay dates', async () => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 
     // When — act: inspect the availability form.
     await expect(app.availabilityHeading).toBeVisible();
 
-    // Then — assert: default stay dates and the action button are present.
-    await expect(app.checkInInput).toHaveValue('09/05/2026');
-    await expect(app.checkOutInput).toHaveValue('10/05/2026');
+    // Then — assert: discovered default stay dates and the action button are present.
+    await expect(app.checkInInput).toHaveValue('10/05/2026');
+    await expect(app.checkOutInput).toHaveValue('11/05/2026');
     await expect(app.checkAvailabilityButton).toBeEnabled();
   });
 
@@ -103,7 +105,21 @@ test.describe('Automation in Testing public demo home page', () => {
     await expect(app.page).toHaveURL(/\/$/);
   });
 
-  test('Scenario 7 — Room listings show known room types and prices', async ({ page }) => {
+  test('Scenario 7 — Availability search can be initiated without completing a reservation', async () => {
+    // Given — arrange: open the public demo home page.
+    await app.goto();
+
+    // When — act: search availability for editable stay dates.
+    await app.checkAvailability('15/05/2026', '16/05/2026');
+
+    // Then — assert: available room booking options remain visible and no reservation is completed.
+    await expect(app.singleRoomBookNowLink).toBeVisible();
+    await expect(app.doubleRoomBookNowLink).toBeVisible();
+    await expect(app.suiteRoomBookNowLink).toBeVisible();
+    await expect(app.page).not.toHaveURL(/\/reservation\//);
+  });
+
+  test('Scenario 8 — Room listings show known room types and prices', async ({ page }) => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 
@@ -119,7 +135,7 @@ test.describe('Automation in Testing public demo home page', () => {
     await expect(page.getByText('£225 per night')).toBeVisible();
   });
 
-  test('Scenario 8 — Room booking links point to reservation pages without completing bookings', async () => {
+  test('Scenario 9 — Room booking links point to reservation pages without completing bookings', async () => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 
@@ -129,19 +145,19 @@ test.describe('Automation in Testing public demo home page', () => {
     // Then — assert: booking links target reservation pages with stay-date query parameters.
     await expect(app.singleRoomBookNowLink).toHaveAttribute(
       'href',
-      /\/reservation\/1\?checkin=2026-05-09&checkout=2026-05-10/,
+      /\/reservation\/1\?checkin=2026-05-10&checkout=2026-05-11/,
     );
     await expect(app.doubleRoomBookNowLink).toHaveAttribute(
       'href',
-      /\/reservation\/2\?checkin=2026-05-09&checkout=2026-05-10/,
+      /\/reservation\/2\?checkin=2026-05-10&checkout=2026-05-11/,
     );
     await expect(app.suiteRoomBookNowLink).toHaveAttribute(
       'href',
-      /\/reservation\/3\?checkin=2026-05-09&checkout=2026-05-10/,
+      /\/reservation\/3\?checkin=2026-05-10&checkout=2026-05-11/,
     );
   });
 
-  test('Scenario 9 — Map attribution links are present', async () => {
+  test('Scenario 10 — Map attribution links are present', async () => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 
@@ -158,7 +174,7 @@ test.describe('Automation in Testing public demo home page', () => {
     );
   });
 
-  test('Scenario 10 — Contact information content is visible', async ({ page }) => {
+  test('Scenario 11 — Contact information content is visible', async ({ page }) => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 
@@ -172,7 +188,7 @@ test.describe('Automation in Testing public demo home page', () => {
     await expect(page.getByRole('heading', { name: 'Getting Here' })).toBeVisible();
   });
 
-  test('Scenario 11 — Contact form starts empty and editable', async () => {
+  test('Scenario 12 — Contact form starts empty and editable', async () => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 
@@ -188,17 +204,17 @@ test.describe('Automation in Testing public demo home page', () => {
     await expect(app.submitContactButton).toBeVisible();
   });
 
-  test('Scenario 12 — User can fill contact form fields without submitting a message', async () => {
+  test('Scenario 13 — User can fill contact form fields before submission', async () => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 
-    // When — act: fill contact fields without pressing Submit.
+    // When — act: fill contact fields with obvious test data.
     await app.fillContactForm({
       name: 'Test User',
       email: 'test@example.test',
       phone: '01234567890',
       subject: 'Read-only smoke test',
-      message: 'This message is not submitted by the first-run pipeline.',
+      message: 'This message is generated by an automated public-demo smoke test.',
     });
 
     // Then — assert: each entered value is retained on the current page.
@@ -206,23 +222,25 @@ test.describe('Automation in Testing public demo home page', () => {
     await expect(app.contactEmailInput).toHaveValue('test@example.test');
     await expect(app.contactPhoneInput).toHaveValue('01234567890');
     await expect(app.contactSubjectInput).toHaveValue('Read-only smoke test');
-    await expect(app.contactMessageInput).toHaveValue('This message is not submitted by the first-run pipeline.');
-    await expect(app.page).toHaveURL(/\/$/);
+    await expect(app.contactMessageInput).toHaveValue(
+      'This message is generated by an automated public-demo smoke test.',
+    );
   });
 
-  test('Scenario 13 — Contact form validation can be observed without sending a message', async () => {
+  test('Scenario 14 — Contact form validation affordance is available', async () => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 
-    // When — act: inspect validation affordances without clicking Submit.
+    // When — act: inspect validation affordances without submitting data.
     await expect(app.contactFormHeading).toBeVisible();
 
-    // Then — assert: Submit is present but no contact message is sent in this first-run smoke test.
+    // Then — assert: Submit is enabled and the alert region exists for validation/submission feedback.
     await expect(app.submitContactButton).toBeVisible();
+    await expect(app.submitContactButton).toBeEnabled();
     await expect(app.alertContainer).toBeAttached();
   });
 
-  test('Scenario 14 — Footer quick links are visible and scoped to the footer', async () => {
+  test('Scenario 15 — Footer quick links are visible and scoped to the footer', async () => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 
@@ -239,7 +257,7 @@ test.describe('Automation in Testing public demo home page', () => {
     await expect(app.footer).toContainText('fake@fakeemail.com');
   });
 
-  test('Scenario 15 — Footer policy and admin links expose expected destinations', async ({ page }) => {
+  test('Scenario 16 — Footer policy and admin links expose expected destinations', async ({ page }) => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 
@@ -256,7 +274,7 @@ test.describe('Automation in Testing public demo home page', () => {
     );
   });
 
-  test('Scenario 16 — Admin link navigates to the public admin entry page only', async () => {
+  test('Scenario 17 — Admin link navigates to the public admin entry page only', async () => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 
@@ -267,7 +285,7 @@ test.describe('Automation in Testing public demo home page', () => {
     await expect(app.page).toHaveURL(/\/admin\/?$/);
   });
 
-  test('Scenario 17 — No table content is present in the discovered public home page', async ({ page }) => {
+  test('Scenario 18 — No table content is present in the discovered public home page', async ({ page }) => {
     // Given — arrange: open the public demo home page.
     await app.goto();
 

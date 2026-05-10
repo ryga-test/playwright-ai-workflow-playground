@@ -22,8 +22,11 @@ artifacts:
   - path: "results/example/2026-04-30T143000Z/step4-draft-page-object/page-object.draft.ts"
     sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
-  - path: "results/example/2026-04-30T143000Z/step5-draft-tests/test-draft.md"
+  - path: "results/example/2026-04-30T143000Z/step5-draft-tests/test-scenarios.feature"
     sha256: "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a"
+
+  - path: "results/example/2026-04-30T143000Z/step5-draft-tests/scenario-coverage.md"
+    sha256: "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
 
 # --- Future drift detection workflow (post-v1) ---
 #

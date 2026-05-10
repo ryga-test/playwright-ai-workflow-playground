@@ -45,3 +45,12 @@ Per constitutional Principle II, locators follow this priority order:
   - Non-exact `Book Now`/`Book now` locators are ambiguous; use `exact: true`.
   - Address/contact text appears in multiple regions; scope to `#location` or footer before using text assertions.
   - Check In and Check Out date inputs were unnamed in the ARIA snapshot; the current page object uses `page.getByRole('textbox').nth(0)` and `.nth(1)`.
+
+## Run 2026-05-09T235844Z
+
+- Confirmed selector fix in passing tests:
+  - `page.getByRole('link', { name: 'Book Now', exact: true })` for the hero CTA.
+  - `page.getByRole('link', { name: 'Book now', exact: true }).nth(0..2)` for room reservation links.
+- Non-exact role matching caused strict-mode failures because Playwright matched the hero `Book Now` link together with room `Book now` links.
+- Date input locators remain positional (`page.getByRole('textbox').nth(0)` and `.nth(1)`) because the Check In/Check Out controls are unnamed in the ARIA snapshot.
+- `page.locator('#description')` remains the documented CSS fallback for the unnamed Message textarea and passed in contact form tests.

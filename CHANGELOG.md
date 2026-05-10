@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-05-10 — Gherkin Scenario Source Adoption
+
+### Added
+
+- **Gherkin as the approved scenario source**: Step 5 now drafts first-class `.feature` content instead of informal GWT Markdown.
+- **Scenario coverage mapping**: Step 5 now requires `scenario-coverage.md` to map each scenario or scenario-outline example row to discovered interactive elements.
+- **Local Gherkin guidance**: added `docs/gherkin-guidelines.md`, adapted from Automation Panda's Gherkin Guidelines for AI with attribution to the original repository.
+- **ADR 0001**: recorded the decision to use Gherkin as a review/design artifact while keeping `@playwright/test` as the only execution runtime.
+
+### Changed
+
+- Step 5 outputs are now `test-scenarios.feature` and `scenario-coverage.md`, with optional `deferred-scenarios.md` for valid-but-not-automatable behavior.
+- Approved feature files are promoted to `tests/<app>/<app>.feature` with provenance comments and require explicit re-approval before overwrite.
+- Step 6 reads the approved `.feature` file and coverage mapping, then generates normal Playwright specs with traceability from each test to one scenario or scenario-outline example row.
+- Workflow manifests, pi adapter prompts, contracts, spec, plan, quickstart, task list, and README were synced to the new artifact model.
+
 ## 2026-05-03 — Step 6 Automatic Spec Overwrite Contract Sync
 
 ### Changed
