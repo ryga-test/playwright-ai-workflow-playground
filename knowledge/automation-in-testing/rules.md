@@ -53,3 +53,15 @@
 
 - **Rule**: First-run tests may fill availability/contact fields and inspect reservation hrefs, but should not click room reservation links, submit contact forms, or enter admin credentials.
 - **Rationale**: This preserves the human-curated read-only smoke policy while still validating interactive controls.
+
+## Run 2026-05-09T235844Z
+
+### R08 — Reconfirm date-sensitive defaults per run
+
+- **Rule**: Treat availability default dates and reservation-link query parameters as run-sensitive observations; update expected values from the current discovery snapshot.
+- **Rationale**: The public site advances default check-in/check-out dates over time.
+
+### R09 — Availability search is safe, reservation completion is not implicit
+
+- **Rule**: It is safe to click `Check Availability` with obvious test dates when asserting that room options remain visible, but do not click through and complete a reservation unless that state-changing flow is explicitly in scope.
+- **Rationale**: This validates an interactive control while preserving public-demo safety boundaries.

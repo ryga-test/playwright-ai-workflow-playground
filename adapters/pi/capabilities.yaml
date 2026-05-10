@@ -55,28 +55,33 @@ capabilities:
     command_template: |
       /pipeline-draft-tests {{app}} {{run}}
       
-      Draft GWT-style test scenarios:
+      Draft Gherkin test scenarios:
       1. Read results/{{app}}/{{run}}/step4-draft-page-object/page-object.draft.ts
-      2. Read knowledge/{{app}}/knowledge.md for app context
-      3. Generate Given-When-Then test scenarios covering all interactive elements
-      4. Write draft to results/{{app}}/{{run}}/step5-draft-tests/test-draft.md
-      5. Present the draft for human review — do NOT proceed to spec writing until approved
+      2. Read knowledge/{{app}}/knowledge.md and docs/gherkin-guidelines.md for app context and scenario rules
+      3. Generate user-goal-focused Gherkin scenarios in results/{{app}}/{{run}}/step5-draft-tests/test-scenarios.feature
+      4. Generate results/{{app}}/{{run}}/step5-draft-tests/scenario-coverage.md mapping each scenario or scenario outline example row to discovered interactive elements; list intentionally uncovered elements with rationale
+      5. Validate before review: Feature present; at least one Scenario or Scenario Outline; Given/When/Then used; no CSS/XPath, Playwright locators, page-object method names, or implementation mechanics in Gherkin
+      6. Optional: write results/{{app}}/{{run}}/step5-draft-tests/deferred-scenarios.md only for valid-but-not-automatable scenarios
+      7. Present the feature file and coverage mapping for human review — do NOT proceed to spec writing until approved
+      8. On approval, promote to tests/{{app}}/{{app}}.feature with Gherkin comment provenance (# Run-ID, # Approved-at, # Approved-step: test-draft-review). If an approved feature already exists, present a diff and require explicit re-approval before overwriting.
 
   - step: write-spec
     command_template: |
       /pipeline-write-spec {{app}} {{run}}
       
       Write the Playwright spec:
-      1. Read approved test draft from results/{{app}}/{{run}}/step5-draft-tests/test-draft.md
-      2. Read approved page object from src/pages/{{app}}/{{app}}.page.ts
-      3. Generate a complete Playwright spec using @playwright/test
+      1. Read approved feature file from tests/{{app}}/{{app}}.feature
+      2. Read scenario coverage from results/{{app}}/{{run}}/step5-draft-tests/scenario-coverage.md
+      3. Read approved page object from src/pages/{{app}}/{{app}}.page.ts
+      4. Re-validate the approved feature and coverage mapping; stop and ask for correction if invalid or if any scenario/example row lacks coverage mapping
+      5. Generate a complete Playwright spec using @playwright/test with one generated test per approved Scenario or Scenario Outline example row, preserving traceability in the test title/comment and appending allowed Gherkin tags to the Playwright test title
          IMPORTANT: Import test and expect from @fixtures/base.fixture.js
          (not from @playwright/test) to enable screencast video recording.
          Example import: import { test, expect } from '@fixtures/base.fixture.js';
-      4. If tests/{{app}}/{{app}}.spec.ts already exists, write the proposed diff to results/{{app}}/{{run}}/step6-write-spec/spec.diff
-      5. Overwrite tests/{{app}}/{{app}}.spec.ts automatically; do not request another human approval in Step 6
-      6. Add/update provenance header: // @provenance runId={{run}} approvedAt=<now> gate=test-draft-review
-      7. Run npm run typecheck to verify compilation
+      6. If tests/{{app}}/{{app}}.spec.ts already exists, write the proposed diff to results/{{app}}/{{run}}/step6-write-spec/spec.diff
+      7. Overwrite tests/{{app}}/{{app}}.spec.ts automatically after Step 5 approval; do not request another human approval in Step 6
+      8. Add/update provenance header: // @provenance runId={{run}} approvedAt=<now> gate=test-draft-review source=tests/{{app}}/{{app}}.feature
+      9. Run npm run typecheck to verify compilation
 
   - step: run-fix
     command_template: |

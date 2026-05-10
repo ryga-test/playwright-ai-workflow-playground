@@ -65,7 +65,7 @@ steps:
     name: Draft Test Scenarios
     order: 5
     gated: true
-    description: Generate GWT-style test scenarios from app knowledge and page objects
+    description: Generate Gherkin feature scenarios and scenario coverage from app knowledge and page objects
     inputs:
       - name: page-object-draft
         path: results/{{app}}/{{run}}/step4-draft-page-object/page-object.draft.ts
@@ -74,23 +74,32 @@ steps:
         path: knowledge/{{app}}/knowledge.md
         format: markdown
     outputs:
-      - name: test-draft
-        path: results/{{app}}/{{run}}/step5-draft-tests/test-draft.md
+      - name: test-scenarios
+        path: results/{{app}}/{{run}}/step5-draft-tests/test-scenarios.feature
+        format: gherkin
+      - name: scenario-coverage
+        path: results/{{app}}/{{run}}/step5-draft-tests/scenario-coverage.md
         format: markdown
 
   - id: write-spec
     name: Write Playwright Spec
     order: 6
     gated: false
-    description: Generate Playwright spec from approved test scenarios and page objects
+    description: Promote approved feature file and generate Playwright spec from approved scenarios and page objects
     inputs:
-      - name: test-draft
-        path: results/{{app}}/{{run}}/step5-draft-tests/test-draft.md
+      - name: test-scenarios
+        path: results/{{app}}/{{run}}/step5-draft-tests/test-scenarios.feature
+        format: gherkin
+      - name: scenario-coverage
+        path: results/{{app}}/{{run}}/step5-draft-tests/scenario-coverage.md
         format: markdown
       - name: page-object
         path: src/pages/{{app}}/{{app}}.page.ts
         format: typescript
     outputs:
+      - name: approved-feature
+        path: tests/{{app}}/{{app}}.feature
+        format: gherkin
       - name: spec
         path: tests/{{app}}/{{app}}.spec.ts
         format: typescript

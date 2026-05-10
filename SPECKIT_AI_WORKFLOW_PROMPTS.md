@@ -103,7 +103,7 @@ Architecture guidance:
   - Step 2 (discover): Playwright ARIA snapshot (YAML), selector candidates (Markdown with locator priority annotations)
   - Step 3 (extract selectors): normalized selector list (Markdown)
   - Step 4 (draft page object): TypeScript page object draft → GATED — human review required
-  - Step 5 (draft tests): GWT Markdown test scenarios → GATED — human review required
+  - Step 5 (draft tests): Gherkin `.feature` scenarios plus scenario coverage → GATED — human review required
   - Step 6 (write spec): TypeScript Playwright spec (only after both gates approved)
   - Step 7 (run/fix): test run report (Markdown with pass/fail/triage), HTML report, traces, screenshots
   - Step 8 (summarize): pipeline summary (Markdown), knowledge file updates (append under ## Run <run-id> headings)

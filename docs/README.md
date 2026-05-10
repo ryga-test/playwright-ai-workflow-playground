@@ -26,7 +26,8 @@ If you only want a basic Playwright starter, this is probably more machinery tha
 - An 8-step AI pipeline defined in `workflows/manifest.yaml`
 - pi slash-command prompts in `.pi/prompts/`
 - A pi pipeline runner extension in `.pi/extensions/pipeline-runner/`
-- Human approval gates for generated page objects and test drafts
+- Human approval gates for generated page objects and Gherkin test scenario drafts
+- Gherkin `.feature` scenario sources with scenario coverage mapping
 - Per-run artifacts under `results/<app>/<run>/`
 - App knowledge files under `knowledge/<app>/`
 - Automated six-run pruning for stale knowledge, with archive and audit log
@@ -108,7 +109,7 @@ When the run finishes, you stay on the pipeline branch so you can inspect the di
 | 2 | Discover UI | Playwright ARIA snapshot and selector candidates | No |
 | 3 | Extract selectors | Normalized selector list with locator priority | No |
 | 4 | Draft page object | TypeScript page object draft | Yes |
-| 5 | Draft tests | GWT-style test scenarios | Yes |
+| 5 | Draft tests | Gherkin `.feature` scenarios + scenario coverage | Yes |
 | 6 | Write spec | Playwright spec in `tests/<app>/` | No |
 | 7 | Run and fix | Test report, Playwright report, traces, videos | No |
 | 8 | Summarize | Pipeline summary, knowledge updates, active summary, and pruning audit | No |
@@ -127,16 +128,18 @@ results/example/2026-05-01T123456Z/
 ├── step2-discover/selector-candidates.md
 ├── step3-extract-selectors/normalized-selectors.md
 ├── step4-draft-page-object/page-object.draft.ts
-├── step5-draft-tests/test-draft.md
+├── step5-draft-tests/test-scenarios.feature
+├── step5-draft-tests/scenario-coverage.md
 └── step7-run-fix/
     ├── test-report.md
     ├── playwright-report/
     └── <test-name>.webm
 ```
 
-Approved generated code lands in the normal source tree:
+Approved generated artifacts land in the normal source tree:
 
 - `src/pages/<app>/<app>.page.ts`
+- `tests/<app>/<app>.feature`
 - `tests/<app>/<app>.spec.ts`
 - `knowledge/<app>/knowledge.md`
 - `knowledge/<app>/rules.md`
@@ -148,6 +151,19 @@ Step 8 also maintains the active knowledge set:
 - `knowledge/<app>/prune-log.md`, evidence for every automated prune
 
 Promoted files include a provenance header with the run ID, approval timestamp, and gate name.
+
+## Gherkin scenario guidelines
+
+Step 5 drafts Gherkin `.feature` files as the human-approved behavioral source. These files are review/design artifacts: the project does **not** use a Cucumber runtime. Step 6 generates normal `@playwright/test` TypeScript specs from approved scenarios.
+
+The local rules live in `docs/gherkin-guidelines.md`. They are adapted from Automation Panda's [Gherkin Guidelines for AI](https://github.com/AutomationPanda/gherkin-guidelines-for-ai) — tribute and thanks to the original project for the guidance.
+
+Key rules:
+
+- write user-goal scenarios, not UI mechanics
+- avoid Playwright APIs, page-object method names, CSS, and XPath in Gherkin
+- map every scenario or scenario-outline example row in `scenario-coverage.md`
+- preserve traceability from approved scenarios to generated Playwright tests
 
 ## How knowledge stays current
 
@@ -219,7 +235,7 @@ workflows/manifest.yaml  Agent-neutral 8-step workflow
 .pi/extensions/          pi automation extensions
 src/pages/<app>/         Approved page objects
 src/fixtures/            Shared Playwright fixtures
-tests/<app>/             Generated Playwright specs
+tests/<app>/             Approved .feature files and generated Playwright specs
 knowledge/<app>/         Active knowledge, pruning archive, and audit log
 results/<app>/           Per-run artifacts, gitignored
 contracts/               YAML schemas
@@ -250,3 +266,5 @@ Use the same run ID for every step.
 - Implementation plan: `specs/001-ai-e2e-framework/plan.md`
 - Design decisions: `DESIGN_DECISIONS.md`
 - pi adapter notes: `adapters/pi/README.md`
+- Gherkin guidelines: `docs/gherkin-guidelines.md`
+- Gherkin source ADR: `docs/adr/0001-gherkin-as-approved-scenario-source.md`

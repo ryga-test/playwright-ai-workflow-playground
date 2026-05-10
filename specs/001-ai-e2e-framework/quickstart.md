@@ -127,8 +127,8 @@ Output (after approval): `src/pages/example/example.page.ts` (with provenance he
 /pipeline-draft-tests example <run>
 ```
 
-Generates GWT-style test scenarios. **Review and approve like Step 4.**
-Output (after approval): `results/example/<run>/step5-draft-tests/test-draft.md`
+Generates Gherkin `.feature` scenarios and `scenario-coverage.md`. **Review and approve like Step 4.**
+Outputs: `results/example/<run>/step5-draft-tests/test-scenarios.feature`, `results/example/<run>/step5-draft-tests/scenario-coverage.md`; approved feature promoted to `tests/example/example.feature`.
 
 ### Step 6: Write Playwright Spec
 
