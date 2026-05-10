@@ -48,7 +48,7 @@ capabilities:
       2. Generate a TypeScript page object class using @playwright/test Page
       3. Use the normalized selectors with proper locator methods
       4. Write draft to results/{{app}}/{{run}}/step4-draft-page-object/page-object.draft.ts
-      5. Present the draft for human review — do NOT promote to src/pages/{{app}}/ until approved
+      5. Present the draft for human review — do NOT promote to src/pages/{{app}}/ until the human runs /pipeline-continue
 
   - step: draft-tests
     gated: true
@@ -62,8 +62,8 @@ capabilities:
       4. Generate results/{{app}}/{{run}}/step5-draft-tests/scenario-coverage.md mapping each scenario or scenario outline example row to discovered interactive elements; list intentionally uncovered elements with rationale
       5. Validate before review: Feature present; at least one Scenario or Scenario Outline; Given/When/Then used; no CSS/XPath, Playwright locators, page-object method names, or implementation mechanics in Gherkin
       6. Optional: write results/{{app}}/{{run}}/step5-draft-tests/deferred-scenarios.md only for valid-but-not-automatable scenarios
-      7. Present the feature file and coverage mapping for human review — do NOT proceed to spec writing until approved
-      8. On approval, promote to tests/{{app}}/{{app}}.feature with Gherkin comment provenance (# Run-ID, # Approved-at, # Approved-step: test-draft-review). If an approved feature already exists, present a diff and require explicit re-approval before overwriting.
+      7. Present the feature file and coverage mapping for human review — do NOT proceed to spec writing until the human runs /pipeline-continue
+      8. On /pipeline-continue approval, promote to tests/{{app}}/{{app}}.feature with Gherkin comment provenance (# Run-ID, # Approved-at, # Approved-step: test-draft-review). If an approved feature already exists, present a diff and require explicit re-approval before overwriting.
 
   - step: write-spec
     command_template: |

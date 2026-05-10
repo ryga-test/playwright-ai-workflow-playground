@@ -22,7 +22,7 @@
 ## Human Review / Approval Gates
 
 - [x] CHK009 — Are the specific pipeline steps that require human approval (gated steps) explicitly listed in the functional requirements? [Completeness — Resolved: FR-020 lists both gated steps: draft page object and draft tests]
-- [x] CHK010 — Is the exact mechanism for a human to signal "approved" specified unambiguously? [Clarity — Resolved: FR-021 requires the exact word "approved"]
+- [x] CHK010 — Is the exact mechanism for a human to approve a gate specified unambiguously? [Clarity — Resolved: FR-021 requires `/pipeline-continue`, which sends `approved` and advances the pipeline]
 - [x] CHK011 — Is the rejection/re-draft loop formally specified: maximum re-draft attempts, how rejection reasons propagate, and what happens if no convergence? [Completeness — Resolved: FR-021 — max 3 re-drafts, blocked state with unresolved feedback recorded]
 - [x] CHK012 — Are requirements defined for what the AI agent must present to the human during review? [Clarity — Resolved: FR-021 — full draft artifact text inline in chat session]
 

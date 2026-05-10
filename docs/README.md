@@ -83,13 +83,13 @@ Non-gated steps continue automatically. The pipeline pauses twice:
 1. Step 4, page object draft review
 2. Step 5, test scenario draft review
 
-At each gate, read the draft in chat and reply with:
+At each gate, read the draft in chat and approve it with:
 
 ```text
-approved
+/pipeline-continue
 ```
 
-or give feedback. The agent can re-draft up to 3 times.
+or give feedback in chat. The agent can re-draft up to 3 times.
 
 Useful extension commands:
 

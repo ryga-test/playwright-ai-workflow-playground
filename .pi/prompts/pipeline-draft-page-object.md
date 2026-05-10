@@ -14,11 +14,11 @@ Draft one shared app-level TypeScript page object:
 6. Use normalized selectors with proper locator methods (`getByRole`, `getByLabel`, etc.).
 7. Write the draft to `results/$1/$2/step4-draft-page-object/page-object.draft.ts`.
 8. **Present the full draft text inline** for human review.
-9. **Do NOT write to `src/pages/$1/` until the human replies `approved`.**
+9. **Do NOT write to `src/pages/$1/` until the human runs `/pipeline-continue`.**
 
 **Approval flow**:
-- Human replies `approved` → promote to `src/pages/$1/$1.page.ts` with provenance header:
+- Human runs `/pipeline-continue` after review; the pipeline runner sends `approved` to this step → promote to `src/pages/$1/$1.page.ts` with provenance header:
   `// @provenance runId=$2 approvedAt=<current-ISO-timestamp> gate=page-object-review`
-- Human provides feedback → re-draft incorporating the feedback (max 3 attempts)
+- Human provides feedback in chat instead of running `/pipeline-continue` → re-draft incorporating the feedback (max 3 attempts)
 - If 3 attempts without approval → mark step blocked and record unresolved feedback
 - Draft copy stays in `results/` as immutable run record

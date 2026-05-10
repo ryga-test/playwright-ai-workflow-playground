@@ -78,7 +78,7 @@ before they are promoted into source files. The review mechanism for v1 is:
 
 1. AI agent writes draft artifacts to `results/<app>/<run>/step-*/`
 2. AI agent presents the draft to the human and requests approval in chat
-3. Human reads the draft and replies "approved" or gives change feedback
+3. Human reads the draft and runs `/pipeline-continue` to approve the current gate, or gives change feedback
 4. Only after explicit human approval may the artifact be promoted to source folders
    (e.g., `src/pages/<app>/`, `tests/<app>/`)
 

@@ -23,10 +23,10 @@ Draft GWT-style test scenarios per selected flow:
    - no forbidden action is included
    - flow source path appears as stable Gherkin provenance comment
 9. **Present every per-flow feature draft and coverage summary inline** for human review.
-10. **Do NOT proceed to spec writing until the human replies `approved`.**
+10. **Do NOT proceed to spec writing until the human runs `/pipeline-continue`.**
 
 **Approval flow**:
-- Human replies `approved` → promote each approved feature to `tests/$1/<flow-id>.feature` with Gherkin comment provenance (`# Source-flow`, `# Run-ID`, `# Approved-at`, `# Approved-step: test-draft-review`).
-- Human provides feedback → re-draft affected flow files incorporating the feedback (max 3 attempts).
+- Human runs `/pipeline-continue` after review; the pipeline runner sends `approved` to this step → promote each approved feature to `tests/$1/<flow-id>.feature` with Gherkin comment provenance (`# Source-flow`, `# Run-ID`, `# Approved-at`, `# Approved-step: test-draft-review`).
+- Human provides feedback in chat instead of running `/pipeline-continue` → re-draft affected flow files incorporating the feedback (max 3 attempts).
 - If one flow cannot be approved after 3 attempts, mark that flow failed/blocked and continue other approved flows when safe.
 - Draft copies stay in `results/` as immutable run record.

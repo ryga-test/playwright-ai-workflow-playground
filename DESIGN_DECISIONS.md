@@ -39,7 +39,7 @@ The framework architecture leaves room for future agents (openCode, Claude, Copi
 **Choice:** Manual human-in-the-loop via chat review.
 
 - AI agent writes artifact drafts and tells the human "review this file"
-- Human reads the file, says "approved" or gives change feedback in chat
+- Human reads the file, runs `/pipeline-continue` to approve the current gate, or gives change feedback in chat
 - No lock file automation, no SHA-256 hashing, no drift detection in v1
 - `.approval-lock.json` schema is defined (from intelli-park-e2e pi adapter spec) so automation can be dropped in later
 

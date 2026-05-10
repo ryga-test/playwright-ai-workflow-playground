@@ -31,8 +31,8 @@ The pi agent resolves these placeholders from context:
 Steps 4 (draft page object) and 5 (draft tests) require human approval:
 
 1. AI presents the draft artifact inline in the chat session.
-2. Human replies with the exact word `approved` to promote the artifact.
-3. Or provides change feedback as free-form text — AI re-drafts (max 3 attempts).
+2. Human runs `/pipeline-continue` to approve the current gate. The runner sends `approved` to the agent, promotes the artifact, and advances to the next step.
+3. Or the human provides change feedback as free-form text — AI re-drafts (max 3 attempts).
 4. On approval, the page object is promoted to its source directory with a provenance header:
    `// @provenance runId=<run> approvedAt=<ISO> gate=<gate-name>`
 
