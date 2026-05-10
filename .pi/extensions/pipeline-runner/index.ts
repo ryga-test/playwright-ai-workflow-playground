@@ -7,7 +7,7 @@
  * 5: draft tests) for human approval. Non-gated steps chain automatically.
  *
  * Commands:
- *   /pipeline-run <app>    — Start pipeline from step 1 (creates branch, switches)
+ *   /pipeline-run <app> [FLOW_IDS] — Start pipeline from step 1 (creates branch, switches)
  *   /pipeline-continue     — Send "approved" to agent and resume after gate
  *   /pipeline-status       — Show current pipeline progress
  *   /pipeline-reset        — Reset / abort, switch back to original branch, delete pipeline branch
@@ -31,6 +31,7 @@ import * as path from "node:path";
 
 interface PipelineState {
   app: string;
+  flowIds: string | null;
   runId: string | null;
   currentStep: number; // 0 = not started, 1-8 = active step
   status: "running" | "paused_gate" | "complete";
@@ -55,6 +56,22 @@ const TOTAL_STEPS = 8;
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Generate ISO 8601 run ID: YYYY-MM-DDTHHMMSSZ */
+function parsePipelineRunArgs(args: string): { app: string; flowIds: string | null } {
+  const parts = args.trim().split(/\s+/).filter(Boolean);
+  const app = parts[0] ?? "";
+  const flowArg = parts.slice(1).join(" ").trim();
+  const flowIds = flowArg
+    ? flowArg.replace(/^FLOW_IDS=/, "").replace(/^--flows=/, "")
+    : null;
+  return { app, flowIds: flowIds || null };
+}
+
+function flowContextLines(app: string, flowIds: string | null): string {
+  return flowIds
+    ? `FLOW_IDS filter: ${flowIds}\nSelected flow files must be resolved from apps/${app}/flows/ and processed in this exact order.\n`
+    : `FLOW_IDS filter: <none>\nProcess all validated flow files under apps/${app}/flows/ in sorted flow ID order when present.\n`;
+}
+
 function generateRunId(): string {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -163,14 +180,18 @@ export default function (pi: ExtensionAPI) {
       // Step 1: pre-generated runId; tell the agent to use it directly
       message =
         `/pipeline-resolve ${app} ${runId}\n\n` +
+        flowContextLines(app, pipeline.flowIds) +
         `Resolve inputs for the ${app} application:\n` +
         `1. Load and validate \`apps/${app}/profile.yaml\`\n` +
         `2. Read the profile's \`baseUrlEnvVar\` field and check that env var is set in \`.env\`\n` +
         `3. The run ID is already generated: **${runId}**. Use this exact value.\n` +
-        `4. Write run metadata to \`results/${app}/${runId}/step1-resolve/run-metadata.json\` with \`app\`, \`runId\`, \`baseUrl\`, profile validation status\n` +
-        `5. Report the run ID clearly — it will be needed for all subsequent steps`;
+        `4. Prefer running \`node scripts/resolve-flows.js ${app} ${runId} ${pipeline.flowIds ?? ""}\` to validate profile/flows and write artifacts\n` +
+        `5. Validate all app flow files when apps/${app}/flows/ exists, then apply FLOW_IDS filtering\n` +
+        `6. Write run metadata to \`results/${app}/${runId}/step1-resolve/run-metadata.json\` with \`app\`, \`runId\`, \`baseUrl\`, profile validation status, and selected flow IDs\n` +
+        `7. Write flow inventory to \`results/${app}/${runId}/step1-resolve/flow-inventory.json\` and per-flow resolved test data under \`results/${app}/${runId}/flows/<flow-id>/resolved-test-data.json\`\n` +
+        `8. Report the run ID and selected flows clearly — they will be needed for all subsequent steps`;
     } else {
-      message = `/${stepName} ${app} ${runId}`;
+      message = `/${stepName} ${app} ${runId}\n\n${flowContextLines(app, pipeline.flowIds)}`;
     }
 
     pipeline.currentStep = step;
@@ -189,11 +210,11 @@ export default function (pi: ExtensionAPI) {
 
   pi.registerCommand("pipeline-run", {
     description:
-      "Run the E2E test pipeline for an app (pauses at gated steps 4 & 5). Each run creates its own git branch and switches to it.",
+      "Run the E2E test pipeline for an app and optional FLOW_IDS filter (pauses at gated steps 4 & 5). Each run creates its own git branch and switches to it.",
     handler: async (args, ctx) => {
-      const app = args.trim();
+      const { app, flowIds } = parsePipelineRunArgs(args);
       if (!app) {
-        ctx.ui.notify("Usage: /pipeline-run <app>", "error");
+        ctx.ui.notify("Usage: /pipeline-run <app> [FLOW_IDS=id-a,id-b]", "error");
         return;
       }
 
@@ -247,6 +268,7 @@ export default function (pi: ExtensionAPI) {
         runId,
         currentStep: 0,
         status: "running",
+        flowIds,
         gateApprovals: { step4: false, step5: false },
         originalBranch: origBranch,
       };
@@ -336,6 +358,7 @@ export default function (pi: ExtensionAPI) {
 
       const lines = [
         `Pipeline: ${pipeline.app}`,
+        `Flows:   ${pipeline.flowIds ?? "<all>"}`,
         `Run ID:  ${pipeline.runId ?? "(pending)"}`,
         `Branch:  pipeline/${pipeline.app}/${pipeline.runId ?? "?"}`,
         `Original: ${pipeline.originalBranch ?? "(unknown)"}`,
@@ -498,6 +521,7 @@ export default function (pi: ExtensionAPI) {
           pipeline = data;
           ctx.ui.notify(
             `📋 Restored pipeline: "${pipeline.app}" at step ${pipeline.currentStep}/8 (${pipeline.status})\n` +
+              `   Flows: ${pipeline.flowIds ?? "<all>"}\n` +
               `   Branch: pipeline/${pipeline.app}/${pipeline.runId ?? "?"}\n` +
               `   Original: ${pipeline.originalBranch ?? "(unknown)"}`,
             "info",

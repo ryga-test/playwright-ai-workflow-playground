@@ -73,9 +73,10 @@ The easiest path is the pipeline runner extension:
 
 ```text
 /pipeline-run example
+/pipeline-run automation-in-testing FLOW_IDS=room-search,contact-message
 ```
 
-That command creates a run ID, creates a git branch named `pipeline/example/<runId>`, switches to it, and starts the 8-step workflow.
+That command creates a run ID, creates a git branch named `pipeline/<app>/<runId>`, switches to it, and starts the 8-step workflow. If `apps/<app>/flows/` exists, the pipeline validates all flow files, applies optional `FLOW_IDS`, keeps discovery/page objects shared, and drafts/writes/runs tests per selected flow.
 
 Non-gated steps continue automatically. The pipeline pauses twice:
 
@@ -94,7 +95,7 @@ Useful extension commands:
 
 | Command | What it does |
 |---|---|
-| `/pipeline-run <app>` | Starts a full pipeline run on a new git branch |
+| `/pipeline-run <app> [FLOW_IDS=id-a,id-b]` | Starts a full pipeline run on a new git branch, optionally filtered to selected flows |
 | `/pipeline-continue` | Sends `approved` at the current gate and advances |
 | `/pipeline-status` | Shows current run state |
 | `/pipeline-reset` | Aborts the run, switches back, and deletes the pipeline branch |
@@ -105,14 +106,14 @@ When the run finishes, you stay on the pipeline branch so you can inspect the di
 
 | # | Step | Output | Human gate |
 |---|---|---|:---:|
-| 1 | Resolve inputs | Validated app profile and run metadata | No |
-| 2 | Discover UI | Playwright ARIA snapshot and selector candidates | No |
-| 3 | Extract selectors | Normalized selector list with locator priority | No |
-| 4 | Draft page object | TypeScript page object draft | Yes |
-| 5 | Draft tests | Gherkin `.feature` scenarios + scenario coverage | Yes |
-| 6 | Write spec | Playwright spec in `tests/<app>/` | No |
-| 7 | Run and fix | Test report, Playwright report, traces, videos | No |
-| 8 | Summarize | Pipeline summary, knowledge updates, active summary, and pruning audit | No |
+| 1 | Resolve inputs | Validated app profile, run metadata, flow inventory, resolved test data | No |
+| 2 | Discover UI | Shared per-path/merged Playwright ARIA snapshots and selector candidates | No |
+| 3 | Extract selectors | Normalized selector list with locator priority and path/flow provenance | No |
+| 4 | Draft page object | Shared TypeScript page object draft | Yes |
+| 5 | Draft tests | Per-flow Gherkin `.feature` scenarios + scenario coverage | Yes |
+| 6 | Write spec | Per-flow Playwright specs in `tests/<app>/` | No |
+| 7 | Run and fix | Per-flow test reports, aggregate report, Playwright report, traces, videos | No |
+| 8 | Summarize | Pipeline summary, flow summaries, knowledge updates, active summary, and pruning audit | No |
 
 Selector priority is role, test id, label, placeholder, text, then CSS or XPath as a last resort.
 
@@ -124,12 +125,17 @@ Each run writes artifacts under `results/<app>/<run>/`:
 results/example/2026-05-01T123456Z/
 ├── pipeline-summary.md
 ├── step1-resolve/run-metadata.json
-├── step2-discover/snapshot.yaml
+├── step1-resolve/flow-inventory.json
+├── step2-discover/paths/<path-label>.snapshot.yaml
+├── step2-discover/snapshot.merged.yaml
 ├── step2-discover/selector-candidates.md
 ├── step3-extract-selectors/normalized-selectors.md
 ├── step4-draft-page-object/page-object.draft.ts
-├── step5-draft-tests/test-scenarios.feature
-├── step5-draft-tests/scenario-coverage.md
+├── step5-draft-tests/test-drafts-index.md
+├── flows/<flow-id>/resolved-test-data.json
+├── flows/<flow-id>/test-scenarios.feature
+├── flows/<flow-id>/scenario-coverage.md
+├── flows/<flow-id>/flow-summary.md
 └── step7-run-fix/
     ├── test-report.md
     ├── playwright-report/
@@ -139,8 +145,8 @@ results/example/2026-05-01T123456Z/
 Approved generated artifacts land in the normal source tree:
 
 - `src/pages/<app>/<app>.page.ts`
-- `tests/<app>/<app>.feature`
-- `tests/<app>/<app>.spec.ts`
+- `tests/<app>/<flow-id>.feature` for flow-based apps, or `tests/<app>/<app>.feature` in legacy app-level mode
+- `tests/<app>/<flow-id>.spec.ts` for flow-based apps, or `tests/<app>/<app>.spec.ts` in legacy app-level mode
 - `knowledge/<app>/knowledge.md`
 - `knowledge/<app>/rules.md`
 
@@ -181,6 +187,8 @@ After a pipeline run, or after editing generated tests:
 
 ```bash
 npx playwright test tests/example/
+APP_NAME=automation-in-testing FLOW_IDS=room-search npm test
+APP_NAME=automation-in-testing npm test
 npm run test:headed
 npm run test:debug
 npm run report
@@ -267,4 +275,5 @@ Use the same run ID for every step.
 - Design decisions: `DESIGN_DECISIONS.md`
 - pi adapter notes: `adapters/pi/README.md`
 - Gherkin guidelines: `docs/gherkin-guidelines.md`
+- Multi-flow pipeline design: `docs/multi-flow-pipeline.md`
 - Gherkin source ADR: `docs/adr/0001-gherkin-as-approved-scenario-source.md`

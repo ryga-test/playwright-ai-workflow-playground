@@ -11,7 +11,8 @@
     "test:headed": "npx playwright test --headed",
     "test:debug": "npx playwright test --debug",
     "report": "node scripts/open-report.js",
-    "dashboard": "node scripts/generate-dashboard-data.js --open"
+    "dashboard": "node scripts/generate-dashboard-data.js --open",
+    "resolve-flows": "node scripts/resolve-flows.js"
   },
   "dependencies": {
     "@playwright/test": "latest",

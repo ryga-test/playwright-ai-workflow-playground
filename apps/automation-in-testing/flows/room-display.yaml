@@ -1,0 +1,25 @@
+version: "1.0"
+id: room-display
+name: Room display
+goal: Verify a public visitor can see each public room type and its booking option without starting checkout.
+startPath: "/#rooms"
+tags:
+  - generated
+auth:
+  required: false
+sideEffects: none
+allowedActions:
+  - navigate
+  - assert
+forbiddenActions:
+  - create-booking
+  - complete-checkout
+successCriteria:
+  - Visitor sees Single room option
+  - Visitor sees Double room option
+  - Visitor sees Suite room option
+outOfScope:
+  - Clicking room Book now links
+  - Completing a room reservation
+knowledgeRefs:
+  - knowledge/automation-in-testing/rules.md

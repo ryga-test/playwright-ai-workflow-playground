@@ -1,0 +1,42 @@
+# Flow Schema v1
+# Contract for apps/<app>/flows/<flow-id>.yaml
+
+version: "1.0"
+id: room-search
+name: Room search
+goal: >
+  Verify a public visitor can choose stay dates, check availability,
+  and see room booking options without completing a reservation.
+startPath: "/#booking"
+tags:
+  - smoke
+auth:
+  required: false
+sideEffects: none
+allowedActions:
+  - navigate
+  - fill-form
+  - submit-query
+  - assert
+forbiddenActions:
+  - create-booking
+  - complete-checkout
+successCriteria:
+  - Visitor sees available room options
+outOfScope:
+  - Completing a room reservation
+knowledgeRefs:
+  - knowledge/automation-in-testing/rules.md
+notes: Extra human guidance for the AI generator.
+testData:
+  checkIn:
+    strategy: relative-date
+    offsetDays: 7
+    format: DD/MM/YYYY
+  checkOut:
+    strategy: relative-date
+    offsetDays: 8
+    format: DD/MM/YYYY
+  contactEmail:
+    strategy: synthetic-email
+    domain: example.test

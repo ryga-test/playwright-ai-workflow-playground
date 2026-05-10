@@ -1,0 +1,26 @@
+version: "1.0"
+id: section-navigation
+name: Section navigation
+goal: Verify a public visitor can navigate to public page sections from the header navigation.
+startPath: "/"
+tags:
+  - generated
+auth:
+  required: false
+sideEffects: none
+allowedActions:
+  - navigate
+  - click-link
+  - assert
+forbiddenActions:
+  - login
+successCriteria:
+  - Visitor can open Rooms
+  - Visitor can open Booking
+  - Visitor can open Location
+  - Visitor can open Contact
+outOfScope:
+  - Admin navigation
+  - Booking creation
+knowledgeRefs:
+  - knowledge/automation-in-testing/rules.md

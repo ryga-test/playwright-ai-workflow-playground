@@ -2,123 +2,55 @@ adapter: pi
 
 # Each pipeline run creates its own git branch (pipeline/<app>/<runId>)
 # and switches to it. All pipeline artifacts are produced on that branch.
+# Optional FLOW_IDS can select one or more app flow files for the full run.
 
 capabilities:
   - step: resolve
     command_template: |
       /pipeline-resolve {{app}} {{run}}
-      
-      Resolve inputs for the {{app}} application using the pre-generated run ID **{{run}}**:
-      1. Load and validate apps/{{app}}/profile.yaml
-      2. Check that {{baseUrlEnvVar}} is set in .env
-      3. Use the exact run ID: **{{run}}**. Do not generate a new one.
-      4. Write run metadata to results/{{app}}/{{run}}/step1-resolve/run-metadata.json
+      FLOW_IDS filter: {{flowIds}}
+      Validate profile, env vars, all app flow files, selected FLOW_IDS, and write run metadata plus flow inventory.
 
   - step: discover
     command_template: |
       /pipeline-discover {{app}} {{run}}
-      
-      Discover the UI of the {{app}} application:
-      1. Navigate to the app's base URL (from {{baseUrlEnvVar}})
-      2. Capture a full Playwright ARIA snapshot
-      3. Write snapshot to results/{{app}}/{{run}}/step2-discover/snapshot.yaml
-      4. Identify all interactive elements and list as selector candidates
-      5. Write selector candidates to results/{{app}}/{{run}}/step2-discover/selector-candidates.md
-      
-      Locator priority: getByRole > getByTestId > getByLabel > getByPlaceholder > getByText > CSS/XPath
+      FLOW_IDS filter: {{flowIds}}
+      Discover all unique selected flow start paths, write per-path snapshots, merged snapshot, and selector candidates with path provenance.
 
   - step: extract-selectors
     command_template: |
       /pipeline-extract-selectors {{app}} {{run}}
-      
-      Extract and normalize selectors:
-      1. Read results/{{app}}/{{run}}/step2-discover/snapshot.yaml
-      2. Read results/{{app}}/{{run}}/step2-discover/selector-candidates.md
-      3. Normalize selectors using Playwright locator priority
-      4. Annotate each selector with its priority level and rationale
-      5. Write normalized selectors to results/{{app}}/{{run}}/step3-extract-selectors/normalized-selectors.md
+      FLOW_IDS filter: {{flowIds}}
+      Normalize selectors from merged/per-path discovery artifacts with locator priority, path provenance, and flow provenance.
 
   - step: draft-page-object
     gated: true
     command_template: |
       /pipeline-draft-page-object {{app}} {{run}}
-      
-      Draft a TypeScript page object:
-      1. Read results/{{app}}/{{run}}/step3-extract-selectors/normalized-selectors.md
-      2. Generate a TypeScript page object class using @playwright/test Page
-      3. Use the normalized selectors with proper locator methods
-      4. Write draft to results/{{app}}/{{run}}/step4-draft-page-object/page-object.draft.ts
-      5. Present the draft for human review — do NOT promote to src/pages/{{app}}/ until approved
+      FLOW_IDS filter: {{flowIds}}
+      Draft one shared app-level page object covering all selected flows. Present draft for human review; promote only after approval.
 
   - step: draft-tests
     gated: true
     command_template: |
       /pipeline-draft-tests {{app}} {{run}}
-      
-      Draft Gherkin test scenarios:
-      1. Read results/{{app}}/{{run}}/step4-draft-page-object/page-object.draft.ts
-      2. Read knowledge/{{app}}/knowledge.md and docs/gherkin-guidelines.md for app context and scenario rules
-      3. Generate user-goal-focused Gherkin scenarios in results/{{app}}/{{run}}/step5-draft-tests/test-scenarios.feature
-      4. Generate results/{{app}}/{{run}}/step5-draft-tests/scenario-coverage.md mapping each scenario or scenario outline example row to discovered interactive elements; list intentionally uncovered elements with rationale
-      5. Validate before review: Feature present; at least one Scenario or Scenario Outline; Given/When/Then used; no CSS/XPath, Playwright locators, page-object method names, or implementation mechanics in Gherkin
-      6. Optional: write results/{{app}}/{{run}}/step5-draft-tests/deferred-scenarios.md only for valid-but-not-automatable scenarios
-      7. Present the feature file and coverage mapping for human review — do NOT proceed to spec writing until approved
-      8. On approval, promote to tests/{{app}}/{{app}}.feature with Gherkin comment provenance (# Run-ID, # Approved-at, # Approved-step: test-draft-review). If an approved feature already exists, present a diff and require explicit re-approval before overwriting.
+      FLOW_IDS filter: {{flowIds}}
+      Draft separate Gherkin feature and coverage files per selected flow. Present all flow drafts for human review; promote approved drafts to tests/{{app}}/<flow-id>.feature only after approval.
 
   - step: write-spec
     command_template: |
       /pipeline-write-spec {{app}} {{run}}
-      
-      Write the Playwright spec:
-      1. Read approved feature file from tests/{{app}}/{{app}}.feature
-      2. Read scenario coverage from results/{{app}}/{{run}}/step5-draft-tests/scenario-coverage.md
-      3. Read approved page object from src/pages/{{app}}/{{app}}.page.ts
-      4. Re-validate the approved feature and coverage mapping; stop and ask for correction if invalid or if any scenario/example row lacks coverage mapping
-      5. Generate a complete Playwright spec using @playwright/test with one generated test per approved Scenario or Scenario Outline example row, preserving traceability in the test title/comment and appending allowed Gherkin tags to the Playwright test title
-         IMPORTANT: Import test and expect from @fixtures/base.fixture.js
-         (not from @playwright/test) to enable screencast video recording.
-         Example import: import { test, expect } from '@fixtures/base.fixture.js';
-      6. If tests/{{app}}/{{app}}.spec.ts already exists, write the proposed diff to results/{{app}}/{{run}}/step6-write-spec/spec.diff
-      7. Overwrite tests/{{app}}/{{app}}.spec.ts automatically after Step 5 approval; do not request another human approval in Step 6
-      8. Add/update provenance header: // @provenance runId={{run}} approvedAt=<now> gate=test-draft-review source=tests/{{app}}/{{app}}.feature
-      9. Run npm run typecheck to verify compilation
+      FLOW_IDS filter: {{flowIds}}
+      Generate one Playwright spec per approved selected flow at tests/{{app}}/<flow-id>.spec.ts. Use shared page object and @fixtures/base.fixture.js. Run npm run typecheck.
 
   - step: run-fix
     command_template: |
       /pipeline-run-fix {{app}} {{run}}
-      
-      Run tests and fix script bugs (with screencast video proof):
-      1. Set env var PLAYWRIGHT_RUN_ID={{run}} to enable screencast recording
-      2. Run: PLAYWRIGHT_RUN_ID={{run}} npx playwright test tests/{{app}}/ --reporter=html
-      3. The base fixture auto-records per-test screencast video with action
-         annotations (red dots + labels on clicks/fills) into:
-         results/{{app}}/{{run}}/step7-run-fix/<test-name>.webm
-      4. For each failure, classify as:
-         - script_bug: fix the spec code
-         - app_bug: report only, do not modify
-         - blocker: report and mark step blocked
-      5. Fix script bugs and re-run (max 3 fix cycles)
-      6. Write test report to results/{{app}}/{{run}}/step7-run-fix/test-report.md
-      7. Concatenate per-test screencast videos into a single
-         results/{{app}}/{{run}}/step7-run-fix/screencast.webm using ffmpeg
-      8. Ensure HTML report, traces, screenshots, and screencast video are in
-         results/{{app}}/{{run}}/step7-run-fix/
+      FLOW_IDS filter: {{flowIds}}
+      Run one Playwright command per selected flow using APP_NAME={{app}}, PLAYWRIGHT_RUN_ID={{run}}, and FLOW_IDS=<flow-id>. Triage failures and write aggregate plus per-flow reports.
 
   - step: summarize
     command_template: |
       /pipeline-summarize {{app}} {{run}}
-      
-      Summarize results and update knowledge:
-      1. Read results/{{app}}/{{run}}/step7-run-fix/test-report.md
-      2. Write pipeline summary to results/{{app}}/{{run}}/pipeline-summary.md
-      3. Extract verified observations (selectors that produced passing tests)
-      4. Append verified observations to knowledge/{{app}}/knowledge.md under ## Run {{run}}
-      5. Append actionable rules to knowledge/{{app}}/rules.md under ## Run {{run}}
-      6. Do NOT modify content under ## Human-Curated
-      7. Do NOT duplicate observations already present in the file
-      8. Apply knowledge/PRUNING_POLICY.md: if an entry has been contradicted
-         or superseded by the last six successful runs, move it from active
-         knowledge files to knowledge/{{app}}/archive.md and record the action
-         in knowledge/{{app}}/prune-log.md. Absence from recent runs alone is
-         not enough to prune.
-      9. Regenerate knowledge/{{app}}/current.md as the compact active summary
+      FLOW_IDS filter: {{flowIds}}
+      Write pipeline summary, ensure per-flow summaries exist, and append verified observations/rules to knowledge files.

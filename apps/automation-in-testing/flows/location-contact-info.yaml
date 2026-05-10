@@ -1,0 +1,23 @@
+version: "1.0"
+id: location-contact-info
+name: Location and contact info
+goal: Verify a public visitor can see location information and public contact details.
+startPath: "/#location"
+tags:
+  - generated
+auth:
+  required: false
+sideEffects: none
+allowedActions:
+  - navigate
+  - assert
+forbiddenActions:
+  - login
+successCriteria:
+  - Visitor sees map attribution links
+  - Visitor sees address, phone, and email details
+outOfScope:
+  - Map interaction
+  - Sending messages
+knowledgeRefs:
+  - knowledge/automation-in-testing/rules.md

@@ -118,3 +118,10 @@ The framework is "done" when:
 - Never commit secrets, `.env`, storage state, or generated `results/` artifacts
 - Git tracks source, not run output
 - `results/` is ignored via `.gitignore`
+
+### 15. Multi-flow Pipeline
+**Choice:** Flow definitions are per-app YAML intent files with strict validation, shared app-level discovery/page objects, and isolated per-flow test generation/execution.
+
+The pipeline will support multiple named user flows under `apps/<app>/flows/<flow-id>.yaml`. App discovery and page-object approval remain shared, while Gherkin drafts, Playwright specs, execution artifacts, and summaries are flow-specific. v1 supports public, no-side-effect flows only and fail-fasts on authenticated, reversible, or destructive flows.
+
+Full decision details live in `docs/multi-flow-pipeline.md`.

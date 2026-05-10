@@ -1,0 +1,22 @@
+version: "1.0"
+id: policy-links
+name: Policy links
+goal: Verify a public visitor can see policy links and their href values without navigating away.
+startPath: "/"
+tags:
+  - generated
+auth:
+  required: false
+sideEffects: none
+allowedActions:
+  - navigate
+  - assert
+forbiddenActions:
+  - login
+successCriteria:
+  - Visitor sees the cookie policy link with the expected href
+  - Visitor sees the privacy policy link with the expected href
+outOfScope:
+  - Loading policy pages
+knowledgeRefs:
+  - knowledge/automation-in-testing/rules.md

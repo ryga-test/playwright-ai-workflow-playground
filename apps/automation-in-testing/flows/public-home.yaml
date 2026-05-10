@@ -1,0 +1,23 @@
+version: "1.0"
+id: public-home
+name: Public home
+goal: Verify a public visitor can see the Shady Meadows B&B home page introduction and navigation.
+startPath: "/"
+tags:
+  - generated
+auth:
+  required: false
+sideEffects: none
+allowedActions:
+  - navigate
+  - assert
+forbiddenActions:
+  - login
+successCriteria:
+  - Visitor sees the welcome heading
+  - Visitor sees public navigation options
+outOfScope:
+  - Admin access
+  - Booking creation
+knowledgeRefs:
+  - knowledge/automation-in-testing/rules.md

@@ -4,11 +4,11 @@ Maps the 8-step `workflows/manifest.yaml` pipeline to pi slash commands.
 
 ## Slash Commands
 
-Run each command in order within a pi agent session:
+Run each command in order within a pi agent session, or use `/pipeline-run <app> [FLOW_IDS=id-a,id-b]` to chain them automatically:
 
 | Order | Slash Command | Gated |
 |-------|--------------|-------|
-| 1 | `/pipeline-resolve <app>` | No |
+| 1 | `/pipeline-resolve <app> <run>` | No |
 | 2 | `/pipeline-discover <app> <run>` | No |
 | 3 | `/pipeline-extract-selectors <app> <run>` | No |
 | 4 | `/pipeline-draft-page-object <app> <run>` | **Yes** |
@@ -24,6 +24,7 @@ The pi agent resolves these placeholders from context:
 - `{{app}}` — the app slug (e.g., `example`), matching `apps/<app>/profile.yaml`
 - `{{run}}` — the ISO 8601 run ID generated in step 1 (e.g., `2026-04-30T143000Z`)
 - `{{baseUrlEnvVar}}` — the environment variable name from the app profile
+- `{{flowIds}}` — optional comma-separated flow ID filter; omitted means all flow files for the app
 
 ## Gated Steps (4 and 5)
 
@@ -32,8 +33,10 @@ Steps 4 (draft page object) and 5 (draft tests) require human approval:
 1. AI presents the draft artifact inline in the chat session.
 2. Human replies with the exact word `approved` to promote the artifact.
 3. Or provides change feedback as free-form text — AI re-drafts (max 3 attempts).
-4. On approval, the artifact is promoted to its source directory with a provenance header:
+4. On approval, the page object is promoted to its source directory with a provenance header:
    `// @provenance runId=<run> approvedAt=<ISO> gate=<gate-name>`
+
+For flow-based apps, Step 5 promotes one approved feature per selected flow to `tests/<app>/<flow-id>.feature`; Step 6 writes one spec per selected flow to `tests/<app>/<flow-id>.spec.ts`.
 
 ## Adding a Second Adapter
 

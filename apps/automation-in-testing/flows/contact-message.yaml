@@ -1,0 +1,31 @@
+version: "1.0"
+id: contact-message
+name: Contact message
+goal: Verify a public visitor can prepare a contact message without submitting it.
+startPath: "/#contact"
+tags:
+  - generated
+auth:
+  required: false
+sideEffects: none
+allowedActions:
+  - navigate
+  - fill-form
+  - assert
+forbiddenActions:
+  - submit-contact-form
+  - send-external-message
+successCriteria:
+  - Visitor-entered contact fields remain populated
+  - Submit button is visible and enabled
+  - No contact message is sent
+outOfScope:
+  - Clicking Submit
+  - Verifying server-side contact delivery
+knowledgeRefs:
+  - knowledge/automation-in-testing/rules.md
+testData:
+  contactEmail:
+    strategy: synthetic-email
+    domain: example.test
+  subject: Read-only smoke test
