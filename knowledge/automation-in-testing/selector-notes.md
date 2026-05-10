@@ -64,3 +64,14 @@ Per constitutional Principle II, locators follow this priority order:
   - `page.getByTestId('ContactName')`, `ContactEmail`, `ContactPhone`, `ContactSubject`, and `ContactDescription` for contact form fields.
   - `page.getByRole('button', { name: 'Check Availability' })` and `page.getByRole('button', { name: 'Submit' })` for public action buttons.
 - Date input locators remain positional textboxes (`nth(0)` and `nth(1)`) because no stable label/test id was discovered for Check In and Check Out.
+
+## Run 2026-05-10T132304Z
+
+- Confirmed selectors that passed in 10 Gherkin-sourced contact-message tests:
+  - `page.getByTestId('ContactName')`, `ContactEmail`, `ContactPhone`, `ContactSubject`, `ContactDescription` for all 5 contact form fields.
+  - `page.getByRole('button', { name: 'Submit' })` for the Submit button (asserted visible + enabled, not clicked).
+  - `page.getByRole('heading', { name: 'Contact Information', level: 3 })` for the contact info section.
+  - `page.getByRole('heading', { name: 'Send Us a Message', level: 3 })` for the contact form section.
+  - `page.getByRole('alert')` confirmed present as an empty live-region container.
+- All 25 normalized selectors from the 2026-05-10T132304Z run match the approved page object with zero drift.
+- `syntheticEmail()` runtime helper correctly resolved `contact-message-2026-05-10T132304Z@example.test` using the `PLAYWRIGHT_RUN_ID` env var.
