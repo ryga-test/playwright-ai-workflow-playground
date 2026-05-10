@@ -8,10 +8,24 @@
 
 ## Current Testing Policy
 
-- First run: read-only public smoke only.
-- Second and later runs: safe demo submissions may be introduced with obvious test data.
-- Avoid real credentials, payment data, and email/SMS dependent assertions.
+- Public smoke coverage should remain safe for a live demo site.
+- Safe interactions include page load, section navigation, availability search, room option visibility, contact field filling without submission, and public policy link inspection.
+- Avoid real credentials, payment data, email/SMS dependent assertions, admin login attempts, final booking submission, and contact message submission unless explicitly approved for a state-changing run.
 
 ## Current Verified Runtime Observations
 
-*(No pipeline-verified observations yet.)*
+- The public home page exposes the heading "Welcome to Shady Meadows B&B".
+- Primary navigation exposes Rooms, Booking, Amenities, Location, Contact, and Admin links.
+- The hero "Book Now" link reaches the availability search area.
+- Availability search can be initiated with editable stay dates while keeping room booking options visible and without completing a reservation.
+- Room options include Single, Double, and Suite.
+- Contact fields accept and retain obvious test data before submission.
+- Cookie-Policy and Privacy-Policy links are visible and route to `/cookie` and `/privacy`.
+
+## Current Selector Rules
+
+- Prefer role locators for named navigation links, headings, buttons, and public links.
+- Use exact matching to distinguish hero `Book Now` from repeated room `Book now` links.
+- Use `data-testid` locators for contact form fields.
+- Date inputs remain positional textboxes until stable labels/test ids are available.
+- Scope duplicate contact/address text to a stable section or footer region.

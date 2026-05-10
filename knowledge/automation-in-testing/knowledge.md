@@ -69,3 +69,23 @@
 - 18 public smoke scenarios passed against the public site.
 - One availability search was initiated, but no booking was completed.
 - No room reservation link was clicked, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-05-10T004617Z
+
+### Verified UI Facts
+
+- The public home page still exposes the level-1 heading "Welcome to Shady Meadows B&B".
+- The page navigation still exposes public section links for Rooms, Booking, Amenities, Location, Contact, and Admin.
+- The hero "Book Now" call to action still reaches the availability search area.
+- Availability search for `10/05/2026` to `11/05/2026` completed without entering a reservation flow and left room booking options visible.
+- The rooms section still exposes room headings "Single", "Double", and "Suite" with visible booking options.
+- Contact form fields accepted and retained obvious read-only test data before submission.
+- The contact form Submit button remained visible and enabled, but was not clicked in this run.
+- Public location/contact information remained visible, including Shady Meadows B&B address text, phone number `012345678901`, and email `fake@fakeemail.com`.
+- Public policy links for Cookie-Policy and Privacy-Policy remained visible with `/cookie` and `/privacy` destinations.
+
+### Verified Test Coverage
+
+- 13 Gherkin-sourced public smoke tests passed against the public site.
+- Every generated Playwright test traced to one approved Gherkin scenario or scenario-outline example row.
+- No room reservation link was clicked, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.

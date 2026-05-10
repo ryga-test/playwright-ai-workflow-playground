@@ -54,3 +54,13 @@ Per constitutional Principle II, locators follow this priority order:
 - Non-exact role matching caused strict-mode failures because Playwright matched the hero `Book Now` link together with room `Book now` links.
 - Date input locators remain positional (`page.getByRole('textbox').nth(0)` and `.nth(1)`) because the Check In/Check Out controls are unnamed in the ARIA snapshot.
 - `page.locator('#description')` remains the documented CSS fallback for the unnamed Message textarea and passed in contact form tests.
+
+## Run 2026-05-10T004617Z
+
+- Confirmed selectors that passed in Gherkin-sourced Playwright tests:
+  - `page.getByRole('navigation')` scoped header section links.
+  - `page.getByRole('link', { name: 'Book Now', exact: true })` for the hero CTA.
+  - `page.getByRole('link', { name: 'Book now', exact: true }).nth(0..2)` for repeated room booking options.
+  - `page.getByTestId('ContactName')`, `ContactEmail`, `ContactPhone`, `ContactSubject`, and `ContactDescription` for contact form fields.
+  - `page.getByRole('button', { name: 'Check Availability' })` and `page.getByRole('button', { name: 'Submit' })` for public action buttons.
+- Date input locators remain positional textboxes (`nth(0)` and `nth(1)`) because no stable label/test id was discovered for Check In and Check Out.
