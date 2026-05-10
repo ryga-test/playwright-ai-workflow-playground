@@ -77,3 +77,15 @@
 
 - **Rule**: It is safe to fill contact fields with obvious test data and assert retained values, but do not click Submit unless a state-changing contact flow is explicitly approved for the run.
 - **Rationale**: This validates contact form interactivity while preserving public-demo safety boundaries.
+
+## Run 2026-05-10T122428Z
+
+### R12 — Keep room-search reservation links assertion-only
+
+- **Rule**: For the `room-search` flow, assert that room `Book now` options are visible after availability search, but do not click those links unless a reservation/checkout flow is explicitly approved.
+- **Rationale**: The flow's success criteria require visible room booking options while remaining outside checkout.
+
+### R13 — Use positional locators for unlabeled availability date fields only within the booking flow
+
+- **Rule**: The availability date fields may use the first and second textbox locators within the room-search page object until stable labels, ids, or test ids become available.
+- **Rationale**: The discovered ARIA snapshot exposes the check-in and check-out inputs as unnamed textboxes with no stable accessible labels or test ids.

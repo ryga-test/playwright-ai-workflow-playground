@@ -89,3 +89,17 @@
 - 13 Gherkin-sourced public smoke tests passed against the public site.
 - Every generated Playwright test traced to one approved Gherkin scenario or scenario-outline example row.
 - No room reservation link was clicked, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-05-10T122428Z
+
+### Verified UI Facts
+
+- Availability search for `17/05/2026` to `18/05/2026` completed without entering the reservation checkout flow.
+- The room-search flow left the visitor outside `/reservation/` after checking availability.
+- The rooms section exposed visible options for Single, Double, and Suite after availability search.
+- Three visible `Book now` room booking links were present as options, but they were not clicked.
+
+### Verified Test Coverage
+
+- One Gherkin-sourced `room-search` Playwright test passed against the public site.
+- No room reservation link was clicked, no booking was completed, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
