@@ -1,24 +1,42 @@
-// @provenance runId=2026-05-10T004617Z approvedAt=2026-05-10T00:48:33Z gate=page-object-review
+// @provenance runId=2026-05-10T132304Z approvedAt=2026-05-10T13:27:00Z gate=page-object-review
 import type { Locator, Page } from '@playwright/test';
 
+export type ContactMessageDraft = {
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+};
+
 /**
- * Draft page object for the Automation in Testing public demo home page.
+ * Shared page object for the Automation in Testing public demo app.
  *
  * Generated from:
- * results/automation-in-testing/2026-05-10T004617Z/step3-extract-selectors/normalized-selectors.md
+ * - results/automation-in-testing/2026-05-10T132304Z/step3-extract-selectors/normalized-selectors.md
+ * - results/automation-in-testing/2026-05-10T132304Z/step1-resolve/flow-inventory.json
+ * - results/automation-in-testing/2026-05-10T132304Z/step2-discover/snapshot.merged.yaml
  *
- * Selector strategy: prefer accessible Playwright locators in priority order
- * getByRole > getByTestId > getByLabel > getByPlaceholder > getByText > CSS/XPath.
+ * Selected flow coverage:
+ * - contact-message: prepare a public contact message without submitting it.
+ *
+ * Safety notes:
+ * - The selected flow forbids submit-contact-form and send-external-message.
+ * - This page object exposes the Submit button for assertions only and intentionally
+ *   does not provide a method that clicks Submit.
  */
 export class AutomationInTestingPage {
   readonly navigation: Locator;
   readonly pageHeading: Locator;
+  readonly mainHeading: Locator;
   readonly brandHomeLink: Locator;
+  readonly brandLink: Locator;
   readonly navRoomsLink: Locator;
   readonly navBookingLink: Locator;
   readonly navAmenitiesLink: Locator;
   readonly navLocationLink: Locator;
   readonly navContactLink: Locator;
+  readonly contactNavLink: Locator;
   readonly navAdminLink: Locator;
 
   readonly heroBookNowLink: Locator;
@@ -40,14 +58,18 @@ export class AutomationInTestingPage {
   readonly openStreetMapAttributionLink: Locator;
 
   readonly contactInformationHeading: Locator;
+  readonly contactInfoHeading: Locator;
   readonly contactFormHeading: Locator;
+  readonly contactSectionHeading: Locator;
   readonly contactNameInput: Locator;
   readonly contactEmailInput: Locator;
   readonly contactPhoneInput: Locator;
   readonly contactSubjectInput: Locator;
   readonly contactMessageInput: Locator;
   readonly submitContactButton: Locator;
+  readonly contactSubmitButton: Locator;
   readonly alertContainer: Locator;
+  readonly alertRegion: Locator;
 
   readonly footer: Locator;
   readonly footerHomeLink: Locator;
@@ -64,12 +86,15 @@ export class AutomationInTestingPage {
       name: 'Welcome to Shady Meadows B&B',
       level: 1,
     });
+    this.mainHeading = this.pageHeading;
     this.brandHomeLink = page.getByRole('link', { name: 'Shady Meadows B&B' });
+    this.brandLink = this.brandHomeLink;
     this.navRoomsLink = this.navigation.getByRole('link', { name: 'Rooms' });
     this.navBookingLink = this.navigation.getByRole('link', { name: 'Booking' });
     this.navAmenitiesLink = this.navigation.getByRole('link', { name: 'Amenities' });
     this.navLocationLink = this.navigation.getByRole('link', { name: 'Location' });
     this.navContactLink = this.navigation.getByRole('link', { name: 'Contact' });
+    this.contactNavLink = this.navContactLink;
     this.navAdminLink = this.navigation.getByRole('link', { name: 'Admin' });
 
     this.heroBookNowLink = page.getByRole('link', { name: 'Book Now', exact: true });
@@ -95,21 +120,26 @@ export class AutomationInTestingPage {
     this.pigeonMapAttributionLink = page.getByRole('link', { name: 'Pigeon' });
     this.openStreetMapAttributionLink = page.getByRole('link', { name: 'OpenStreetMap' });
 
+    // Provenance: flow=contact-message path=/#contact
     this.contactInformationHeading = page.getByRole('heading', {
       name: 'Contact Information',
       level: 3,
     });
+    this.contactInfoHeading = this.contactInformationHeading;
     this.contactFormHeading = page.getByRole('heading', {
       name: 'Send Us a Message',
       level: 3,
     });
+    this.contactSectionHeading = this.contactFormHeading;
     this.contactNameInput = page.getByTestId('ContactName');
     this.contactEmailInput = page.getByTestId('ContactEmail');
     this.contactPhoneInput = page.getByTestId('ContactPhone');
     this.contactSubjectInput = page.getByTestId('ContactSubject');
     this.contactMessageInput = page.getByTestId('ContactDescription');
     this.submitContactButton = page.getByRole('button', { name: 'Submit' });
+    this.contactSubmitButton = this.submitContactButton;
     this.alertContainer = page.getByRole('alert');
+    this.alertRegion = this.alertContainer;
 
     this.footer = page.getByRole('contentinfo');
     this.footerHomeLink = this.footer.getByRole('link', { name: 'Home' });
@@ -121,8 +151,8 @@ export class AutomationInTestingPage {
     this.footerAdminPanelLink = page.getByRole('link', { name: 'Admin panel' });
   }
 
-  async goto(): Promise<void> {
-    await this.page.goto('/');
+  async goto(path = '/#contact'): Promise<void> {
+    await this.page.goto(path);
   }
 
   async openRoomsSection(): Promise<void> {
@@ -161,28 +191,7 @@ export class AutomationInTestingPage {
     await this.checkAvailabilityButton.click();
   }
 
-  // fallow-ignore-next-line unused-class-member
-  async bookSingleRoom(): Promise<void> {
-    await this.singleRoomBookNowLink.click();
-  }
-
-  // fallow-ignore-next-line unused-class-member
-  async bookDoubleRoom(): Promise<void> {
-    await this.doubleRoomBookNowLink.click();
-  }
-
-  // fallow-ignore-next-line unused-class-member
-  async bookSuiteRoom(): Promise<void> {
-    await this.suiteRoomBookNowLink.click();
-  }
-
-  async fillContactForm(contact: {
-    name: string;
-    email: string;
-    phone: string;
-    subject: string;
-    message: string;
-  }): Promise<void> {
+  async fillContactForm(contact: ContactMessageDraft): Promise<void> {
     await this.contactNameInput.fill(contact.name);
     await this.contactEmailInput.fill(contact.email);
     await this.contactPhoneInput.fill(contact.phone);
@@ -190,15 +199,19 @@ export class AutomationInTestingPage {
     await this.contactMessageInput.fill(contact.message);
   }
 
+  /** Alias for readability in scenarios that call the action a contact message. */
   // fallow-ignore-next-line unused-class-member
-  async submitContactForm(contact: {
-    name: string;
-    email: string;
-    phone: string;
-    subject: string;
-    message: string;
-  }): Promise<void> {
+  async fillContactMessage(contact: ContactMessageDraft): Promise<void> {
     await this.fillContactForm(contact);
-    await this.submitContactButton.click();
+  }
+
+  async contactFieldValues(): Promise<ContactMessageDraft> {
+    return {
+      name: await this.contactNameInput.inputValue(),
+      email: await this.contactEmailInput.inputValue(),
+      phone: await this.contactPhoneInput.inputValue(),
+      subject: await this.contactSubjectInput.inputValue(),
+      message: await this.contactMessageInput.inputValue(),
+    };
   }
 }

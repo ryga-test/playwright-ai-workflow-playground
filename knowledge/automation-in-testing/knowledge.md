@@ -103,3 +103,21 @@
 
 - One Gherkin-sourced `room-search` Playwright test passed against the public site.
 - No room reservation link was clicked, no booking was completed, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-05-10T132304Z
+
+### Verified UI Facts
+
+- Contact form fields (Name, Email, Phone, Subject, Message) accept and retain obvious test data without submission.
+- The contact form Submit button is visible and enabled after filling all five fields.
+- The page stays on the public home page (`automationintesting.online`) after filling the contact form — no redirect, confirmation page, or submission feedback.
+- The `alert` ARIA region remains empty after contact form fill (no validation or submission message triggered).
+- All five contact form fields load empty on initial navigation to `/#contact`.
+- The "Contact Information" (level 3) and "Send Us a Message" (level 3) headings are visible on the contact section.
+- `getByTestId()` selectors (`ContactName`, `ContactEmail`, `ContactPhone`, `ContactSubject`, `ContactDescription`) confirmed working for all contact form fields in a 10-test run.
+
+### Verified Test Coverage
+
+- 10 Gherkin-sourced `contact-message` Playwright tests passed against the public site.
+- Every test traced to one approved Gherkin scenario or scenario-outline example row (6 scenarios, 10 test cases).
+- No Submit button was clicked, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.

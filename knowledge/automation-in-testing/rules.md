@@ -89,3 +89,10 @@
 
 - **Rule**: The availability date fields may use the first and second textbox locators within the room-search page object until stable labels, ids, or test ids become available.
 - **Rationale**: The discovered ARIA snapshot exposes the check-in and check-out inputs as unnamed textboxes with no stable accessible labels or test ids.
+
+## Run 2026-05-10T132304Z
+
+### R14 — Prefer `getByTestId` for contact form fields
+
+- **Rule**: Use `page.getByTestId('ContactName')`, `ContactEmail`, `ContactPhone`, `ContactSubject`, and `ContactDescription` for all contact form interactions.
+- **Rationale**: These `data-testid` selectors are confirmed stable and passing across 4 pipeline runs (2026-05-10T004617Z through 2026-05-10T132304Z). They are more reliable than role-based textbox name matching for the unnamed Message textarea.
