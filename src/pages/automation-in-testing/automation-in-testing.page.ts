@@ -1,11 +1,11 @@
-// @provenance runId=2026-05-09T235844Z approvedAt=2026-05-10T00:02:12Z gate=page-object-review
+// @provenance runId=2026-05-10T004617Z approvedAt=2026-05-10T00:48:33Z gate=page-object-review
 import type { Locator, Page } from '@playwright/test';
 
 /**
  * Draft page object for the Automation in Testing public demo home page.
  *
  * Generated from:
- * results/automation-in-testing/2026-05-09T235844Z/step3-extract-selectors/normalized-selectors.md
+ * results/automation-in-testing/2026-05-10T004617Z/step3-extract-selectors/normalized-selectors.md
  *
  * Selector strategy: prefer accessible Playwright locators in priority order
  * getByRole > getByTestId > getByLabel > getByPlaceholder > getByText > CSS/XPath.
@@ -103,11 +103,11 @@ export class AutomationInTestingPage {
       name: 'Send Us a Message',
       level: 3,
     });
-    this.contactNameInput = page.getByRole('textbox', { name: 'Name' });
-    this.contactEmailInput = page.getByRole('textbox', { name: 'Email' });
-    this.contactPhoneInput = page.getByRole('textbox', { name: 'Phone' });
-    this.contactSubjectInput = page.getByRole('textbox', { name: 'Subject' });
-    this.contactMessageInput = page.locator('#description');
+    this.contactNameInput = page.getByTestId('ContactName');
+    this.contactEmailInput = page.getByTestId('ContactEmail');
+    this.contactPhoneInput = page.getByTestId('ContactPhone');
+    this.contactSubjectInput = page.getByTestId('ContactSubject');
+    this.contactMessageInput = page.getByTestId('ContactDescription');
     this.submitContactButton = page.getByRole('button', { name: 'Submit' });
     this.alertContainer = page.getByRole('alert');
 
@@ -133,6 +133,7 @@ export class AutomationInTestingPage {
     await this.navBookingLink.click();
   }
 
+  // fallow-ignore-next-line unused-class-member
   async openAmenitiesSection(): Promise<void> {
     await this.navAmenitiesLink.click();
   }
@@ -145,6 +146,7 @@ export class AutomationInTestingPage {
     await this.navContactLink.click();
   }
 
+  // fallow-ignore-next-line unused-class-member
   async openAdmin(): Promise<void> {
     await this.navAdminLink.click();
   }

@@ -65,3 +65,15 @@
 
 - **Rule**: It is safe to click `Check Availability` with obvious test dates when asserting that room options remain visible, but do not click through and complete a reservation unless that state-changing flow is explicitly in scope.
 - **Rationale**: This validates an interactive control while preserving public-demo safety boundaries.
+
+## Run 2026-05-10T004617Z
+
+### R10 — Treat approved Gherkin as the behavioral source
+
+- **Rule**: For `automation-in-testing`, generate Playwright specs from the approved `.feature` file and preserve one-test-per-scenario or one-test-per-example-row traceability.
+- **Rationale**: The 2026-05-10 run passed with Gherkin-sourced tests and scenario coverage as the review contract.
+
+### R11 — Keep read-only contact preparation non-submitting unless state-changing scope is approved
+
+- **Rule**: It is safe to fill contact fields with obvious test data and assert retained values, but do not click Submit unless a state-changing contact flow is explicitly approved for the run.
+- **Rationale**: This validates contact form interactivity while preserving public-demo safety boundaries.
