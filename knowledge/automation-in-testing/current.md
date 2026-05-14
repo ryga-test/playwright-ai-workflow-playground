@@ -26,17 +26,27 @@
 - All five contact form fields load empty on initial navigation to `/#contact`.
 - Cookie-Policy and Privacy-Policy links are visible and route to `/cookie` and `/privacy`.
 
+### Location Section (verified 2026-05-14T130209Z)
+- The `#location` section heading "Our Location" (h2) and "Contact Information" (h3) are visible.
+- Map attribution links "Pigeon" and "OpenStreetMap" are visible within `#location`.
+- Address, phone, and email contact details are visible within `#location`:
+  - Address: "Shady Meadows B&B, Shadows valley, Newingtonfordburyshire, Dilbery, N1 1AA"
+  - Phone: "012345678901"
+  - Email: "fake@fakeemail.com"
+- Contact detail labels use `h5` headings (Address, Phone, Email) within `#location`.
+
 ## Current Selector Rules
 
 - Prefer role locators for named navigation links, headings, buttons, and public links.
 - Use exact matching to distinguish hero `Book Now` from repeated room `Book now` links.
 - Use `getByTestId()` locators (`ContactName`, `ContactEmail`, `ContactPhone`, `ContactSubject`, `ContactDescription`) for all contact form fields — confirmed stable across 4 runs.
 - Availability date inputs are currently unnamed textboxes; use positional locators only within a booking/room-search page object until stable labels/test ids are available.
-- Scope duplicate contact/address text to a stable section or footer region.
+- Scope duplicate contact/address text to `#location` via page object fields (R05, R15).
+- Define `#location`-scoped locators on the shared page object to keep specs clean and avoid `.first()` workarounds (R15).
 
 ## Latest Successful Run
 
-- Run: `2026-05-10T132304Z`
-- Flow: `contact-message`
-- Result: 10/10 passed with 0 fix cycles
-- Artifacts: `results/automation-in-testing/2026-05-10T132304Z/`
+- Run: `2026-05-14T130209Z`
+- Flow: `location-contact-info`
+- Result: 1/1 passed with 0 fix cycles
+- Artifacts: `results/automation-in-testing/2026-05-14T130209Z/`

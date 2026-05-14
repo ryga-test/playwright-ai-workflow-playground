@@ -57,6 +57,15 @@ export class AutomationInTestingPage {
   readonly pigeonMapAttributionLink: Locator;
   readonly openStreetMapAttributionLink: Locator;
 
+  // Scoped to #location per R05 to avoid duplicate-text false positives from footer
+  readonly locationSection: Locator;
+  readonly locationAddressLabel: Locator;
+  readonly locationAddressText: Locator;
+  readonly locationPhoneLabel: Locator;
+  readonly locationPhoneText: Locator;
+  readonly locationEmailLabel: Locator;
+  readonly locationEmailText: Locator;
+
   readonly contactInformationHeading: Locator;
   readonly contactInfoHeading: Locator;
   readonly contactFormHeading: Locator;
@@ -117,8 +126,17 @@ export class AutomationInTestingPage {
     this.suiteRoomBookNowLink = page.getByRole('link', { name: 'Book now', exact: true }).nth(2);
 
     this.locationHeading = page.getByRole('heading', { name: 'Our Location', level: 2 });
-    this.pigeonMapAttributionLink = page.getByRole('link', { name: 'Pigeon' });
-    this.openStreetMapAttributionLink = page.getByRole('link', { name: 'OpenStreetMap' });
+    this.pigeonMapAttributionLink = page.locator('#location').getByRole('link', { name: 'Pigeon' });
+    this.openStreetMapAttributionLink = page.locator('#location').getByRole('link', { name: 'OpenStreetMap' });
+
+    // Scoped to #location per R05 to avoid duplicate-text false positives from footer contact content
+    this.locationSection = page.locator('#location');
+    this.locationAddressLabel = this.locationSection.getByRole('heading', { name: 'Address', level: 5 });
+    this.locationAddressText = this.locationSection.getByText('Shady Meadows B&B, Shadows valley, Newingtonfordburyshire, Dilbery, N1 1AA');
+    this.locationPhoneLabel = this.locationSection.getByRole('heading', { name: 'Phone', level: 5 });
+    this.locationPhoneText = this.locationSection.getByText('012345678901');
+    this.locationEmailLabel = this.locationSection.getByRole('heading', { name: 'Email', level: 5 });
+    this.locationEmailText = this.locationSection.getByText('fake@fakeemail.com');
 
     // Provenance: flow=contact-message path=/#contact
     this.contactInformationHeading = page.getByRole('heading', {

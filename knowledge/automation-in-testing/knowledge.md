@@ -121,3 +121,22 @@
 - 10 Gherkin-sourced `contact-message` Playwright tests passed against the public site.
 - Every test traced to one approved Gherkin scenario or scenario-outline example row (6 scenarios, 10 test cases).
 - No Submit button was clicked, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-05-14T130209Z
+
+### Verified UI Facts
+
+- The `#location` section heading "Our Location" (level 2) is visible after navigating to `/#location`.
+- Map attribution links "Pigeon" and "OpenStreetMap" are visible and scoped to `#location`.
+- The "Contact Information" heading (level 3) is visible within `#location`.
+- Address text "Shady Meadows B&B, Shadows valley, Newingtonfordburyshire, Dilbery, N1 1AA" is visible within `#location`.
+- Phone text "012345678901" is visible within `#location`.
+- Email text "fake@fakeemail.com" is visible within `#location`.
+- `#location`-scoped `getByText()` locators avoid strict-mode duplicate-text failures from footer contact content.
+- Address, Phone, and Email labels use `h5` headings within `#location` with accessible names.
+
+### Verified Test Coverage
+
+- 1 Gherkin-sourced `location-contact-info` Playwright test passed against the public site.
+- The test traced to the approved "Location section displays map attribution and contact details" scenario.
+- All assertions used `toBeVisible()` per R06; no form interaction or submission occurred.
