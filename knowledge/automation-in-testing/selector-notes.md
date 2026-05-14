@@ -75,3 +75,16 @@ Per constitutional Principle II, locators follow this priority order:
   - `page.getByRole('alert')` confirmed present as an empty live-region container.
 - All 25 normalized selectors from the 2026-05-10T132304Z run match the approved page object with zero drift.
 - `syntheticEmail()` runtime helper correctly resolved `contact-message-2026-05-10T132304Z@example.test` using the `PLAYWRIGHT_RUN_ID` env var.
+
+## Run 2026-05-14T130209Z
+
+- Confirmed selectors that passed in the `location-contact-info` flow:
+  - `page.locator('#location').getByText('Shady Meadows B&B, Shadows valley, Newingtonfordburyshire, Dilbery, N1 1AA')` — address text scoped to `#location` per R05.
+  - `page.locator('#location').getByText('012345678901')` — phone text scoped to `#location` per R05.
+  - `page.locator('#location').getByText('fake@fakeemail.com')` — email text scoped to `#location` per R05.
+  - `page.locator('#location').getByRole('link', { name: 'Pigeon' })` — map attribution link scoped to `#location`.
+  - `page.locator('#location').getByRole('link', { name: 'OpenStreetMap' })` — map attribution link scoped to `#location`.
+  - `page.getByRole('heading', { name: 'Our Location', level: 2 })` — location section heading.
+  - `page.getByRole('heading', { name: 'Contact Information', level: 3 })` — contact info sub-heading.
+- `#location`-scoped text locators avoid strict-mode failures from duplicate footer contact content without requiring `.first()` workarounds.
+- Scoped locators defined as page object fields (`locationAddressText`, `locationPhoneText`, `locationEmailText`) keep test specs clean and maintainable.

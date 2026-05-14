@@ -96,3 +96,10 @@
 
 - **Rule**: Use `page.getByTestId('ContactName')`, `ContactEmail`, `ContactPhone`, `ContactSubject`, and `ContactDescription` for all contact form interactions.
 - **Rationale**: These `data-testid` selectors are confirmed stable and passing across 4 pipeline runs (2026-05-10T004617Z through 2026-05-10T132304Z). They are more reliable than role-based textbox name matching for the unnamed Message textarea.
+
+## Run 2026-05-14T130209Z
+
+### R15 — Scope location contact detail locators to `#location` via page object
+
+- **Rule**: Define `#location`-scoped locators on the shared page object (e.g., `this.locationAddressText = page.locator('#location').getByText(...)`) rather than using unscoped `page.getByText().first()` in specs.
+- **Rationale**: Contact text (address, phone, email) appears in both `#location` and the footer. Scoping via page object fields keeps assertions clean and avoids `.first()` workarounds that are fragile to DOM order changes.
