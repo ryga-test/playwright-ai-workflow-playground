@@ -4,7 +4,7 @@ Maps the 8-step `workflows/manifest.yaml` pipeline to pi slash commands.
 
 ## Slash Commands
 
-Run each command in order within a pi agent session, or use `/pipeline-run <app> [FLOW_IDS=id-a,id-b]` to chain them automatically:
+Run each command in order within a pi agent session, or use `/pipeline-run <app> FLOW_ID=<flow-id>` to chain them automatically:
 
 | Order | Slash Command | Gated |
 |-------|--------------|-------|
@@ -24,7 +24,7 @@ The pi agent resolves these placeholders from context:
 - `{{app}}` — the app slug (e.g., `example`), matching `apps/<app>/profile.yaml`
 - `{{run}}` — the ISO 8601 run ID generated in step 1 (e.g., `2026-04-30T143000Z`)
 - `{{baseUrlEnvVar}}` — the environment variable name from the app profile
-- `{{flowIds}}` — optional comma-separated flow ID filter; omitted means all flow files for the app
+- `{{flowId}}` — required single flow ID for the run
 
 ## Gated Steps (4 and 5)
 
@@ -36,7 +36,7 @@ Steps 4 (draft page object) and 5 (draft tests) require human approval:
 4. On approval, the page object is promoted to its source directory with a provenance header:
    `// @provenance runId=<run> approvedAt=<ISO> gate=<gate-name>`
 
-For flow-based apps, Step 5 promotes one approved feature per selected flow to `tests/<app>/<flow-id>.feature`; Step 6 writes one spec per selected flow to `tests/<app>/<flow-id>.spec.ts`.
+For flow-based apps, Step 5 promotes the approved feature to `tests/<app>/<flow-id>.feature`; Step 6 writes one spec for the selected flow to `tests/<app>/<flow-id>.spec.ts`.
 
 ## Adding a Second Adapter
 

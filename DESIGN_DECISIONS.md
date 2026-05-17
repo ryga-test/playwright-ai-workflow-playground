@@ -125,3 +125,8 @@ The framework is "done" when:
 The pipeline will support multiple named user flows under `apps/<app>/flows/<flow-id>.yaml`. App discovery and page-object approval remain shared, while Gherkin drafts, Playwright specs, execution artifacts, and summaries are flow-specific. v1 supports public, no-side-effect flows only and fail-fasts on authenticated, reversible, or destructive flows.
 
 Full decision details live in `docs/multi-flow-pipeline.md`.
+
+### 16. Single-Flow Run Invariant
+**Choice:** One pipeline run targets exactly one flow.
+
+Pipeline invocation requires singular `FLOW_ID=<flow-id>` and rejects omitted flow IDs, comma-separated values, and legacy `FLOW_IDS`. New result artifacts live under `results/<app>/flows/<flow-id>/<run>/`. `flow-inventory.json` remains as a compatibility artifact with `selectedFlows`/`flows` arrays containing exactly one flow.

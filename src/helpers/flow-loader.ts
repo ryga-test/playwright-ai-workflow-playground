@@ -134,44 +134,35 @@ function parseFlow(value: unknown, appName: string, filenameId: string, flowPath
   };
 }
 
-function loadFlows(appName: string, profileTags?: string[]): ResolvedFlow[] {
+function listFlowIds(appName: string): string[] {
   const flowsRoot = join('apps', appName, 'flows');
   if (!existsSync(flowsRoot)) return [];
 
   return readdirSync(flowsRoot)
     .filter((fileName) => fileName.endsWith('.yaml'))
     .sort()
-    .map((fileName) => {
-      const filenameId = fileName.slice(0, -'.yaml'.length);
-      const flowPath = join(flowsRoot, fileName);
-      const parsed = load(readFileSync(flowPath, 'utf8'));
-      return parseFlow(parsed, appName, filenameId, flowPath, profileTags);
-    });
+    .map((fileName) => fileName.slice(0, -'.yaml'.length));
 }
 
-// fallow-ignore-next-line complexity
-export function resolveSelectedFlows(appName: string, flowIdsInput: string | undefined, profileTags?: string[]): ResolvedFlow[] {
-  const flows = loadFlows(appName, profileTags);
-  if (flows.length === 0) {
-    if (flowIdsInput?.trim()) {
-      throw new Error(`FLOW_IDS was provided, but app ${appName} has no flow files`);
-    }
-    return [];
-  }
+function resolveFlowIdForAvailableFlows(appName: string, flowIdInput: string | undefined, availableFlowIds: string[]): string {
+  const flowId = flowIdInput?.trim();
+  if (!flowId) throw new Error(`FLOW_ID is required for app ${appName}. Available flow IDs: ${availableFlowIds.join(', ')}`);
+  if (flowId.includes(',')) throw new Error('FLOW_ID must contain exactly one flow ID, not a comma-separated list');
+  if (!availableFlowIds.includes(flowId)) throw new Error(`Unknown FLOW_ID "${flowId}" for app ${appName}. Available flow IDs: ${availableFlowIds.join(', ')}`);
+  return flowId;
+}
 
-  if (!flowIdsInput?.trim()) return flows;
+function validateFlowIdInput(appName: string, flowIdInput: string | undefined, availableFlowIds: string[]): string | null {
+  if (availableFlowIds.length > 0) return resolveFlowIdForAvailableFlows(appName, flowIdInput, availableFlowIds);
+  if (flowIdInput?.trim()) throw new Error(`FLOW_ID was provided, but app ${appName} has no flow files`);
+  return null;
+}
 
-  const requestedIds = flowIdsInput.split(',').map((id) => id.trim()).filter(Boolean);
-  const duplicateIds = requestedIds.filter((id, index) => requestedIds.indexOf(id) !== index);
-  if (duplicateIds.length > 0) {
-    throw new Error(`Duplicate FLOW_IDS are not allowed: ${[...new Set(duplicateIds)].join(', ')}`);
-  }
+export function resolveSelectedFlow(appName: string, flowIdInput: string | undefined, profileTags?: string[]): ResolvedFlow | null {
+  const flowId = validateFlowIdInput(appName, flowIdInput, listFlowIds(appName));
+  if (!flowId) return null;
 
-  const byId = new Map(flows.map((flow) => [flow.id, flow]));
-  const unknownIds = requestedIds.filter((id) => !byId.has(id));
-  if (unknownIds.length > 0) {
-    throw new Error(`Unknown FLOW_IDS for app ${appName}: ${unknownIds.join(', ')}`);
-  }
-
-  return requestedIds.map((id) => byId.get(id)!);
+  const flowPath = join('apps', appName, 'flows', `${flowId}.yaml`);
+  const parsed = load(readFileSync(flowPath, 'utf8'));
+  return parseFlow(parsed, appName, flowId, flowPath, profileTags);
 }

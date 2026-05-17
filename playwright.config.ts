@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
-import { resolveSelectedFlows } from './src/helpers/flow-loader.js';
+import { resolveSelectedFlow } from './src/helpers/flow-loader.js';
 import { loadProfile } from './src/helpers/profile-loader.js';
+import { getFlowRunRoot } from './src/helpers/result-paths.js';
 
 dotenv.config();
 
@@ -9,16 +10,28 @@ const appName = process.env.APP_NAME ?? 'example';
 const profile = loadProfile(appName);
 const runId = process.env.PLAYWRIGHT_RUN_ID ?? 'local-run';
 const baseURL = process.env[profile.baseUrlEnvVar] ?? 'http://localhost:3000';
-const selectedFlows = resolveSelectedFlows(profile.name, process.env.FLOW_IDS, profile.testTags);
-const selectedFlowTestMatch = selectedFlows.map((flow) => `${flow.id}.spec.ts`);
+if (process.env.FLOW_IDS) {
+  throw new Error('FLOW_IDS is no longer supported. Use singular FLOW_ID.');
+}
+
+const hasExplicitApp = process.env.APP_NAME !== undefined;
+const selectedFlow = process.env.FLOW_ID || hasExplicitApp
+  ? resolveSelectedFlow(profile.name, process.env.FLOW_ID, profile.testTags)
+  : null;
+const selectedFlowTestMatch = selectedFlow ? [`${selectedFlow.id}.spec.ts`] : [];
+const flowRunRoot = selectedFlow ? getFlowRunRoot(profile.name, selectedFlow.id, runId) : null;
+const outputDir = flowRunRoot
+  ? `${flowRunRoot}/test-results`
+  : `results/${profile.name}/${runId}/test-results`;
+const htmlReportDir = flowRunRoot ? `${flowRunRoot}/step7-run-fix/playwright-report` : 'playwright-report';
 
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
   workers: 1,
-  outputDir: `results/${profile.name}/${runId}/test-results`,
+  outputDir,
   reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
+    ['html', { outputFolder: htmlReportDir }],
     ['list'],
   ],
   use: {

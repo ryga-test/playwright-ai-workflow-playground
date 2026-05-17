@@ -1,56 +1,56 @@
 adapter: pi
 
-# Each pipeline run creates its own git branch (pipeline/<app>/<runId>)
-# and switches to it. All pipeline artifacts are produced on that branch.
-# Optional FLOW_IDS can select one or more app flow files for the full run.
+# Each pipeline run targets exactly one flow, creates its own git branch
+# (pipeline/<app>/<flow-id>/<runId>), and switches to it. All pipeline artifacts
+# are produced under results/<app>/flows/<flow-id>/<runId>/ on that branch.
 
 capabilities:
   - step: resolve
     command_template: |
       /pipeline-resolve {{app}} {{run}}
-      FLOW_IDS filter: {{flowIds}}
-      Validate profile, env vars, all app flow files, selected FLOW_IDS, and write run metadata plus flow inventory.
+      FLOW_ID: {{flowId}}
+      Validate profile, env vars, the selected app flow file, and write run metadata plus flow inventory.
 
   - step: discover
     command_template: |
       /pipeline-discover {{app}} {{run}}
-      FLOW_IDS filter: {{flowIds}}
-      Discover all unique selected flow start paths, write per-path snapshots, merged snapshot, and selector candidates with path provenance.
+      FLOW_ID: {{flowId}}
+      Discover the selected flow start path, write per-path snapshots, merged snapshot, and selector candidates with path provenance.
 
   - step: extract-selectors
     command_template: |
       /pipeline-extract-selectors {{app}} {{run}}
-      FLOW_IDS filter: {{flowIds}}
+      FLOW_ID: {{flowId}}
       Normalize selectors from merged/per-path discovery artifacts with locator priority, path provenance, and flow provenance.
 
   - step: draft-page-object
     gated: true
     command_template: |
       /pipeline-draft-page-object {{app}} {{run}}
-      FLOW_IDS filter: {{flowIds}}
-      Draft one shared app-level page object covering all selected flows. Present draft for human review; promote only after approval.
+      FLOW_ID: {{flowId}}
+      Draft one shared app-level page object covering the selected flow. Present draft for human review; promote only after approval.
 
   - step: draft-tests
     gated: true
     command_template: |
       /pipeline-draft-tests {{app}} {{run}}
-      FLOW_IDS filter: {{flowIds}}
-      Draft separate Gherkin feature and coverage files per selected flow. Present all flow drafts for human review; promote approved drafts to tests/{{app}}/<flow-id>.feature only after approval.
+      FLOW_ID: {{flowId}}
+      Draft Gherkin feature and coverage files for the selected flow. Present the draft for human review; promote approved draft to tests/{{app}}/<flow-id>.feature only after approval.
 
   - step: write-spec
     command_template: |
       /pipeline-write-spec {{app}} {{run}}
-      FLOW_IDS filter: {{flowIds}}
-      Generate one Playwright spec per approved selected flow at tests/{{app}}/<flow-id>.spec.ts. Use shared page object and @fixtures/base.fixture.js. Run npm run typecheck.
+      FLOW_ID: {{flowId}}
+      Generate one Playwright spec for the approved selected flow at tests/{{app}}/<flow-id>.spec.ts. Use shared page object and @fixtures/base.fixture.js. Run npm run typecheck.
 
   - step: run-fix
     command_template: |
       /pipeline-run-fix {{app}} {{run}}
-      FLOW_IDS filter: {{flowIds}}
-      Run one Playwright command per selected flow using APP_NAME={{app}}, PLAYWRIGHT_RUN_ID={{run}}, and FLOW_IDS=<flow-id>. Triage failures and write aggregate plus per-flow reports.
+      FLOW_ID: {{flowId}}
+      Run one Playwright command for the selected flow using APP_NAME={{app}}, PLAYWRIGHT_RUN_ID={{run}}, and FLOW_ID=<flow-id>. Triage failures and write reports.
 
   - step: summarize
     command_template: |
       /pipeline-summarize {{app}} {{run}}
-      FLOW_IDS filter: {{flowIds}}
-      Write pipeline summary, ensure per-flow summaries exist, and append verified observations/rules to knowledge files.
+      FLOW_ID: {{flowId}}
+      Write pipeline and flow summaries, then append verified observations/rules to knowledge files.

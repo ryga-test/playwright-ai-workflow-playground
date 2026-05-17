@@ -1,6 +1,6 @@
 # Multi-flow Pipeline Design
 
-Status: planned, with a deliberately small proof-of-concept phase. Captured from the multi-flow design grilling session on 2026-05-10.
+Status: superseded for run cardinality. Captured from the multi-flow design grilling session on 2026-05-10; updated by Design Decision 16 on 2026-05-17. Flow YAML support remains, but each pipeline run now targets exactly one `FLOW_ID` and writes artifacts under `results/<app>/flows/<flow-id>/<run>/`.
 
 ## Goal
 

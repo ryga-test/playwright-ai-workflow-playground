@@ -119,72 +119,79 @@ function loadFlow(app, fileName, profileTags) {
   return { ...flow, startPath, sourceFile: file, mergedTags: tags, effectiveForbiddenActions };
 }
 
-const [app, runId, flowIdsArg = process.env.FLOW_IDS ?? ''] = process.argv.slice(2);
-if (!app || !runId) die('Usage: node scripts/resolve-flows.js <app> <runId> [flowIds]');
+const [app, runId, flowIdArg = process.env.FLOW_ID ?? ''] = process.argv.slice(2);
+if (!app || !runId) die('Usage: node scripts/resolve-flows.js <app> <runId> <flowId>');
+if (process.env.FLOW_IDS) die('FLOW_IDS is no longer supported. Use singular FLOW_ID.');
+
+const flowId = flowIdArg.trim();
+if (!flowId) die('FLOW_ID is required for a pipeline run');
+if (flowId.includes(',')) die('FLOW_ID must contain exactly one flow ID, not a comma-separated list');
+if (!SLUG.test(flowId)) die(`FLOW_ID ${flowId} must be a slug`);
 
 const profile = validateProfile(app);
 const baseUrl = process.env[profile.baseUrlEnvVar];
 if (!baseUrl) die(`Missing environment variable ${profile.baseUrlEnvVar}`);
 
 const flowsRoot = join('apps', app, 'flows');
-const allFlows = existsSync(flowsRoot)
-  ? readdirSync(flowsRoot).filter((name) => name.endsWith('.yaml')).sort().map((name) => loadFlow(app, name, profile.testTags))
-  : [];
+if (!existsSync(flowsRoot)) die(`App ${app} has no flow files; single-flow pipeline runs require apps/${app}/flows/<flow-id>.yaml`);
 
-const requested = flowIdsArg.trim() ? flowIdsArg.split(',').map((id) => id.trim()).filter(Boolean) : [];
-const dupes = requested.filter((id, index) => requested.indexOf(id) !== index);
-if (dupes.length) die(`Duplicate FLOW_IDS are not allowed: ${unique(dupes).join(', ')}`);
-const byId = new Map(allFlows.map((flow) => [flow.id, flow]));
-const unknown = requested.filter((id) => !byId.has(id));
-if (unknown.length) die(`Unknown FLOW_IDS for app ${app}: ${unknown.join(', ')}`);
-const selected = requested.length ? requested.map((id) => byId.get(id)) : allFlows;
+const availableFlowIds = readdirSync(flowsRoot)
+  .filter((name) => name.endsWith('.yaml'))
+  .sort()
+  .map((name) => name.slice(0, -'.yaml'.length));
+if (!availableFlowIds.includes(flowId)) {
+  die(`Unknown FLOW_ID "${flowId}" for app ${app}. Available flow IDs: ${availableFlowIds.join(', ')}`);
+}
 
-const runRoot = join('results', app, runId);
+const selected = [loadFlow(app, `${flowId}.yaml`, profile.testTags)];
+const runRoot = join('results', app, 'flows', flowId, runId);
+const resultRoot = runRoot;
 mkdirSync(join(runRoot, 'step1-resolve'), { recursive: true });
 writeFileSync(join(runRoot, 'step1-resolve', 'run-metadata.json'), JSON.stringify({
   app,
+  flowId,
   runId,
+  resultRoot,
   baseUrl,
   profile: { path: join('apps', app, 'profile.yaml'), valid: true, baseUrlEnvVar: profile.baseUrlEnvVar },
-  flowMode: allFlows.length ? 'multi-flow' : 'legacy-app',
+  flowMode: 'single-flow',
   selectedFlowIds: selected.map((flow) => flow.id),
   resolvedAt: new Date().toISOString(),
 }, null, 2));
 
-if (allFlows.length) {
-  const inventoryFlows = [];
-  for (const flow of selected) {
-    const flowDir = join(runRoot, 'flows', flow.id);
-    mkdirSync(flowDir, { recursive: true });
-    const resolvedTestDataPath = join(flowDir, 'resolved-test-data.json');
-    if (flow.testData !== undefined) {
-      writeFileSync(resolvedTestDataPath, JSON.stringify(resolveTestData(flow.testData, flow.id, runId), null, 2));
-    }
-    inventoryFlows.push({
-      id: flow.id,
-      name: flow.name,
-      goal: flow.goal,
-      startPath: flow.startPath,
-      sourceFile: flow.sourceFile,
-      mergedTags: flow.mergedTags,
-      auth: flow.auth,
-      sideEffects: flow.sideEffects,
-      allowedActions: flow.allowedActions,
-      forbiddenActions: flow.forbiddenActions,
-      effectiveForbiddenActions: flow.effectiveForbiddenActions,
-      successCriteria: flow.successCriteria,
-      outOfScope: flow.outOfScope ?? [],
-      knowledgeRefs: flow.knowledgeRefs ?? [],
-      resolvedTestDataPath: flow.testData !== undefined ? resolvedTestDataPath : null,
-    });
+const inventoryFlows = [];
+for (const flow of selected) {
+  const resolvedTestDataPath = join(runRoot, 'resolved-test-data.json');
+  if (flow.testData !== undefined) {
+    writeFileSync(resolvedTestDataPath, JSON.stringify(resolveTestData(flow.testData, flow.id, runId), null, 2));
   }
-  writeFileSync(join(runRoot, 'step1-resolve', 'flow-inventory.json'), JSON.stringify({
-    app,
-    runId,
-    flowIdsInput: flowIdsArg || null,
-    selectedFlowIds: selected.map((flow) => flow.id),
-    flows: inventoryFlows,
-  }, null, 2));
+  inventoryFlows.push({
+    id: flow.id,
+    name: flow.name,
+    goal: flow.goal,
+    startPath: flow.startPath,
+    sourceFile: flow.sourceFile,
+    mergedTags: flow.mergedTags,
+    auth: flow.auth,
+    sideEffects: flow.sideEffects,
+    allowedActions: flow.allowedActions,
+    forbiddenActions: flow.forbiddenActions,
+    effectiveForbiddenActions: flow.effectiveForbiddenActions,
+    successCriteria: flow.successCriteria,
+    outOfScope: flow.outOfScope ?? [],
+    knowledgeRefs: flow.knowledgeRefs ?? [],
+    resolvedTestDataPath: flow.testData !== undefined ? resolvedTestDataPath : null,
+  });
 }
+writeFileSync(join(runRoot, 'step1-resolve', 'flow-inventory.json'), JSON.stringify({
+  app,
+  flowId,
+  runId,
+  resultRoot,
+  flowIdInput: flowId,
+  selectedFlowIds: selected.map((flow) => flow.id),
+  selectedFlows: inventoryFlows,
+  flows: inventoryFlows,
+}, null, 2));
 
-console.log(JSON.stringify({ app, runId, selectedFlowIds: selected.map((flow) => flow.id) }, null, 2));
+console.log(JSON.stringify({ app, flowId, runId, resultRoot, selectedFlowIds: selected.map((flow) => flow.id) }, null, 2));

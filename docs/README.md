@@ -28,7 +28,7 @@ If you only want a basic Playwright starter, this is probably more machinery tha
 - A pi pipeline runner extension in `.pi/extensions/pipeline-runner/`
 - Human approval gates for generated page objects and Gherkin test scenario drafts
 - Gherkin `.feature` scenario sources with scenario coverage mapping
-- Per-run artifacts under `results/<app>/<run>/`
+- Per-flow run artifacts under `results/<app>/flows/<flow-id>/<run>/`
 - App knowledge files under `knowledge/<app>/`
 - Automated six-run pruning for stale knowledge, with archive and audit log
 - A self-contained QA dashboard in `index.html`
@@ -72,11 +72,10 @@ Never commit `.env`, credentials, cookies, tokens, storage state, customer data,
 The easiest path is the pipeline runner extension:
 
 ```text
-/pipeline-run example
-/pipeline-run automation-in-testing FLOW_IDS=room-search,contact-message
+/pipeline-run automation-in-testing FLOW_ID=room-search
 ```
 
-That command creates a run ID, creates a git branch named `pipeline/<app>/<runId>`, switches to it, and starts the 8-step workflow. If `apps/<app>/flows/` exists, the pipeline validates all flow files, applies optional `FLOW_IDS`, keeps discovery/page objects shared, and drafts/writes/runs tests per selected flow.
+That command creates a run ID, creates a git branch named `pipeline/<app>/<flow-id>/<runId>`, switches to it, and starts the 8-step workflow. The pipeline validates the selected flow file, keeps discovery/page objects app-level, and drafts/writes/runs tests for exactly one flow.
 
 Non-gated steps continue automatically. The pipeline pauses twice:
 
@@ -95,7 +94,7 @@ Useful extension commands:
 
 | Command | What it does |
 |---|---|
-| `/pipeline-run <app> [FLOW_IDS=id-a,id-b]` | Starts a full pipeline run on a new git branch, optionally filtered to selected flows |
+| `/pipeline-run <app> FLOW_ID=<flow-id>` | Starts a full pipeline run for one flow on a new git branch |
 | `/pipeline-continue` | Sends `approved` at the current gate and advances |
 | `/pipeline-status` | Shows current run state |
 | `/pipeline-reset` | Aborts the run, switches back, and deletes the pipeline branch |
@@ -119,11 +118,15 @@ Selector priority is role, test id, label, placeholder, text, then CSS or XPath 
 
 ## What a run produces
 
-Each run writes artifacts under `results/<app>/<run>/`:
+Each run writes artifacts under `results/<app>/flows/<flow-id>/<run>/`:
 
 ```text
-results/example/2026-05-01T123456Z/
+results/automation-in-testing/flows/room-search/2026-05-01T123456Z/
 ├── pipeline-summary.md
+├── resolved-test-data.json
+├── test-scenarios.feature
+├── scenario-coverage.md
+├── flow-summary.md
 ├── step1-resolve/run-metadata.json
 ├── step1-resolve/flow-inventory.json
 ├── step2-discover/paths/<path-label>.snapshot.yaml
@@ -132,10 +135,6 @@ results/example/2026-05-01T123456Z/
 ├── step3-extract-selectors/normalized-selectors.md
 ├── step4-draft-page-object/page-object.draft.ts
 ├── step5-draft-tests/test-drafts-index.md
-├── flows/<flow-id>/resolved-test-data.json
-├── flows/<flow-id>/test-scenarios.feature
-├── flows/<flow-id>/scenario-coverage.md
-├── flows/<flow-id>/flow-summary.md
 └── step7-run-fix/
     ├── test-report.md
     ├── playwright-report/
@@ -187,8 +186,7 @@ After a pipeline run, or after editing generated tests:
 
 ```bash
 npx playwright test tests/example/
-APP_NAME=automation-in-testing FLOW_IDS=room-search npm test
-APP_NAME=automation-in-testing npm test
+APP_NAME=automation-in-testing FLOW_ID=room-search npm test
 npm run test:headed
 npm run test:debug
 npm run report
@@ -223,7 +221,7 @@ MY_APP_BASE_URL=http://localhost:3001
 Then run:
 
 ```text
-/pipeline-run my-app
+/pipeline-run my-app FLOW_ID=<flow-id>
 ```
 
 No framework source changes should be needed. App-specific output stays under:
@@ -231,7 +229,7 @@ No framework source changes should be needed. App-specific output stays under:
 - `src/pages/my-app/`
 - `tests/my-app/`
 - `knowledge/my-app/`
-- `results/my-app/`
+- `results/my-app/flows/<flow-id>/`
 
 ## Project map
 
@@ -245,7 +243,7 @@ src/pages/<app>/         Approved page objects
 src/fixtures/            Shared Playwright fixtures
 tests/<app>/             Approved .feature files and generated Playwright specs
 knowledge/<app>/         Active knowledge, pruning archive, and audit log
-results/<app>/           Per-run artifacts, gitignored
+results/<app>/flows/     Per-flow run artifacts, gitignored
 contracts/               YAML schemas
 docs/                    Project documentation
 ```
@@ -255,14 +253,20 @@ docs/                    Project documentation
 If you do not use `/pipeline-run`, you can run the step commands yourself in pi. Generate a run ID first, for example `2026-05-01T123456Z`, then run:
 
 ```text
-/pipeline-resolve example 2026-05-01T123456Z
-/pipeline-discover example 2026-05-01T123456Z
-/pipeline-extract-selectors example 2026-05-01T123456Z
-/pipeline-draft-page-object example 2026-05-01T123456Z
-/pipeline-draft-tests example 2026-05-01T123456Z
-/pipeline-write-spec example 2026-05-01T123456Z
-/pipeline-run-fix example 2026-05-01T123456Z
-/pipeline-summarize example 2026-05-01T123456Z
+/pipeline-resolve automation-in-testing 2026-05-01T123456Z
+/pipeline-discover automation-in-testing 2026-05-01T123456Z
+/pipeline-extract-selectors automation-in-testing 2026-05-01T123456Z
+/pipeline-draft-page-object automation-in-testing 2026-05-01T123456Z
+/pipeline-draft-tests automation-in-testing 2026-05-01T123456Z
+/pipeline-write-spec automation-in-testing 2026-05-01T123456Z
+/pipeline-run-fix automation-in-testing 2026-05-01T123456Z
+/pipeline-summarize automation-in-testing 2026-05-01T123456Z
+```
+
+Include `FLOW_ID: <flow-id>` in the context for each manual step, and run the resolver as:
+
+```bash
+node scripts/resolve-flows.js automation-in-testing 2026-05-01T123456Z room-search
 ```
 
 Use the same run ID for every step.

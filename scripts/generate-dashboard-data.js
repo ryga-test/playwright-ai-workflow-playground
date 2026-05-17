@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Scans results/example/ pipeline-summary.md files and generates
+// Scans results/<app>/flows/<flow-id>/<run>/ pipeline-summary.md files and generates
 // dashboard-data.js — a JS file that sets window.__DASHBOARD_DATA__
 // with the latest and historical test run stats.
 // Usage: node scripts/generate-dashboard-data.js [--open]
@@ -11,7 +11,8 @@ import { openDefaultBrowser } from './open-default-browser.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const RESULTS_DIR = join(ROOT, 'results', 'example');
+const APP_NAME = process.env.APP_NAME ?? 'example';
+const RESULTS_DIR = join(ROOT, 'results', APP_NAME);
 const OUTPUT = join(ROOT, 'dashboard-data.js');
 
 // ── low-level helpers ────────────────────────────────────────────────
@@ -405,28 +406,54 @@ function enrichFromTestReport(data, reportText, report) {
   }
 }
 
-function collectRuns(resultsDir) {
-  const runs = [];
-  for (const entry of readdirSync(resultsDir)) {
-    const runDir = join(resultsDir, entry);
-    if (!statSync(runDir).isDirectory() || entry === 'local-run') continue;
+function addRun(runs, runDir, metadata = {}) {
+  const summaryPath = join(runDir, 'pipeline-summary.md');
+  if (!existsSync(summaryPath)) return;
 
-    const summaryPath = join(runDir, 'pipeline-summary.md');
-    if (!existsSync(summaryPath)) continue;
+  const summaryText = readFileSync(summaryPath, 'utf-8');
+  const data = { ...metadata, ...parsePipelineSummary(summaryText) };
+  data.runDir = runDir;
 
-    const summaryText = readFileSync(summaryPath, 'utf-8');
-    const data = parsePipelineSummary(summaryText);
-    data.runDir = entry;
-
-    const testReportPath = join(runDir, 'step7-run-fix', 'test-report.md');
-    if (existsSync(testReportPath)) {
-      const reportText = readFileSync(testReportPath, 'utf-8');
-      enrichFromTestReport(data, reportText, parseTestReport(reportText));
-    }
-
-    runs.push(data);
+  const testReportPath = join(runDir, 'step7-run-fix', 'test-report.md');
+  if (existsSync(testReportPath)) {
+    const reportText = readFileSync(testReportPath, 'utf-8');
+    enrichFromTestReport(data, reportText, parseTestReport(reportText));
   }
 
+  runs.push(data);
+}
+
+function collectFlowRuns(runs, resultsDir) {
+  const flowsDir = join(resultsDir, 'flows');
+  if (!existsSync(flowsDir)) return;
+
+  for (const flowId of readdirSync(flowsDir)) {
+    const flowDir = join(flowsDir, flowId);
+    if (!statSync(flowDir).isDirectory()) continue;
+    collectRunsForFlow(runs, flowDir, flowId);
+  }
+}
+
+function collectRunsForFlow(runs, flowDir, flowId) {
+  for (const runId of readdirSync(flowDir)) {
+    const runDir = join(flowDir, runId);
+    if (!statSync(runDir).isDirectory() || runId === 'local-run') continue;
+    addRun(runs, runDir, { flowId });
+  }
+}
+
+function collectLegacyRuns(runs, resultsDir) {
+  for (const entry of readdirSync(resultsDir)) {
+    const runDir = join(resultsDir, entry);
+    if (!statSync(runDir).isDirectory() || entry === 'local-run' || entry === 'flows') continue;
+    addRun(runs, runDir);
+  }
+}
+
+function collectRuns(resultsDir) {
+  const runs = [];
+  collectFlowRuns(runs, resultsDir);
+  collectLegacyRuns(runs, resultsDir);
   runs.sort((a, b) => (b.runId || '').localeCompare(a.runId || ''));
   return runs;
 }
@@ -461,7 +488,7 @@ function buildDashboardData(runs) {
   })).reverse();
 
   return {
-    project: 'example',
+    project: APP_NAME,
     projectPath: ROOT,
     generatedAt: new Date().toISOString(),
     latest: {

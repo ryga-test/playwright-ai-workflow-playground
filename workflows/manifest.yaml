@@ -6,43 +6,43 @@ steps:
     name: Resolve Inputs
     order: 1
     gated: false
-    description: Validate app profile, resolve environment variables, validate/select flow files, generate run ID
+    description: Validate app profile, resolve environment variables, validate the selected flow file, generate run ID
     inputs: []
     outputs:
       - name: run-metadata
-        path: results/{{app}}/{{run}}/step1-resolve/run-metadata.json
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step1-resolve/run-metadata.json
         format: json
       - name: flow-inventory
-        path: results/{{app}}/{{run}}/step1-resolve/flow-inventory.json
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step1-resolve/flow-inventory.json
         format: json
       - name: resolved-test-data
-        path: results/{{app}}/{{run}}/flows/<flow-id>/resolved-test-data.json
+        path: results/{{app}}/flows/<flow-id>/{{run}}/resolved-test-data.json
         format: json
 
   - id: discover
     name: Discover UI
     order: 2
     gated: false
-    description: Capture shared Playwright ARIA snapshots for selected flow start paths and identify interactive elements
+    description: Capture Playwright ARIA snapshots for the selected flow start path and identify interactive elements
     inputs:
       - name: run-metadata
-        path: results/{{app}}/{{run}}/step1-resolve/run-metadata.json
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step1-resolve/run-metadata.json
         format: json
       - name: flow-inventory
-        path: results/{{app}}/{{run}}/step1-resolve/flow-inventory.json
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step1-resolve/flow-inventory.json
         format: json
     outputs:
       - name: snapshot
-        path: results/{{app}}/{{run}}/step2-discover/snapshot.yaml
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step2-discover/snapshot.yaml
         format: yaml
       - name: merged-snapshot
-        path: results/{{app}}/{{run}}/step2-discover/snapshot.merged.yaml
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step2-discover/snapshot.merged.yaml
         format: yaml
       - name: path-snapshots
-        path: results/{{app}}/{{run}}/step2-discover/paths/<path-label>.snapshot.yaml
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step2-discover/paths/<path-label>.snapshot.yaml
         format: yaml
       - name: selector-candidates
-        path: results/{{app}}/{{run}}/step2-discover/selector-candidates.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step2-discover/selector-candidates.md
         format: markdown
 
   - id: extract-selectors
@@ -52,14 +52,14 @@ steps:
     description: Normalize selector candidates with locator priority annotations, path provenance, and flow provenance
     inputs:
       - name: merged-snapshot
-        path: results/{{app}}/{{run}}/step2-discover/snapshot.merged.yaml
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step2-discover/snapshot.merged.yaml
         format: yaml
       - name: selector-candidates
-        path: results/{{app}}/{{run}}/step2-discover/selector-candidates.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step2-discover/selector-candidates.md
         format: markdown
     outputs:
       - name: normalized-selectors
-        path: results/{{app}}/{{run}}/step3-extract-selectors/normalized-selectors.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step3-extract-selectors/normalized-selectors.md
         format: markdown
 
   - id: draft-page-object
@@ -69,50 +69,50 @@ steps:
     description: Generate one shared app-level TypeScript page object from normalized selectors
     inputs:
       - name: normalized-selectors
-        path: results/{{app}}/{{run}}/step3-extract-selectors/normalized-selectors.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step3-extract-selectors/normalized-selectors.md
         format: markdown
     outputs:
       - name: page-object-draft
-        path: results/{{app}}/{{run}}/step4-draft-page-object/page-object.draft.ts
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step4-draft-page-object/page-object.draft.ts
         format: typescript
 
   - id: draft-tests
     name: Draft Test Scenarios
     order: 5
     gated: true
-    description: Generate per-flow Gherkin feature scenarios and scenario coverage from app knowledge, flow definitions, and page objects
+    description: Generate Gherkin feature scenarios and scenario coverage for the selected flow
     inputs:
       - name: page-object-draft
-        path: results/{{app}}/{{run}}/step4-draft-page-object/page-object.draft.ts
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step4-draft-page-object/page-object.draft.ts
         format: typescript
       - name: flow-inventory
-        path: results/{{app}}/{{run}}/step1-resolve/flow-inventory.json
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step1-resolve/flow-inventory.json
         format: json
       - name: knowledge
         path: knowledge/{{app}}/knowledge.md
         format: markdown
     outputs:
       - name: test-scenarios
-        path: results/{{app}}/{{run}}/flows/<flow-id>/test-scenarios.feature
+        path: results/{{app}}/flows/<flow-id>/{{run}}/test-scenarios.feature
         format: gherkin
       - name: scenario-coverage
-        path: results/{{app}}/{{run}}/flows/<flow-id>/scenario-coverage.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/scenario-coverage.md
         format: markdown
       - name: draft-index
-        path: results/{{app}}/{{run}}/step5-draft-tests/test-drafts-index.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step5-draft-tests/test-drafts-index.md
         format: markdown
 
   - id: write-spec
     name: Write Playwright Spec
     order: 6
     gated: false
-    description: Promote approved per-flow feature files and generate per-flow Playwright specs from approved scenarios and page objects
+    description: Promote the approved feature file and generate the selected flow Playwright spec from approved scenarios and page objects
     inputs:
       - name: test-scenarios
-        path: results/{{app}}/{{run}}/flows/<flow-id>/test-scenarios.feature
+        path: results/{{app}}/flows/<flow-id>/{{run}}/test-scenarios.feature
         format: gherkin
       - name: scenario-coverage
-        path: results/{{app}}/{{run}}/flows/<flow-id>/scenario-coverage.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/scenario-coverage.md
         format: markdown
       - name: page-object
         path: src/pages/{{app}}/{{app}}.page.ts
@@ -129,43 +129,43 @@ steps:
     name: Run Tests & Fix Script Bugs
     order: 7
     gated: false
-    description: Execute selected flow tests one flow at a time, triage failures, fix script bugs only
+    description: Execute the selected flow test, triage failures, fix script bugs only
     inputs:
       - name: spec
         path: tests/{{app}}/<flow-id>.spec.ts
         format: typescript
     outputs:
       - name: test-report
-        path: results/{{app}}/{{run}}/step7-run-fix/test-report.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step7-run-fix/test-report.md
         format: markdown
       - name: flow-summary
-        path: results/{{app}}/{{run}}/flows/<flow-id>/flow-summary.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/flow-summary.md
         format: markdown
       - name: html-report
-        path: results/{{app}}/{{run}}/step7-run-fix/playwright-report/
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step7-run-fix/playwright-report/
         format: html
       - name: traces
-        path: results/{{app}}/{{run}}/step7-run-fix/traces/
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step7-run-fix/traces/
         format: binary
       - name: screencast-videos
-        path: results/{{app}}/{{run}}/step7-run-fix/
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step7-run-fix/
         format: webm
 
   - id: summarize
     name: Summarize & Update Knowledge
     order: 8
     gated: false
-    description: Write pipeline and per-flow summaries, update app knowledge with verified observations, and apply six-run archival pruning
+    description: Write pipeline and flow summaries, update app knowledge with verified observations, and apply six-run archival pruning
     inputs:
       - name: test-report
-        path: results/{{app}}/{{run}}/step7-run-fix/test-report.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step7-run-fix/test-report.md
         format: markdown
       - name: flow-summary
-        path: results/{{app}}/{{run}}/flows/<flow-id>/flow-summary.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/flow-summary.md
         format: markdown
     outputs:
       - name: pipeline-summary
-        path: results/{{app}}/{{run}}/pipeline-summary.md
+        path: results/{{app}}/flows/<flow-id>/{{run}}/pipeline-summary.md
         format: markdown
       - name: knowledge-update
         path: knowledge/{{app}}/knowledge.md

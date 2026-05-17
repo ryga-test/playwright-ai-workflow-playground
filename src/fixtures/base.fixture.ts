@@ -3,11 +3,18 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { loadProfile, type AppProfile } from '../helpers/profile-loader.js';
+import { getStepDir } from '../helpers/result-paths.js';
 
 dotenv.config();
 
 export interface AppFixtures {
   appConfig: AppProfile;
+}
+
+function getScreencastOutputDir(appName: string, runId: string): string {
+  const flowId = process.env.FLOW_ID;
+  if (!flowId) throw new Error('FLOW_ID is required when PLAYWRIGHT_RUN_ID is set');
+  return getStepDir(appName, flowId, runId, 'step7-run-fix');
 }
 
 export const test = base.extend<AppFixtures>({
@@ -37,7 +44,7 @@ export const test = base.extend<AppFixtures>({
 
     // Pipeline run: enable screencast with action annotations and chapter overlays
     const appName = process.env.APP_NAME ?? 'example';
-    const outputDir = path.join('results', appName, runId, 'step7-run-fix');
+    const outputDir = getScreencastOutputDir(appName, runId);
     const videoPath = path.join(outputDir, `${testInfo.title}.webm`);
 
     fs.mkdirSync(outputDir, { recursive: true });

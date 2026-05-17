@@ -4,16 +4,16 @@ argument-hint: "<app> <run>"
 ---
 Summarize results and update knowledge:
 
-1. Read `results/$1/$2/step7-run-fix/test-report.md`.
-2. Read `results/$1/$2/step1-resolve/flow-inventory.json` when present.
-3. Read per-flow summaries from `results/$1/$2/flows/<flow-id>/flow-summary.md` when present.
-4. Write a pipeline summary to `results/$1/$2/pipeline-summary.md` covering:
+1. Read `results/$1/flows/<flow-id>/$2/step7-run-fix/test-report.md`.
+2. Read `results/$1/flows/<flow-id>/$2/step1-resolve/flow-inventory.json`.
+3. Read the flow summary from `results/$1/flows/<flow-id>/$2/flow-summary.md` when present.
+4. Write a pipeline summary to `results/$1/flows/<flow-id>/$2/pipeline-summary.md` covering:
    - all 8 step outcomes (completed/blocked/failed)
-   - selected flows and per-flow status
+   - selected flow and status
    - test pass/fail counts
    - any unresolved issues
    - run ID and duration
-5. Ensure every selected flow has `results/$1/$2/flows/<flow-id>/flow-summary.md`; create/update missing flow summaries from the aggregate report.
+5. Ensure the selected flow has `results/$1/flows/<flow-id>/$2/flow-summary.md`; create/update a missing flow summary from the test report.
 
 6. **Update knowledge files** (append-only — never delete or modify existing content):
    - Read `knowledge/$1/knowledge.md`.
