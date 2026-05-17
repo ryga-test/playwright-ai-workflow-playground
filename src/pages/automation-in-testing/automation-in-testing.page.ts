@@ -1,5 +1,11 @@
-// @provenance runId=2026-05-17T092115Z approvedAt=2026-05-17T09:27:00.000Z gate=page-object-review
+// @provenance runId=2026-05-17T094218Z approvedAt=2026-05-17T09:42:18.000Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/room-search.yaml
 import type { Locator, Page } from '@playwright/test';
+
+const ROOM_SEARCH_EXPECTED_ROOM_HREFS = {
+  single: '/reservation/1?checkin=2026-05-24&checkout=2026-05-25',
+  double: '/reservation/2?checkin=2026-05-24&checkout=2026-05-25',
+  suite: '/reservation/3?checkin=2026-05-24&checkout=2026-05-25',
+} as const;
 
 export const POLICY_LINK_HREFS = {
   cookie: '/cookie',
@@ -17,17 +23,20 @@ export type ContactMessageDraft = {
 /**
  * Shared page object for the Automation in Testing public demo app.
  *
- * Generated from approved page-object drafts, including:
- * - results/automation-in-testing/2026-05-10T132304Z/step3-extract-selectors/normalized-selectors.md
- * - results/automation-in-testing/flows/policy-links/2026-05-17T092115Z/step3-extract-selectors/normalized-selectors.md
+ * Approved provenance:
+ * - runId: 2026-05-17T094218Z
+ * - flowId: room-search
+ * - source flow: apps/automation-in-testing/flows/room-search.yaml
+ * - normalized selectors: results/automation-in-testing/flows/room-search/2026-05-17T094218Z/step3-extract-selectors/normalized-selectors.md
+ * - discovery paths: /#booking (booking)
  *
- * Selected flow coverage includes:
- * - contact-message: prepare a public contact message without submitting it.
- * - policy-links: verify public footer policy links and href values without navigating away.
+ * Selected flow coverage:
+ * - room-search: fill stay dates, check availability, and verify visible room booking options without entering checkout.
  *
  * Safety notes:
- * - Read-only flows must not click room reservation links, submit contact forms, log in, or load policy pages unless explicitly in scope.
- * - This page object exposes potentially state-changing controls for assertions only where generated flows forbid the action.
+ * - This flow is read-only and allows navigate, fill-form, submit-query, and assert actions.
+ * - Do not click room Book now links; checkout/reservation creation is explicitly out of scope.
+ * - Do not navigate to /admin.
  */
 export class AutomationInTestingPage {
   readonly navigation: Locator;
@@ -44,6 +53,7 @@ export class AutomationInTestingPage {
   readonly navAdminLink: Locator;
 
   readonly heroBookNowLink: Locator;
+  readonly bookingSection: Locator;
   readonly availabilityHeading: Locator;
   readonly checkInInput: Locator;
   readonly checkOutInput: Locator;
@@ -53,6 +63,7 @@ export class AutomationInTestingPage {
   readonly singleRoomHeading: Locator;
   readonly doubleRoomHeading: Locator;
   readonly suiteRoomHeading: Locator;
+  readonly roomBookNowLinks: Locator;
   readonly singleRoomBookNowLink: Locator;
   readonly doubleRoomBookNowLink: Locator;
   readonly suiteRoomBookNowLink: Locator;
@@ -61,7 +72,6 @@ export class AutomationInTestingPage {
   readonly pigeonMapAttributionLink: Locator;
   readonly openStreetMapAttributionLink: Locator;
 
-  // Scoped to #location per R05 to avoid duplicate-text false positives from footer
   readonly locationSection: Locator;
   readonly locationAddressLabel: Locator;
   readonly locationAddressText: Locator;
@@ -112,29 +122,33 @@ export class AutomationInTestingPage {
     this.navAdminLink = this.navigation.getByRole('link', { name: 'Admin' });
 
     this.heroBookNowLink = page.getByRole('link', { name: 'Book Now', exact: true });
+
+    // Provenance: flow=room-search path=/#booking selector-priority=P6 scoped CSS fallback for inputs.
+    this.bookingSection = page.locator('section#booking');
     this.availabilityHeading = page.getByRole('heading', {
       name: 'Check Availability & Book Your Stay',
       level: 3,
     });
-    this.checkInInput = page.getByRole('textbox').nth(0);
-    this.checkOutInput = page.getByRole('textbox').nth(1);
+    this.checkInInput = this.bookingSection.locator('input').nth(0);
+    this.checkOutInput = this.bookingSection.locator('input').nth(1);
     this.checkAvailabilityButton = page.getByRole('button', {
       name: 'Check Availability',
     });
 
+    // Provenance: flow=room-search path=/#booking selector-priority=P1 getByRole.
     this.roomsHeading = page.getByRole('heading', { name: 'Our Rooms', level: 2 });
     this.singleRoomHeading = page.getByRole('heading', { name: 'Single', level: 5 });
     this.doubleRoomHeading = page.getByRole('heading', { name: 'Double', level: 5 });
     this.suiteRoomHeading = page.getByRole('heading', { name: 'Suite', level: 5 });
-    this.singleRoomBookNowLink = page.getByRole('link', { name: 'Book now', exact: true }).nth(0);
-    this.doubleRoomBookNowLink = page.getByRole('link', { name: 'Book now', exact: true }).nth(1);
-    this.suiteRoomBookNowLink = page.getByRole('link', { name: 'Book now', exact: true }).nth(2);
+    this.roomBookNowLinks = page.getByRole('link', { name: 'Book now', exact: true });
+    this.singleRoomBookNowLink = this.roomBookNowLinks.nth(0);
+    this.doubleRoomBookNowLink = this.roomBookNowLinks.nth(1);
+    this.suiteRoomBookNowLink = this.roomBookNowLinks.nth(2);
 
     this.locationHeading = page.getByRole('heading', { name: 'Our Location', level: 2 });
     this.pigeonMapAttributionLink = page.locator('#location').getByRole('link', { name: 'Pigeon' });
     this.openStreetMapAttributionLink = page.locator('#location').getByRole('link', { name: 'OpenStreetMap' });
 
-    // Scoped to #location per R05 to avoid duplicate-text false positives from footer contact content
     this.locationSection = page.locator('#location');
     this.locationAddressLabel = this.locationSection.getByRole('heading', { name: 'Address', level: 5 });
     this.locationAddressText = this.locationSection.getByText('Shady Meadows B&B, Shadows valley, Newingtonfordburyshire, Dilbery, N1 1AA');
@@ -143,7 +157,6 @@ export class AutomationInTestingPage {
     this.locationEmailLabel = this.locationSection.getByRole('heading', { name: 'Email', level: 5 });
     this.locationEmailText = this.locationSection.getByText('fake@fakeemail.com');
 
-    // Provenance: flow=contact-message path=/#contact
     this.contactInformationHeading = page.getByRole('heading', {
       name: 'Contact Information',
       level: 3,
@@ -164,7 +177,6 @@ export class AutomationInTestingPage {
     this.alertContainer = page.getByRole('alert');
     this.alertRegion = this.alertContainer;
 
-    // Provenance: flow=policy-links path=/ selector-priority=P1 getByRole
     this.footer = page.getByRole('contentinfo');
     this.footerHomeLink = this.footer.getByRole('link', { name: 'Home' });
     this.footerRoomsLink = this.footer.getByRole('link', { name: 'Rooms' });
@@ -176,7 +188,7 @@ export class AutomationInTestingPage {
     this.footerAdminPanelLink = page.getByRole('link', { name: 'Admin panel' });
   }
 
-  async goto(path = '/#contact'): Promise<void> {
+  async goto(path = '/#booking'): Promise<void> {
     await this.page.goto(path);
   }
 
@@ -201,11 +213,6 @@ export class AutomationInTestingPage {
     await this.navContactLink.click();
   }
 
-  // fallow-ignore-next-line unused-class-member
-  async openAdmin(): Promise<void> {
-    await this.navAdminLink.click();
-  }
-
   async setStayDates(checkIn: string, checkOut: string): Promise<void> {
     await this.checkInInput.fill(checkIn);
     await this.checkOutInput.fill(checkOut);
@@ -216,6 +223,15 @@ export class AutomationInTestingPage {
     await this.checkAvailabilityButton.click();
   }
 
+  // fallow-ignore-next-line unused-class-member
+  async roomBookingHrefs(): Promise<(string | null)[]> {
+    return this.roomBookNowLinks.evaluateAll((links) => links.map((link) => link.getAttribute('href')));
+  }
+
+  roomSearchExpectedHrefs(): typeof ROOM_SEARCH_EXPECTED_ROOM_HREFS {
+    return ROOM_SEARCH_EXPECTED_ROOM_HREFS;
+  }
+
   async fillContactForm(contact: ContactMessageDraft): Promise<void> {
     await this.contactNameInput.fill(contact.name);
     await this.contactEmailInput.fill(contact.email);
@@ -224,7 +240,6 @@ export class AutomationInTestingPage {
     await this.contactMessageInput.fill(contact.message);
   }
 
-  /** Alias for readability in scenarios that call the action a contact message. */
   // fallow-ignore-next-line unused-class-member
   async fillContactMessage(contact: ContactMessageDraft): Promise<void> {
     await this.fillContactForm(contact);
@@ -240,4 +255,18 @@ export class AutomationInTestingPage {
     };
   }
 
+  // fallow-ignore-next-line unused-class-member
+  async cookiePolicyHref(): Promise<string | null> {
+    return this.cookiePolicyLink.getAttribute('href');
+  }
+
+  // fallow-ignore-next-line unused-class-member
+  async privacyPolicyHref(): Promise<string | null> {
+    return this.privacyPolicyLink.getAttribute('href');
+  }
+
+  // fallow-ignore-next-line unused-class-member
+  policyLinkExpectedHrefs(): typeof POLICY_LINK_HREFS {
+    return POLICY_LINK_HREFS;
+  }
 }
