@@ -144,3 +144,20 @@ Per constitutional Principle II, locators follow this priority order:
 - All 7 selectors are still P1 `getByRole` with zero CSS, XPath, or text fallbacks.
 - `welcomeHeading` and `brandLink` aliases were added to the shared page object for readability in the `public-home` spec.
 - The `public-home` spec uses explicit `goto('/')` and read-only visibility assertions only.
+
+## Run 2026-05-17T155137Z
+
+- Confirmed selectors that passed in the `room-search` flow:
+  - `page.getByRole('navigation').getByRole('link', { name: 'Booking' })` — entry point to `/#booking` from the shared page object.
+  - `page.locator('section#booking').locator('input').nth(0)` — Check In input.
+  - `page.locator('section#booking').locator('input').nth(1)` — Check Out input.
+  - `page.getByRole('button', { name: 'Check Availability' })` — availability action button.
+  - `page.getByRole('heading', { name: 'Our Rooms', level: 2 })` — results heading.
+  - `page.getByRole('heading', { name: 'Single', level: 5 })`, `Double`, and `Suite` — room option headings.
+  - `page.getByRole('link', { name: 'Book now', exact: true })` — repeated room booking links, asserted only.
+- Confirmed href assertions:
+  - Single room link href `/reservation/1?checkin=2026-05-24&checkout=2026-05-25`.
+  - Double room link href `/reservation/2?checkin=2026-05-24&checkout=2026-05-25`.
+  - Suite room link href `/reservation/3?checkin=2026-05-24&checkout=2026-05-25`.
+- The booking date inputs remain positional CSS fallbacks scoped to `section#booking` because the ARIA snapshot still did not expose stable accessible names.
+- The shared page object's room-search constants now reflect the new resolved dates from this run.

@@ -78,7 +78,7 @@ The easiest path is the pipeline runner extension. The runner checks the app pro
 
 That command creates a run ID, creates a git branch named `pipeline/<app>/<flow-id>/<runId>`, switches to it, and starts the 8-step workflow. The pipeline validates the selected flow file, keeps discovery/page objects app-level, and drafts/writes/runs tests for exactly one flow.
 
-For `runner: docker` apps, Step 2 uses the Playwright Agent CLI inside the Playwright Docker image, and Step 7 runs `npx playwright test` inside the same image with `--ipc=host` and the project root bind-mounted. The Docker image tag is pinned in `.docker-version`, and `./scripts/ensure-docker-image.sh` prepares the image plus dependencies for agent runs.
+For `runner: docker` apps, Step 2 uses the Playwright Agent CLI inside the Playwright Docker image, and Step 7 runs `npx playwright test` inside the same image with `--ipc=host` and the project root bind-mounted. The Docker image tag is pinned in `.docker-version`, and `./scripts/ensure-docker-image.sh` prepares the image plus dependencies for agent runs. Each docker-runner browser step also writes a small `run-command.md` artifact so future runs can prove the exact command that was used.
 
 Non-gated steps continue automatically. The pipeline pauses twice:
 

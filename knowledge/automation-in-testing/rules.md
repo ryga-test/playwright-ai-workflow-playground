@@ -144,3 +144,15 @@
 
 - **Rule**: The shared page object should expose `welcomeHeading` and `brandLink` aliases for the public-home flow alongside the existing heading/home-link locators.
 - **Rationale**: These aliases keep the `public-home` spec readable without introducing new selector strategies.
+
+## Run 2026-05-17T155137Z
+
+### R23 — Room-search should keep reservation links assertion-only
+
+- **Rule**: For the `room-search` flow, assert room `Book now` link visibility and hrefs after availability search, but do not click those links unless a reservation/checkout flow is explicitly approved.
+- **Rationale**: The flow validates date propagation into room options while remaining outside checkout.
+
+### R24 — Room-search date inputs stay section-scoped
+
+- **Rule**: Continue using `section#booking`-scoped positional input locators for Check In and Check Out until stable labels or test ids are available.
+- **Rationale**: The booking inputs still require scoped fallback selectors and the current run confirmed they remain stable enough for the selected flow.

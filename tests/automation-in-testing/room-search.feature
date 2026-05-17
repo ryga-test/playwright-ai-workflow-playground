@@ -1,11 +1,12 @@
-# @provenance runId=2026-05-17T094218Z approvedAt=2026-05-17T09:42:18.000Z gate=test-draft-review sourceFlow=apps/automation-in-testing/flows/room-search.yaml
-@smoke @public-demo @read-only @generated @room-search
+# @provenance runId=2026-05-17T155137Z approvedAt=2026-05-17T15:58:05Z gate=test-draft-review sourceFlow=apps/automation-in-testing/flows/room-search.yaml
+@generated @smoke @public-demo @read-only @room-search
 Feature: Room availability search
-  Public visitors need to check available rooms for stay dates without starting or completing a reservation.
+  Public visitors can choose stay dates, check availability, and inspect room booking options
+  without starting or completing a reservation.
 
   # Source-flow: apps/automation-in-testing/flows/room-search.yaml
   # Flow-ID: room-search
-  # Run-ID: 2026-05-17T094218Z
+  # Run-ID: 2026-05-17T155137Z
   # Start-path: /#booking
   Scenario: Visitor checks room availability without entering checkout
     Given a public visitor is on the room booking area

@@ -7,6 +7,7 @@
 - **Project-level Docker image pinning** via `.docker-version`, used by the pipeline for docker-runner apps.
 - **`scripts/ensure-docker-image.sh`** to pull the Playwright image and prepare the environment for agent runs.
 - **`@playwright/cli` as a devDependency** so the Playwright Agent CLI is available to the agent inside the Docker bind mount.
+- **Run-command log artifacts** for docker-runner browser steps (`step2-discover/run-command.md` and `step7-run-fix/run-command.md`) so future runs can prove the exact command used.
 
 ### Changed
 

@@ -19,6 +19,7 @@
 - The hero "Book Now" link reaches the availability search area.
 - Availability search can be initiated with editable stay dates while keeping room booking options visible and without completing a reservation.
 - The latest verified room-search run used `17/05/2026` to `18/05/2026`, stayed outside `/reservation/`, and showed Single, Double, and Suite options.
+- The approved room-search run `2026-05-17T155137Z` used `24/05/2026` to `25/05/2026`, stayed outside `/reservation/`, and again showed Single, Double, and Suite options with assertion-only `Book now` links.
 - Three `Book now` room links are visible as booking options after search; room-search treats them as assertion-only and does not click them.
 - Contact fields accept and retain obvious test data before submission.
 - The contact form Submit button is visible and enabled after filling all fields; not clicked.
@@ -52,7 +53,7 @@
 
 ## Latest Successful Run
 
-- Run: `2026-05-17T142233Z`
-- Flow: `public-home`
-- Result: 3/3 passed with 0 fix cycles
-- Artifacts: `results/automation-in-testing/flows/public-home/2026-05-17T142233Z/`
+- Run: `2026-05-17T155137Z`
+- Flow: `room-search`
+- Result: 1/1 passed with 0 fix cycles
+- Artifacts: `results/automation-in-testing/flows/room-search/2026-05-17T155137Z/`

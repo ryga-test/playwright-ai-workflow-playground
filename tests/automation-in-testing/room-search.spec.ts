@@ -1,4 +1,4 @@
-// @provenance runId=2026-05-17T094218Z approvedAt=2026-05-17T09:42:18.000Z gate=test-draft-review sourceFlow=apps/automation-in-testing/flows/room-search.yaml sourceFeature=tests/automation-in-testing/room-search.feature
+// @provenance runId=2026-05-17T155137Z approvedAt=2026-05-17T15:58:05Z gate=test-draft-review sourceFeature=tests/automation-in-testing/room-search.feature sourceFlow=apps/automation-in-testing/flows/room-search.yaml
 import { test, expect } from '@fixtures/base.fixture.js';
 import { AutomationInTestingPage } from '@pages/automation-in-testing/automation-in-testing.page.js';
 
@@ -15,7 +15,9 @@ test.describe('Flow: room-search', () => {
   });
 
   test(`Visitor checks room availability without entering checkout ${tags}`, async () => {
+    // Traceability: tests/automation-in-testing/room-search.feature
     // Scenario: Visitor checks room availability without entering checkout
+    // Source-flow: apps/automation-in-testing/flows/room-search.yaml
     await expect(app.availabilityHeading).toBeVisible();
 
     await app.checkAvailability(checkIn, checkOut);
