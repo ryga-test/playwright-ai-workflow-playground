@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-05-17 — Docker Runner Wiring for automation-in-testing
+
+### Added
+
+- **Project-level Docker image pinning** via `.docker-version`, used by the pipeline for docker-runner apps.
+- **`scripts/ensure-docker-image.sh`** to pull the Playwright image and prepare the environment for agent runs.
+- **`@playwright/cli` as a devDependency** so the Playwright Agent CLI is available to the agent inside the Docker bind mount.
+
+### Changed
+
+- **`apps/automation-in-testing/profile.yaml` now declares `runner: docker`** so the pipeline can choose containerized execution for that app.
+- **Step 2 discovery prompt now uses Playwright Agent CLI inside Docker** for docker-runner apps.
+- **Step 7 run/fix prompt now branches on runner mode** and uses `mcr.microsoft.com/playwright` when the app profile says `runner: docker`.
+- **`src/types/app-profile.ts` and `src/helpers/profile-loader.ts`** now validate and load the optional `runner` field.
+- **README and design docs** were updated to document the native-vs-docker runner split.
+
 ## 2026-05-17 — Single-Flow Pipeline Runs
 
 ### Changed

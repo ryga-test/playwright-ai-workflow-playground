@@ -1,6 +1,7 @@
 // @provenance runId=2026-05-17T100540Z approvedAt=2026-05-17T10:05:40.000Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/section-navigation.yaml
 // @provenance runId=2026-05-17T120959Z approvedAt=2026-05-17T12:12:49.451Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
-import type { Locator, Page } from '@playwright/test';
+// @provenance runId=2026-05-17T142233Z approvedAt=2026-05-17T14:28:54+00:00 gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
+import { expect, type Locator, type Page } from '@playwright/test';
 
 const ROOM_SEARCH_EXPECTED_ROOM_HREFS = {
   single: '/reservation/1?checkin=2026-05-17&checkout=2026-05-18',
@@ -37,12 +38,18 @@ export type ContactMessageDraft = {
  * - normalized selectors: results/automation-in-testing/flows/public-home/2026-05-17T120959Z/step3-extract-selectors/normalized-selectors.md
  * - discovery paths: / (home)
  *
+ * - runId: 2026-05-17T142233Z
+ * - flowId: public-home
+ * - source flow: apps/automation-in-testing/flows/public-home.yaml
+ * - normalized selectors: results/automation-in-testing/flows/public-home/2026-05-17T142233Z/step3-extract-selectors/normalized-selectors.md
+ * - discovery paths: / (home)
+ *
  * Inherited selectors (approved in prior runs):
  * - room-search (2026-05-17T094218Z): booking section, date inputs, room options, availability button.
  * - contact-message, policy-links, location-contact-info, room-display: prior approved locators preserved.
  *
  * Selected flow coverage (this run):
- * - public-home: verify welcome heading and public navigation link visibility on /.
+ * - public-home: verify a public visitor can see the welcome heading and public navigation options.
  * - All selectors are read-only (navigate + assert only).
  *
  * Safety notes:
@@ -57,6 +64,7 @@ export class AutomationInTestingPage {
   readonly navigation: Locator;
   readonly pageHeading: Locator;
   readonly mainHeading: Locator;
+  readonly welcomeHeading: Locator;
   readonly brandHomeLink: Locator;
   readonly brandLink: Locator;
   readonly navRoomsLink: Locator;
@@ -126,6 +134,7 @@ export class AutomationInTestingPage {
       level: 1,
     });
     this.mainHeading = this.pageHeading;
+    this.welcomeHeading = this.pageHeading;
     this.brandHomeLink = page.getByRole('link', { name: 'Shady Meadows B&B' });
     this.brandLink = this.brandHomeLink;
     // Provenance: flow=section-navigation path=/ selector-priority=P1 getByRole navigation-scoped.
@@ -230,6 +239,26 @@ export class AutomationInTestingPage {
 
   async openContactSection(): Promise<void> {
     await this.navContactLink.click();
+  }
+
+  /** All public navigation links in display order. */
+  publicNavLinks(): Locator[] {
+    return [
+      this.navRoomsLink,
+      this.navBookingLink,
+      this.navAmenitiesLink,
+      this.navLocationLink,
+      this.navContactLink,
+    ];
+  }
+
+  /** Assert the selected flow goals for the public-home smoke path. */
+  // fallow-ignore-next-line unused-class-member
+  async expectPublicHomeVisible(): Promise<void> {
+    await expect(this.pageHeading).toBeVisible();
+    for (const link of this.publicNavLinks()) {
+      await expect(link).toBeVisible();
+    }
   }
 
   async setStayDates(checkIn: string, checkOut: string): Promise<void> {

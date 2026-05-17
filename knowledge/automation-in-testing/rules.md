@@ -127,3 +127,20 @@
 
 - **Rule**: Use `section#booking`-scoped input locators for Check In and Check Out until stable accessible names, ids, or test ids are available.
 - **Rationale**: The latest discovery still exposes the booking date inputs as unnamed textboxes; section scoping reduces ambiguity compared with unscoped positional textbox locators.
+
+## Run 2026-05-17T142233Z
+
+### R20 — Public-home should use the home route explicitly
+
+- **Rule**: For the `public-home` smoke flow, `goto('/')` is the canonical entry point; do not rely on the page object's `/#booking` default.
+- **Rationale**: The flow only validates the home page intro/navigation, and explicit home navigation reduces incidental dependence on booking state.
+
+### R21 — Public-home selectors should stay role-based and visibility-only
+
+- **Rule**: Keep `public-home` assertions limited to `getByRole` heading/link locators and `toBeVisible()` checks for the welcome heading, public nav links, and brand link.
+- **Rationale**: The flow is read-only smoke coverage and passed without any fallback selectors or interactions.
+
+### R22 — Expose friendly aliases for home-page assertions
+
+- **Rule**: The shared page object should expose `welcomeHeading` and `brandLink` aliases for the public-home flow alongside the existing heading/home-link locators.
+- **Rationale**: These aliases keep the `public-home` spec readable without introducing new selector strategies.
