@@ -1,10 +1,10 @@
-// @provenance runId=2026-05-17T094218Z approvedAt=2026-05-17T09:42:18.000Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/room-search.yaml
+// @provenance runId=2026-05-17T100540Z approvedAt=2026-05-17T10:05:40.000Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/section-navigation.yaml
 import type { Locator, Page } from '@playwright/test';
 
 const ROOM_SEARCH_EXPECTED_ROOM_HREFS = {
-  single: '/reservation/1?checkin=2026-05-24&checkout=2026-05-25',
-  double: '/reservation/2?checkin=2026-05-24&checkout=2026-05-25',
-  suite: '/reservation/3?checkin=2026-05-24&checkout=2026-05-25',
+  single: '/reservation/1?checkin=2026-05-17&checkout=2026-05-18',
+  double: '/reservation/2?checkin=2026-05-17&checkout=2026-05-18',
+  suite: '/reservation/3?checkin=2026-05-17&checkout=2026-05-18',
 } as const;
 
 export const POLICY_LINK_HREFS = {
@@ -24,19 +24,26 @@ export type ContactMessageDraft = {
  * Shared page object for the Automation in Testing public demo app.
  *
  * Approved provenance:
- * - runId: 2026-05-17T094218Z
- * - flowId: room-search
- * - source flow: apps/automation-in-testing/flows/room-search.yaml
- * - normalized selectors: results/automation-in-testing/flows/room-search/2026-05-17T094218Z/step3-extract-selectors/normalized-selectors.md
- * - discovery paths: /#booking (booking)
+ * - runId: 2026-05-17T100540Z
+ * - flowId: section-navigation
+ * - source flow: apps/automation-in-testing/flows/section-navigation.yaml
+ * - normalized selectors: results/automation-in-testing/flows/section-navigation/2026-05-17T100540Z/step3-extract-selectors/normalized-selectors.md
+ * - discovery paths: / (home)
  *
- * Selected flow coverage:
- * - room-search: fill stay dates, check availability, and verify visible room booking options without entering checkout.
+ * Inherited selectors (approved in prior runs):
+ * - room-search (2026-05-17T094218Z): booking section, date inputs, room options, availability button.
+ * - contact-message, policy-links, location-contact-info, room-display, public-home: prior approved locators preserved.
+ *
+ * Selected flow coverage (this run):
+ * - section-navigation: click header nav links (Rooms, Booking, Location, Contact) and assert section heading visibility.
+ * - Also covers the hero Book Now CTA scenario.
  *
  * Safety notes:
- * - This flow is read-only and allows navigate, fill-form, submit-query, and assert actions.
- * - Do not click room Book now links; checkout/reservation creation is explicitly out of scope.
- * - Do not navigate to /admin.
+ * - This flow is read-only and allows navigate, click-link, and assert actions.
+ * - Do not click Admin link; admin navigation is out of scope.
+ * - Do not click room Book now links; checkout/reservation is out of scope.
+ * - Assert heading visibility after navigation (rule R06).
+ * - All section-navigation selectors are P1 getByRole.
  */
 export class AutomationInTestingPage {
   readonly navigation: Locator;
@@ -113,6 +120,7 @@ export class AutomationInTestingPage {
     this.mainHeading = this.pageHeading;
     this.brandHomeLink = page.getByRole('link', { name: 'Shady Meadows B&B' });
     this.brandLink = this.brandHomeLink;
+    // Provenance: flow=section-navigation path=/ selector-priority=P1 getByRole navigation-scoped.
     this.navRoomsLink = this.navigation.getByRole('link', { name: 'Rooms' });
     this.navBookingLink = this.navigation.getByRole('link', { name: 'Booking' });
     this.navAmenitiesLink = this.navigation.getByRole('link', { name: 'Amenities' });
@@ -121,9 +129,10 @@ export class AutomationInTestingPage {
     this.contactNavLink = this.navContactLink;
     this.navAdminLink = this.navigation.getByRole('link', { name: 'Admin' });
 
+    // Provenance: flow=section-navigation path=/ selector-priority=P1 getByRole exact for hero.
     this.heroBookNowLink = page.getByRole('link', { name: 'Book Now', exact: true });
 
-    // Provenance: flow=room-search path=/#booking selector-priority=P6 scoped CSS fallback for inputs.
+    // Provenance: inherited from flow=room-search path=/#booking.
     this.bookingSection = page.locator('section#booking');
     this.availabilityHeading = page.getByRole('heading', {
       name: 'Check Availability & Book Your Stay',
@@ -135,7 +144,7 @@ export class AutomationInTestingPage {
       name: 'Check Availability',
     });
 
-    // Provenance: flow=room-search path=/#booking selector-priority=P1 getByRole.
+    // Provenance: flow=section-navigation path=/ selector-priority=P1 getByRole.
     this.roomsHeading = page.getByRole('heading', { name: 'Our Rooms', level: 2 });
     this.singleRoomHeading = page.getByRole('heading', { name: 'Single', level: 5 });
     this.doubleRoomHeading = page.getByRole('heading', { name: 'Double', level: 5 });
@@ -145,6 +154,7 @@ export class AutomationInTestingPage {
     this.doubleRoomBookNowLink = this.roomBookNowLinks.nth(1);
     this.suiteRoomBookNowLink = this.roomBookNowLinks.nth(2);
 
+    // Provenance: flow=section-navigation path=/ selector-priority=P1 getByRole.
     this.locationHeading = page.getByRole('heading', { name: 'Our Location', level: 2 });
     this.pigeonMapAttributionLink = page.locator('#location').getByRole('link', { name: 'Pigeon' });
     this.openStreetMapAttributionLink = page.locator('#location').getByRole('link', { name: 'OpenStreetMap' });
@@ -157,6 +167,7 @@ export class AutomationInTestingPage {
     this.locationEmailLabel = this.locationSection.getByRole('heading', { name: 'Email', level: 5 });
     this.locationEmailText = this.locationSection.getByText('fake@fakeemail.com');
 
+    // Provenance: flow=section-navigation path=/ selector-priority=P1 getByRole.
     this.contactInformationHeading = page.getByRole('heading', {
       name: 'Contact Information',
       level: 3,
