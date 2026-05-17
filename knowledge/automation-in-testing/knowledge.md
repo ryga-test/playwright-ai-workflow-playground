@@ -140,3 +140,18 @@
 - 1 Gherkin-sourced `location-contact-info` Playwright test passed against the public site.
 - The test traced to the approved "Location section displays map attribution and contact details" scenario.
 - All assertions used `toBeVisible()` per R06; no form interaction or submission occurred.
+
+## Run 2026-05-17T092115Z
+
+### Verified UI Facts
+
+- The footer `Cookie-Policy` link is visible on the public home page and exposes the app-relative destination `/cookie`.
+- The footer `Privacy-Policy` link is visible on the public home page and exposes the app-relative destination `/privacy`.
+- The `policy-links` flow verified policy link destinations without clicking either policy link and without leaving the home page.
+- Footer-scoped role locators for `Cookie-Policy` and `Privacy-Policy` passed against the public site.
+
+### Verified Test Coverage
+
+- 1 Gherkin-sourced `policy-links` Playwright test passed against the public site.
+- The test traced to the approved "Visitor can see policy links and their destinations without leaving the home page" scenario.
+- No policy page was loaded, no booking was completed, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.

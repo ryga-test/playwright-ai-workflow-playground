@@ -16,3 +16,8 @@ No automated pruning has been applied yet.
 
 - Action: no pruning applied.
 - Reason: the `location-contact-info` flow observations reinforce existing verified facts (map attribution links visible, contact details visible in #location, R05 scoping effective). No entries are contradicted or superseded across the 6 successful runs.
+
+## Run 2026-05-17T092115Z
+
+- Action: no pruning applied.
+- Reason: the `policy-links` flow observations reinforce existing verified facts (Cookie-Policy and Privacy-Policy links visible with `/cookie` and `/privacy` destinations). No entries are contradicted or superseded across the last six successful runs.

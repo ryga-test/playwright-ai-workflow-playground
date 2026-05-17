@@ -1,5 +1,10 @@
-// @provenance runId=2026-05-10T132304Z approvedAt=2026-05-10T13:27:00Z gate=page-object-review
+// @provenance runId=2026-05-17T092115Z approvedAt=2026-05-17T09:27:00.000Z gate=page-object-review
 import type { Locator, Page } from '@playwright/test';
+
+export const POLICY_LINK_HREFS = {
+  cookie: '/cookie',
+  privacy: '/privacy',
+} as const;
 
 export type ContactMessageDraft = {
   name: string;
@@ -12,18 +17,17 @@ export type ContactMessageDraft = {
 /**
  * Shared page object for the Automation in Testing public demo app.
  *
- * Generated from:
+ * Generated from approved page-object drafts, including:
  * - results/automation-in-testing/2026-05-10T132304Z/step3-extract-selectors/normalized-selectors.md
- * - results/automation-in-testing/2026-05-10T132304Z/step1-resolve/flow-inventory.json
- * - results/automation-in-testing/2026-05-10T132304Z/step2-discover/snapshot.merged.yaml
+ * - results/automation-in-testing/flows/policy-links/2026-05-17T092115Z/step3-extract-selectors/normalized-selectors.md
  *
- * Selected flow coverage:
+ * Selected flow coverage includes:
  * - contact-message: prepare a public contact message without submitting it.
+ * - policy-links: verify public footer policy links and href values without navigating away.
  *
  * Safety notes:
- * - The selected flow forbids submit-contact-form and send-external-message.
- * - This page object exposes the Submit button for assertions only and intentionally
- *   does not provide a method that clicks Submit.
+ * - Read-only flows must not click room reservation links, submit contact forms, log in, or load policy pages unless explicitly in scope.
+ * - This page object exposes potentially state-changing controls for assertions only where generated flows forbid the action.
  */
 export class AutomationInTestingPage {
   readonly navigation: Locator;
@@ -85,6 +89,7 @@ export class AutomationInTestingPage {
   readonly footerRoomsLink: Locator;
   readonly footerBookingLink: Locator;
   readonly footerContactLink: Locator;
+  readonly footerAuthorLink: Locator;
   readonly cookiePolicyLink: Locator;
   readonly privacyPolicyLink: Locator;
   readonly footerAdminPanelLink: Locator;
@@ -159,13 +164,15 @@ export class AutomationInTestingPage {
     this.alertContainer = page.getByRole('alert');
     this.alertRegion = this.alertContainer;
 
+    // Provenance: flow=policy-links path=/ selector-priority=P1 getByRole
     this.footer = page.getByRole('contentinfo');
     this.footerHomeLink = this.footer.getByRole('link', { name: 'Home' });
     this.footerRoomsLink = this.footer.getByRole('link', { name: 'Rooms' });
     this.footerBookingLink = this.footer.getByRole('link', { name: 'Booking' });
     this.footerContactLink = this.footer.getByRole('link', { name: 'Contact' });
-    this.cookiePolicyLink = page.getByRole('link', { name: 'Cookie-Policy' });
-    this.privacyPolicyLink = page.getByRole('link', { name: 'Privacy-Policy' });
+    this.footerAuthorLink = page.getByRole('link', { name: 'Mark Winteringham' });
+    this.cookiePolicyLink = this.footer.getByRole('link', { name: 'Cookie-Policy' });
+    this.privacyPolicyLink = this.footer.getByRole('link', { name: 'Privacy-Policy' });
     this.footerAdminPanelLink = page.getByRole('link', { name: 'Admin panel' });
   }
 
@@ -232,4 +239,5 @@ export class AutomationInTestingPage {
       message: await this.contactMessageInput.inputValue(),
     };
   }
+
 }

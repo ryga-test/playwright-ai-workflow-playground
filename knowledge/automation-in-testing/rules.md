@@ -103,3 +103,15 @@
 
 - **Rule**: Define `#location`-scoped locators on the shared page object (e.g., `this.locationAddressText = page.locator('#location').getByText(...)`) rather than using unscoped `page.getByText().first()` in specs.
 - **Rationale**: Contact text (address, phone, email) appears in both `#location` and the footer. Scoping via page object fields keeps assertions clean and avoids `.first()` workarounds that are fragile to DOM order changes.
+
+## Run 2026-05-17T092115Z
+
+### R16 — Keep policy-link checks assertion-only
+
+- **Rule**: For the `policy-links` flow, assert that the footer `Cookie-Policy` and `Privacy-Policy` links are visible and expose `/cookie` and `/privacy` hrefs, but do not click those links unless loading policy pages is explicitly in scope.
+- **Rationale**: The flow goal is to verify public link visibility and destinations without navigating away, and the flow marks loading policy pages out of scope.
+
+### R17 — Scope policy links to the footer landmark
+
+- **Rule**: Use footer-scoped role locators for policy links, e.g. `page.getByRole('contentinfo').getByRole('link', { name: 'Cookie-Policy' })` and `Privacy-Policy`.
+- **Rationale**: Role locators preserve accessibility alignment, and footer scoping protects generated tests from future duplicate policy links elsewhere on the page.

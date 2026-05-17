@@ -1,8 +1,11 @@
-// @provenance source=apps/automation-in-testing/flows/policy-links.yaml
+// @provenance runId=2026-05-17T092115Z approvedAt=2026-05-17T09:30:34Z gate=test-draft-review source=tests/automation-in-testing/policy-links.feature flow=apps/automation-in-testing/flows/policy-links.yaml
 import { test, expect } from '@fixtures/base.fixture.js';
-import { AutomationInTestingPage } from '@pages/automation-in-testing/automation-in-testing.page.js';
+import {
+  AutomationInTestingPage,
+  POLICY_LINK_HREFS,
+} from '@pages/automation-in-testing/automation-in-testing.page.js';
 
-const tags = '@generated @smoke @public-demo @read-only @policy-links';
+const tags = '@smoke @public-demo @read-only @generated @policy-links';
 
 // fallow-ignore-next-line code-duplication
 test.describe('Flow: policy-links', () => {
@@ -10,13 +13,20 @@ test.describe('Flow: policy-links', () => {
 
   test.beforeEach(async ({ page }) => {
     app = new AutomationInTestingPage(page);
-    await app.goto();
+    await app.goto('/');
   });
 
-  test(`Visitor can access public policy links ${tags}`, async () => {
+  test(`Visitor can see policy links and their destinations without leaving the home page ${tags}`, async ({ page }) => {
+    // Traceability: tests/automation-in-testing/policy-links.feature
+    // Scenario: Visitor can see policy links and their destinations without leaving the home page
+    // Source-flow: apps/automation-in-testing/flows/policy-links.yaml
+    const homeUrl = page.url();
+    const expectedHrefs = POLICY_LINK_HREFS;
+
     await expect(app.cookiePolicyLink).toBeVisible();
-    await expect(app.cookiePolicyLink).toHaveAttribute('href', '/cookie');
+    await expect(app.cookiePolicyLink).toHaveAttribute('href', expectedHrefs.cookie);
     await expect(app.privacyPolicyLink).toBeVisible();
-    await expect(app.privacyPolicyLink).toHaveAttribute('href', '/privacy');
+    await expect(app.privacyPolicyLink).toHaveAttribute('href', expectedHrefs.privacy);
+    await expect(page).toHaveURL(homeUrl);
   });
 });

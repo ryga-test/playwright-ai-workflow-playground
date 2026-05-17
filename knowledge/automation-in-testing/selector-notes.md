@@ -88,3 +88,14 @@ Per constitutional Principle II, locators follow this priority order:
   - `page.getByRole('heading', { name: 'Contact Information', level: 3 })` — contact info sub-heading.
 - `#location`-scoped text locators avoid strict-mode failures from duplicate footer contact content without requiring `.first()` workarounds.
 - Scoped locators defined as page object fields (`locationAddressText`, `locationPhoneText`, `locationEmailText`) keep test specs clean and maintainable.
+
+## Run 2026-05-17T092115Z
+
+- Confirmed selectors that passed in the `policy-links` flow:
+  - `page.getByRole('contentinfo')` — footer landmark for scoping policy links.
+  - `page.getByRole('contentinfo').getByRole('link', { name: 'Cookie-Policy' })` — footer cookie policy link.
+  - `page.getByRole('contentinfo').getByRole('link', { name: 'Privacy-Policy' })` — footer privacy policy link.
+- Confirmed href assertions:
+  - Cookie policy link has raw `href` `/cookie`.
+  - Privacy policy link has raw `href` `/privacy`.
+- CSS href selectors such as `a[href="/cookie"]` and text-only locators were not needed because footer-scoped role locators were stable and passed.

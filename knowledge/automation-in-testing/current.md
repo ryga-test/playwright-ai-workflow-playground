@@ -10,7 +10,7 @@
 
 - Public smoke coverage should remain safe for a live demo site.
 - Safe interactions include page load, section navigation, availability search, room option visibility, contact field filling without submission, and public policy link inspection.
-- Avoid real credentials, payment data, email/SMS dependent assertions, admin login attempts, final booking submission, and contact message submission unless explicitly approved for a state-changing run.
+- Avoid real credentials, payment data, email/SMS dependent assertions, admin login attempts, final booking submission, contact message submission, and policy-page navigation unless explicitly approved for a flow.
 
 ## Current Verified Runtime Observations
 
@@ -24,9 +24,10 @@
 - The contact form Submit button is visible and enabled after filling all fields; not clicked.
 - The alert ARIA region remains empty after contact form fill (no submission feedback triggered).
 - All five contact form fields load empty on initial navigation to `/#contact`.
-- Cookie-Policy and Privacy-Policy links are visible and route to `/cookie` and `/privacy`.
+- Footer Cookie-Policy and Privacy-Policy links are visible on `/`, expose raw hrefs `/cookie` and `/privacy`, and can be verified without navigating away.
 
 ### Location Section (verified 2026-05-14T130209Z)
+
 - The `#location` section heading "Our Location" (h2) and "Contact Information" (h3) are visible.
 - Map attribution links "Pigeon" and "OpenStreetMap" are visible within `#location`.
 - Address, phone, and email contact details are visible within `#location`:
@@ -37,16 +38,17 @@
 
 ## Current Selector Rules
 
-- Prefer role locators for named navigation links, headings, buttons, and public links.
+- Prefer role locators for named navigation links, headings, buttons, landmarks, and public links.
 - Use exact matching to distinguish hero `Book Now` from repeated room `Book now` links.
-- Use `getByTestId()` locators (`ContactName`, `ContactEmail`, `ContactPhone`, `ContactSubject`, `ContactDescription`) for all contact form fields — confirmed stable across 4 runs.
+- Use footer-scoped role locators for policy links: `page.getByRole('contentinfo').getByRole('link', { name: 'Cookie-Policy' })` and `Privacy-Policy`.
+- Use `getByTestId()` locators (`ContactName`, `ContactEmail`, `ContactPhone`, `ContactSubject`, `ContactDescription`) for all contact form fields — confirmed stable across multiple runs.
 - Availability date inputs are currently unnamed textboxes; use positional locators only within a booking/room-search page object until stable labels/test ids are available.
 - Scope duplicate contact/address text to `#location` via page object fields (R05, R15).
 - Define `#location`-scoped locators on the shared page object to keep specs clean and avoid `.first()` workarounds (R15).
 
 ## Latest Successful Run
 
-- Run: `2026-05-14T130209Z`
-- Flow: `location-contact-info`
+- Run: `2026-05-17T092115Z`
+- Flow: `policy-links`
 - Result: 1/1 passed with 0 fix cycles
-- Artifacts: `results/automation-in-testing/2026-05-14T130209Z/`
+- Artifacts: `results/automation-in-testing/flows/policy-links/2026-05-17T092115Z/`
