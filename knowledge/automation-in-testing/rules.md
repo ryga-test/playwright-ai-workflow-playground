@@ -115,3 +115,15 @@
 
 - **Rule**: Use footer-scoped role locators for policy links, e.g. `page.getByRole('contentinfo').getByRole('link', { name: 'Cookie-Policy' })` and `Privacy-Policy`.
 - **Rationale**: Role locators preserve accessibility alignment, and footer scoping protects generated tests from future duplicate policy links elsewhere on the page.
+
+## Run 2026-05-17T094218Z
+
+### R18 — Assert room-search hrefs without entering reservation
+
+- **Rule**: For the `room-search` flow, it is safe to assert room `Book now` link visibility and raw `href` values after availability search, but generated tests must not click those links unless a reservation/checkout flow is explicitly approved.
+- **Rationale**: Reservation hrefs prove date propagation into available room options while preserving the flow boundary that checkout is out of scope.
+
+### R19 — Scope room-search date inputs to the booking section
+
+- **Rule**: Use `section#booking`-scoped input locators for Check In and Check Out until stable accessible names, ids, or test ids are available.
+- **Rationale**: The latest discovery still exposes the booking date inputs as unnamed textboxes; section scoping reduces ambiguity compared with unscoped positional textbox locators.

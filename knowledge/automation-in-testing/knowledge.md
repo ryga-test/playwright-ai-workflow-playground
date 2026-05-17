@@ -155,3 +155,19 @@
 - 1 Gherkin-sourced `policy-links` Playwright test passed against the public site.
 - The test traced to the approved "Visitor can see policy links and their destinations without leaving the home page" scenario.
 - No policy page was loaded, no booking was completed, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-05-17T094218Z
+
+### Verified UI Facts
+
+- Availability search for `24/05/2026` to `25/05/2026` completed without entering the reservation checkout flow.
+- The room-search flow left the visitor outside `/reservation/` after checking availability.
+- The rooms section exposed visible options for Single, Double, and Suite after availability search.
+- Three visible room `Book now` links were present and exposed reservation hrefs for the selected dates: `/reservation/1?checkin=2026-05-24&checkout=2026-05-25`, `/reservation/2?checkin=2026-05-24&checkout=2026-05-25`, and `/reservation/3?checkin=2026-05-24&checkout=2026-05-25`.
+- The booking date inputs accepted and retained the resolved test data values `24/05/2026` and `25/05/2026`.
+
+### Verified Test Coverage
+
+- 1 Gherkin-sourced `room-search` Playwright test passed against the public site.
+- The test traced to the approved "Visitor checks room availability without entering checkout" scenario.
+- No room reservation link was clicked, no booking was completed, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.

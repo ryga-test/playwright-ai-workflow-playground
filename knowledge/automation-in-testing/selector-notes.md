@@ -99,3 +99,19 @@ Per constitutional Principle II, locators follow this priority order:
   - Cookie policy link has raw `href` `/cookie`.
   - Privacy policy link has raw `href` `/privacy`.
 - CSS href selectors such as `a[href="/cookie"]` and text-only locators were not needed because footer-scoped role locators were stable and passed.
+
+## Run 2026-05-17T094218Z
+
+- Confirmed selectors that passed in the `room-search` flow:
+  - `page.locator('section#booking')` — booking section scope for availability controls.
+  - `page.locator('section#booking').locator('input').nth(0)` — Check In date input.
+  - `page.locator('section#booking').locator('input').nth(1)` — Check Out date input.
+  - `page.getByRole('button', { name: 'Check Availability' })` — availability query button.
+  - `page.getByRole('heading', { name: 'Our Rooms', level: 2 })` — room results heading.
+  - `page.getByRole('heading', { name: 'Single', level: 5 })`, `Double`, and `Suite` — room option headings.
+  - `page.getByRole('link', { name: 'Book now', exact: true }).nth(0..2)` — room booking links, asserted only.
+- Confirmed href assertions:
+  - Single room link has raw `href` `/reservation/1?checkin=2026-05-24&checkout=2026-05-25`.
+  - Double room link has raw `href` `/reservation/2?checkin=2026-05-24&checkout=2026-05-25`.
+  - Suite room link has raw `href` `/reservation/3?checkin=2026-05-24&checkout=2026-05-25`.
+- The scoped CSS fallback for booking date inputs remains necessary because the captured ARIA snapshot exposes visible label text but no reliable programmatic accessible name for the inputs.
