@@ -21,6 +21,7 @@
     "typescript": "latest"
   },
   "devDependencies": {
+    "@playwright/cli": "latest",
     "dotenv": "latest",
     "@types/node": "latest",
     "fallow": "^2.61.0"

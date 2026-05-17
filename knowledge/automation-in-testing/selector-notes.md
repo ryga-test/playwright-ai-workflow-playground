@@ -115,3 +115,18 @@ Per constitutional Principle II, locators follow this priority order:
   - Double room link has raw `href` `/reservation/2?checkin=2026-05-24&checkout=2026-05-25`.
   - Suite room link has raw `href` `/reservation/3?checkin=2026-05-24&checkout=2026-05-25`.
 - The scoped CSS fallback for booking date inputs remains necessary because the captured ARIA snapshot exposes visible label text but no reliable programmatic accessible name for the inputs.
+
+## Run 2026-05-17T120959Z
+
+- Confirmed selectors that passed in the `public-home` flow:
+  - `page.getByRole('heading', { name: 'Welcome to Shady Meadows B&B', level: 1 })` — h1 welcome heading, unique on page.
+  - `page.getByRole('link', { name: 'Rooms' })` — public navigation link to `/#rooms`.
+  - `page.getByRole('link', { name: 'Booking' })` — public navigation link to `/#booking`.
+  - `page.getByRole('link', { name: 'Amenities' })` — public navigation link to `/#amenities`.
+  - `page.getByRole('link', { name: 'Location' })` — public navigation link to `/#location`.
+  - `page.getByRole('link', { name: 'Contact' })` — public navigation link to `/#contact`.
+  - `page.getByRole('link', { name: 'Shady Meadows B&B' })` — brand logo/home link.
+- All 7 selectors are P1 `getByRole` with zero CSS, XPath, or text fallbacks.
+- Navigation links are page-scoped (not navigation-scoped) for maximum compatibility with the shared monolithic `AutomationInTestingPage` page object.
+- The Admin link (`getByRole('link', { name: 'Admin' })`) exists on the page but was explicitly excluded from assertions — admin access is out of scope.
+- `goto('/')` is the correct explicit navigation for home page tests; the page object default `/#booking` is preserved for backward compatibility with section-navigation and room-search flows.

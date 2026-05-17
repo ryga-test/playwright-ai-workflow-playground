@@ -1,4 +1,5 @@
 // @provenance runId=2026-05-17T100540Z approvedAt=2026-05-17T10:05:40.000Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/section-navigation.yaml
+// @provenance runId=2026-05-17T120959Z approvedAt=2026-05-17T12:12:49.451Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
 import type { Locator, Page } from '@playwright/test';
 
 const ROOM_SEARCH_EXPECTED_ROOM_HREFS = {
@@ -30,20 +31,27 @@ export type ContactMessageDraft = {
  * - normalized selectors: results/automation-in-testing/flows/section-navigation/2026-05-17T100540Z/step3-extract-selectors/normalized-selectors.md
  * - discovery paths: / (home)
  *
+ * - runId: 2026-05-17T120959Z
+ * - flowId: public-home
+ * - source flow: apps/automation-in-testing/flows/public-home.yaml
+ * - normalized selectors: results/automation-in-testing/flows/public-home/2026-05-17T120959Z/step3-extract-selectors/normalized-selectors.md
+ * - discovery paths: / (home)
+ *
  * Inherited selectors (approved in prior runs):
  * - room-search (2026-05-17T094218Z): booking section, date inputs, room options, availability button.
- * - contact-message, policy-links, location-contact-info, room-display, public-home: prior approved locators preserved.
+ * - contact-message, policy-links, location-contact-info, room-display: prior approved locators preserved.
  *
  * Selected flow coverage (this run):
- * - section-navigation: click header nav links (Rooms, Booking, Location, Contact) and assert section heading visibility.
- * - Also covers the hero Book Now CTA scenario.
+ * - public-home: verify welcome heading and public navigation link visibility on /.
+ * - All selectors are read-only (navigate + assert only).
  *
  * Safety notes:
- * - This flow is read-only and allows navigate, click-link, and assert actions.
+ * - This flow is read-only and allows navigate and assert actions only.
  * - Do not click Admin link; admin navigation is out of scope.
- * - Do not click room Book now links; checkout/reservation is out of scope.
- * - Assert heading visibility after navigation (rule R06).
- * - All section-navigation selectors are P1 getByRole.
+ * - Do not click Book Now/Book now links; checkout/reservation is out of scope.
+ * - Do not click Check Availability; booking is forbidden.
+ * - Assert heading visibility (rule R06).
+ * - All public-home selectors are P1 getByRole.
  */
 export class AutomationInTestingPage {
   readonly navigation: Locator;

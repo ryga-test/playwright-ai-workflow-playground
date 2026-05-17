@@ -130,3 +130,16 @@ Full decision details live in `docs/multi-flow-pipeline.md`.
 **Choice:** One pipeline run targets exactly one flow.
 
 Pipeline invocation requires singular `FLOW_ID=<flow-id>` and rejects omitted flow IDs, comma-separated values, and legacy `FLOW_IDS`. New result artifacts live under `results/<app>/flows/<flow-id>/<run>/`. `flow-inventory.json` remains as a compatibility artifact with `selectedFlows`/`flows` arrays containing exactly one flow.
+
+### 17. Docker Runner for External Apps
+**Choice:** Apps targeting remote URLs run browser steps inside `mcr.microsoft.com/playwright` containers.
+
+- `runner: docker` in the app profile triggers containerized execution for steps 2 (discover, Agent CLI) and 7 (run/fix, Playwright test).
+- One ephemeral container per browser step — no long-lived daemons.
+- Project root is bind-mounted (`-v $(pwd):/app -w /app`) so source, deps, and `results/` flow through.
+- Docker image tag is pinned in `.docker-version` at project root.
+- `@playwright/cli` is a project devDependency, available inside the container via bind mount.
+- `--ipc=host` prevents Chromium shared-memory crashes.
+- Local apps (e.g., `example`) stay `runner: native` — sidesteps localhost-in-Docker networking.
+
+Pipeline invocation requires singular `FLOW_ID=<flow-id>` and rejects omitted flow IDs, comma-separated values, and legacy `FLOW_IDS`. New result artifacts live under `results/<app>/flows/<flow-id>/<run>/`. `flow-inventory.json` remains as a compatibility artifact with `selectedFlows`/`flows` arrays containing exactly one flow.

@@ -171,3 +171,20 @@
 - 1 Gherkin-sourced `room-search` Playwright test passed against the public site.
 - The test traced to the approved "Visitor checks room availability without entering checkout" scenario.
 - No room reservation link was clicked, no booking was completed, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-05-17T120959Z
+
+### Verified UI Facts
+
+- The public home page at `/` loads and renders the h1 welcome heading "Welcome to Shady Meadows B&B".
+- Five public navigation links are visible on the home page: Rooms, Booking, Amenities, Location, Contact.
+- The Admin navigation link exists on the page but was not asserted because admin access is out of scope per the flow definition.
+- The brand logo link "Shady Meadows B&B" is visible and navigates to `/`.
+- Explicit `goto('/')` navigation is more appropriate for read-only home page smoke coverage than relying on the shared page object's default `/#booking`.
+
+### Verified Test Coverage
+
+- 3 Gherkin-sourced `public-home` Playwright tests passed against the public site.
+- Tests traced to approved scenarios: "Visitor sees the welcome heading", "Visitor sees public navigation options", and "Visitor sees the brand logo link".
+- All selectors were P1 `getByRole` with zero CSS/XPath fallbacks.
+- No admin link was clicked, no booking was initiated, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.

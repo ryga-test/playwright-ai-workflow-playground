@@ -1,4 +1,4 @@
-// @provenance source=apps/automation-in-testing/flows/public-home.yaml
+// @provenance runId=2026-05-17T120959Z approvedAt=2026-05-17T12:12:49.451Z gate=test-draft-review source=tests/automation-in-testing/public-home.feature flow=apps/automation-in-testing/flows/public-home.yaml
 import { test, expect } from '@fixtures/base.fixture.js';
 import { AutomationInTestingPage } from '@pages/automation-in-testing/automation-in-testing.page.js';
 
@@ -10,18 +10,31 @@ test.describe('Flow: public-home', () => {
 
   test.beforeEach(async ({ page }) => {
     app = new AutomationInTestingPage(page);
-    await app.goto();
+    await app.goto('/');
   });
 
-  test(`Visitor sees the public home page introduction ${tags}`, async () => {
+  test(`Visitor sees the welcome heading ${tags}`, async () => {
+    // Traceability: tests/automation-in-testing/public-home.feature
+    // Scenario: Visitor sees the welcome heading
+    // Source-flow: apps/automation-in-testing/flows/public-home.yaml
     await expect(app.pageHeading).toBeVisible();
-    await expect(app.brandHomeLink).toBeVisible();
-    await expect(app.navigation).toBeVisible();
+  });
+
+  test(`Visitor sees public navigation options ${tags}`, async () => {
+    // Traceability: tests/automation-in-testing/public-home.feature
+    // Scenario: Visitor sees public navigation options
+    // Source-flow: apps/automation-in-testing/flows/public-home.yaml
     await expect(app.navRoomsLink).toBeVisible();
     await expect(app.navBookingLink).toBeVisible();
     await expect(app.navAmenitiesLink).toBeVisible();
     await expect(app.navLocationLink).toBeVisible();
     await expect(app.navContactLink).toBeVisible();
-    await expect(app.navAdminLink).toBeVisible();
+  });
+
+  test(`Visitor sees the brand logo link ${tags}`, async () => {
+    // Traceability: tests/automation-in-testing/public-home.feature
+    // Scenario: Visitor sees the brand logo link
+    // Source-flow: apps/automation-in-testing/flows/public-home.yaml
+    await expect(app.brandHomeLink).toBeVisible();
   });
 });
