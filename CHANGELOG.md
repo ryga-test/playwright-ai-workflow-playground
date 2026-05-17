@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-05-17 — Single-Flow Pipeline Runs
+
+### Changed
+
+- **Pipeline runs now target exactly one flow**: `/pipeline-run` requires `FLOW_ID=<flow-id>` and rejects omitted, comma-separated, or legacy `FLOW_IDS` input.
+- **Flow-scoped result layout**: new artifacts are written under `results/<app>/flows/<flow-id>/<run>/` instead of `results/<app>/<run>/flows/<flow-id>/`.
+- **Resolver validation is flow-local**: `scripts/resolve-flows.js` validates only the selected flow file, so unrelated invalid flows do not block a single-flow run.
+- **Pipeline branches include the flow ID**: runner branches now use `pipeline/<app>/<flow-id>/<run>`.
+- **Playwright execution uses `FLOW_ID`**: app-scoped test runs require a singular flow ID and write test output, HTML reports, and screencasts into the flow run directory.
+- **Pipeline prompts, manifest, pi adapter docs, README, and design decisions** were synced to the single-flow invariant.
+
+### Added
+
+- **Shared result path helper**: `src/helpers/result-paths.ts` centralizes `results/<app>/flows/<flow-id>/<run>/` path construction.
+- **Design Decision 16**: documents the single-flow run invariant and the one-item compatibility shape for `flow-inventory.json.selectedFlows`.
+
 ## 2026-05-10 — Gherkin Scenario Source Adoption
 
 ### Added
