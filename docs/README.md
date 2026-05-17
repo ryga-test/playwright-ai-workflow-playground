@@ -22,7 +22,7 @@ If you only want a basic Playwright starter, this is probably more machinery tha
 
 - A strict TypeScript Playwright project
 - A local static example app in `apps/example/`
-- App profiles in `apps/<app>/profile.yaml`
+- App profiles in `apps/<app>/profile.yaml` (including per-app runner mode: `native` or `docker`)
 - An 8-step AI pipeline defined in `workflows/manifest.yaml`
 - pi slash-command prompts in `.pi/prompts/`
 - A pi pipeline runner extension in `.pi/extensions/pipeline-runner/`
@@ -38,6 +38,7 @@ If you only want a basic Playwright starter, this is probably more machinery tha
 - Node.js 18+
 - npm
 - Chromium installed through Playwright
+- Docker if you plan to run `runner: docker` apps (for example `automation-in-testing`)
 - A pi agent session if you want to run the AI pipeline
 
 You can run the generated Playwright tests without pi. The 8-step AI pipeline requires pi because the workflow is implemented as slash-command prompts and a pi extension.
@@ -69,13 +70,15 @@ Never commit `.env`, credentials, cookies, tokens, storage state, customer data,
 
 ## Run the AI pipeline
 
-The easiest path is the pipeline runner extension:
+The easiest path is the pipeline runner extension. The runner checks the app profile and uses the right execution mode automatically (`native` or `docker`):
 
 ```text
 /pipeline-run automation-in-testing FLOW_ID=room-search
 ```
 
 That command creates a run ID, creates a git branch named `pipeline/<app>/<flow-id>/<runId>`, switches to it, and starts the 8-step workflow. The pipeline validates the selected flow file, keeps discovery/page objects app-level, and drafts/writes/runs tests for exactly one flow.
+
+For `runner: docker` apps, Step 2 uses the Playwright Agent CLI inside the Playwright Docker image, and Step 7 runs `npx playwright test` inside the same image with `--ipc=host` and the project root bind-mounted. The Docker image tag is pinned in `.docker-version`, and `./scripts/ensure-docker-image.sh` prepares the image plus dependencies for agent runs.
 
 Non-gated steps continue automatically. The pipeline pauses twice:
 

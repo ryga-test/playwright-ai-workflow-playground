@@ -42,7 +42,7 @@ Per constitutional Principle II, locators follow this priority order:
 - Fallback selector that passed:
   - `page.locator('#description')` for the contact Message textarea because it is unnamed in the captured ARIA snapshot.
 - Selector caveats:
-  - Non-exact `Book Now`/`Book now` locators are ambiguous; use `exact: true`.
+  - Non-exact `Book Now`/`Book Now` locators are ambiguous; use `exact: true`.
   - Address/contact text appears in multiple regions; scope to `#location` or footer before using text assertions.
   - Check In and Check Out date inputs were unnamed in the ARIA snapshot; the current page object uses `page.getByRole('textbox').nth(0)` and `.nth(1)`.
 
@@ -130,3 +130,17 @@ Per constitutional Principle II, locators follow this priority order:
 - Navigation links are page-scoped (not navigation-scoped) for maximum compatibility with the shared monolithic `AutomationInTestingPage` page object.
 - The Admin link (`getByRole('link', { name: 'Admin' })`) exists on the page but was explicitly excluded from assertions — admin access is out of scope.
 - `goto('/')` is the correct explicit navigation for home page tests; the page object default `/#booking` is preserved for backward compatibility with section-navigation and room-search flows.
+
+## Run 2026-05-17T142233Z
+
+- Confirmed selectors that passed in the `public-home` flow:
+  - `page.getByRole('heading', { name: 'Welcome to Shady Meadows B&B', level: 1 })` — h1 welcome heading, unique on page.
+  - `page.getByRole('link', { name: 'Rooms' })` — public navigation link to `/#rooms`.
+  - `page.getByRole('link', { name: 'Booking' })` — public navigation link to `/#booking`.
+  - `page.getByRole('link', { name: 'Amenities' })` — public navigation link to `/#amenities`.
+  - `page.getByRole('link', { name: 'Location' })` — public navigation link to `/#location`.
+  - `page.getByRole('link', { name: 'Contact' })` — public navigation link to `/#contact`.
+  - `page.getByRole('link', { name: 'Shady Meadows B&B' })` — brand logo/home link.
+- All 7 selectors are still P1 `getByRole` with zero CSS, XPath, or text fallbacks.
+- `welcomeHeading` and `brandLink` aliases were added to the shared page object for readability in the `public-home` spec.
+- The `public-home` spec uses explicit `goto('/')` and read-only visibility assertions only.

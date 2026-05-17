@@ -25,6 +25,8 @@
 - The alert ARIA region remains empty after contact form fill (no submission feedback triggered).
 - All five contact form fields load empty on initial navigation to `/#contact`.
 - Footer Cookie-Policy and Privacy-Policy links are visible on `/`, expose raw hrefs `/cookie` and `/privacy`, and can be verified without navigating away.
+- The public home page loads at `/` and renders the welcome heading plus public nav links for Rooms, Booking, Amenities, Location, and Contact.
+- The brand logo link "Shady Meadows B&B" is visible and navigates to `/`.
 
 ### Location Section (verified 2026-05-14T130209Z)
 
@@ -45,10 +47,12 @@
 - Availability date inputs are currently unnamed textboxes; use positional locators only within a booking/room-search page object until stable labels/test ids are available.
 - Scope duplicate contact/address text to `#location` via page object fields (R05, R15).
 - Define `#location`-scoped locators on the shared page object to keep specs clean and avoid `.first()` workarounds (R15).
+- For `public-home`, use the home route `/` explicitly and keep assertions read-only with `getByRole` visibility checks.
+- Expose `welcomeHeading` and `brandLink` aliases on the shared page object for the `public-home` spec.
 
 ## Latest Successful Run
 
-- Run: `2026-05-17T092115Z`
-- Flow: `policy-links`
-- Result: 1/1 passed with 0 fix cycles
-- Artifacts: `results/automation-in-testing/flows/policy-links/2026-05-17T092115Z/`
+- Run: `2026-05-17T142233Z`
+- Flow: `public-home`
+- Result: 3/3 passed with 0 fix cycles
+- Artifacts: `results/automation-in-testing/flows/public-home/2026-05-17T142233Z/`

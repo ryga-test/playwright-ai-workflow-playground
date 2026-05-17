@@ -12,41 +12,68 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+function assertProfileName(name: unknown, appName: string): string {
+  if (typeof name !== 'string' || !APP_NAME_PATTERN.test(name)) {
+    throw new Error(`Profile apps/${appName}/profile.yaml has invalid name; expected ${APP_NAME_PATTERN.source}`);
+  }
+  if (name !== appName) {
+    throw new Error(`Profile name "${name}" must match requested app "${appName}"`);
+  }
+  return name;
+}
+
+function assertBaseUrlEnvVar(baseUrlEnvVar: unknown, name: string): string {
+  if (typeof baseUrlEnvVar !== 'string' || !ENV_VAR_PATTERN.test(baseUrlEnvVar)) {
+    throw new Error(`Profile ${name} has invalid baseUrlEnvVar; expected ${ENV_VAR_PATTERN.source}`);
+  }
+  return baseUrlEnvVar;
+}
+
+function assertOptionalString(value: unknown, errorMessage: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') {
+    throw new Error(errorMessage);
+  }
+  return value;
+}
+
+function assertOptionalRunner(value: unknown, name: string): 'native' | 'docker' | undefined {
+  if (value === undefined) return undefined;
+  if (value !== 'native' && value !== 'docker') {
+    throw new Error(`Profile ${name} runner must be "native" or "docker" when provided`);
+  }
+  return value;
+}
+
+function assertOptionalTestTags(value: unknown, name: string): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (!isStringArray(value)) {
+    throw new Error(`Profile ${name} testTags must be a string array when provided`);
+  }
+  return value;
+}
+
 function validateProfileShape(value: unknown, appName: string): AppProfile {
   if (!isRecord(value)) {
     throw new Error(`Profile apps/${appName}/profile.yaml must contain a YAML object`);
   }
 
-  const { name, baseUrlEnvVar, authMethod, testTags, storageStatePath } = value;
-
-  if (typeof name !== 'string' || !APP_NAME_PATTERN.test(name)) {
-    throw new Error(`Profile apps/${appName}/profile.yaml has invalid name; expected ${APP_NAME_PATTERN.source}`);
-  }
-
-  if (name !== appName) {
-    throw new Error(`Profile name "${name}" must match requested app "${appName}"`);
-  }
-
-  if (typeof baseUrlEnvVar !== 'string' || !ENV_VAR_PATTERN.test(baseUrlEnvVar)) {
-    throw new Error(`Profile ${name} has invalid baseUrlEnvVar; expected ${ENV_VAR_PATTERN.source}`);
-  }
-
-  if (authMethod !== undefined && typeof authMethod !== 'string') {
-    throw new Error(`Profile ${name} authMethod must be a string when provided`);
-  }
-
-  if (testTags !== undefined && (!Array.isArray(testTags) || !testTags.every((tag) => typeof tag === 'string'))) {
-    throw new Error(`Profile ${name} testTags must be a string array when provided`);
-  }
-
-  if (storageStatePath !== undefined && typeof storageStatePath !== 'string') {
-    throw new Error(`Profile ${name} storageStatePath must be a string when provided`);
-  }
+  const name = assertProfileName(value.name, appName);
+  const baseUrlEnvVar = assertBaseUrlEnvVar(value.baseUrlEnvVar, name);
+  const authMethod = assertOptionalString(value.authMethod, `Profile ${name} authMethod must be a string when provided`);
+  const runner = assertOptionalRunner(value.runner, name);
+  const testTags = assertOptionalTestTags(value.testTags, name);
+  const storageStatePath = assertOptionalString(value.storageStatePath, `Profile ${name} storageStatePath must be a string when provided`);
 
   return {
     name,
     baseUrlEnvVar,
     ...(authMethod !== undefined ? { authMethod } : {}),
+    ...(runner !== undefined ? { runner } : {}),
     ...(testTags !== undefined ? { testTags } : {}),
     ...(storageStatePath !== undefined ? { storageStatePath } : {}),
   };

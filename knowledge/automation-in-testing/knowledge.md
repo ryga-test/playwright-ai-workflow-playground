@@ -188,3 +188,19 @@
 - Tests traced to approved scenarios: "Visitor sees the welcome heading", "Visitor sees public navigation options", and "Visitor sees the brand logo link".
 - All selectors were P1 `getByRole` with zero CSS/XPath fallbacks.
 - No admin link was clicked, no booking was initiated, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-05-17T142233Z
+
+### Verified UI Facts
+
+- The public home page at `/` loads and renders the h1 welcome heading "Welcome to Shady Meadows B&B".
+- The page exposes public navigation links for Rooms, Booking, Amenities, Location, and Contact.
+- The brand logo link "Shady Meadows B&B" is visible and navigates to `/`.
+- The public-home spec uses an explicit `goto('/')` baseline and read-only visibility assertions only.
+- The shared page object now exposes `welcomeHeading` and `brandLink` aliases for the public-home flow, alongside role-based nav links.
+
+### Verified Test Coverage
+
+- 3 Gherkin-sourced `public-home` Playwright tests passed against the public site.
+- No retries were needed.
+- No admin link was clicked, no booking was initiated, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
