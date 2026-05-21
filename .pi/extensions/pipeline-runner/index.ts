@@ -208,10 +208,13 @@ export default function (pi: ExtensionAPI) {
     persistState();
 
     pendingPipelineStep = step;
-    // Plain sendUserMessage (no deliverAs) because we are dispatching from agent_end
-    // (idle after turn) or command handler; triggers new agent turn for auto-chaining.
-    // followUp would only queue without auto-triggering when idle.
-    pi.sendUserMessage(message);
+
+    // Idle-aware: plain send triggers turn when idle (most agent_end cases); streamingBehavior only when busy.
+    if (ctx && typeof ctx.isIdle === "function" && !ctx.isIdle()) {
+      pi.sendUserMessage(message, { streamingBehavior: "followUp" });
+    } else {
+      pi.sendUserMessage(message);
+    }
   }
 
   // ── Commands ─────────────────────────────────────────────────────────────
