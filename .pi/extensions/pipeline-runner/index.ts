@@ -592,6 +592,12 @@ export default function (pi: ExtensionAPI) {
         return approved ? " [approved]" : " [awaiting approval]";
       };
 
+      const markerStatus = (n: number) => {
+        if (n !== pipeline!.currentStep) return "";
+        if (pipeline!.stepMarkerReceived) return " [marker received]";
+        return " [agent working]";
+      };
+
       const progressLines = Array.from({ length: TOTAL_STEPS }, (_, i) => {
         const n = i + 1;
         const done =
@@ -599,7 +605,8 @@ export default function (pi: ExtensionAPI) {
           (n === pipeline!.currentStep &&
             pipeline!.status === "complete");
         const marker = done ? "✓" : stepPad(n);
-        return `  ${marker} ${n}/8 ${STEP_NAMES[n]}${gateStatus(n)}`;
+        const mStatus = markerStatus(n);
+        return `  ${marker} ${n}/8 ${STEP_NAMES[n]}${gateStatus(n)}${mStatus}`;
       });
 
       const lines = [
@@ -682,16 +689,11 @@ export default function (pi: ExtensionAPI) {
           if (typeof pipeline.stepMarkerReceived !== "boolean") {
             pipeline.stepMarkerReceived = false;
           }
-          ctx.ui.notify(
-            `📋 Restored pipeline: "${pipeline.app}" at step ${pipeline.currentStep}/8 (${pipeline.status})\n` +
-              `   Flow: ${pipeline.flowId}\n` +
-              `   Branch: pipeline/${pipeline.app}/${pipeline.flowId}/${pipeline.runId ?? "?"}\n` +
-              `   Original: ${pipeline.originalBranch ?? "(unknown)"}`,
-            "info",
-          );
-          // Basic watcher re-attach for running pipelines (Phase 2; enhanced in Phase 3)
+
+          const cwd = ctx.cwd || process.cwd();
+          let shouldReset = false;
+
           if (pipeline.status === "running" && pipeline.currentStep > 0 && pipeline.runId) {
-            const cwd = ctx.cwd || process.cwd();
             const artifactPath = getPrimaryArtifactPath(
               pipeline.currentStep,
               pipeline.app,
@@ -699,11 +701,38 @@ export default function (pi: ExtensionAPI) {
               pipeline.runId,
               cwd
             );
-            watcher.watch({ artifactPath, step: pipeline.currentStep, context: { runId: pipeline.runId, app: pipeline.app, flowId: pipeline.flowId } });
+            if (fs.existsSync(artifactPath)) {
+              // Artifact exists: attach watcher (fires immediately if marker already present)
+              watcher.watch({ artifactPath, step: pipeline.currentStep, context: { runId: pipeline.runId, app: pipeline.app, flowId: pipeline.flowId } });
+            } else {
+              // Missing artifact = unrecoverable, reset
+              shouldReset = true;
+            }
+          } else if (pipeline.status === "paused_gate") {
+            // Just notify, no watcher per PRD
           }
+
+          if (shouldReset) {
+            ctx.ui.notify(
+              `⚠️ Restored pipeline for "${pipeline.app}" but primary artifact for step ${pipeline.currentStep} missing. Resetting pipeline state.`,
+              "warning",
+            );
+            pipeline = null;
+            watcher.destroy();
+            pi.appendEntry("pipeline-state", null);
+            break;
+          }
+
+          ctx.ui.notify(
+            `📋 Restored pipeline: "${pipeline.app}" at step ${pipeline.currentStep}/8 (${pipeline.status})\n` +
+              `   Flow: ${pipeline.flowId}\n` +
+              `   Branch: pipeline/${pipeline.app}/${pipeline.flowId}/${pipeline.runId ?? "?"}\n` +
+              `   Original: ${pipeline.originalBranch ?? "(unknown)"}`,
+            "info",
+          );
         }
         break;
       }
     }
   });
-}
+

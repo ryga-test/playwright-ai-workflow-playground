@@ -59,6 +59,26 @@ Replace the fragile `agent_end` + mutable `pendingPipelineStep`/`pendingGateAppr
 
 **Next:** Phase 3 (update /pipeline-status for marker state, full session restore, /pipeline-reset polish) then Phase 4 tests + docs.
 
+## Phase 3 Implementation Results & Notes (2026-05-21)
+
+**Branch:** `002-phase1-completion-signaling`
+
+**Completed:**
+- Task 7: Enhanced `/pipeline-status` to display per-step marker state (`[marker received]` vs `[agent working]`) for current step using `stepMarkerReceived` flag (matches PRD examples exactly).
+- Enhanced `session_start` restore: checks existence of current primary artifact; if exists → attach watcher (auto-fires if marker present); if missing → full reset + notify; for paused_gate → notify only, no watcher. Defaults stepMarkerReceived for compat.
+- `/pipeline-continue` and `/pipeline-reset` already aligned in Phase 2 (immediate advance + watcher.destroy()); minor polish for phase3 consistency.
+- Added `markerStatus` helper in status for clean UI output.
+
+**Implementation notes:**
+- Restore now robust per PRD: "Check if the current step's primary artifact exists on disk. If yes: register watcher... If no: reset pipeline entirely". Uses fs.existsSync.
+- Status output now shows e.g. `▶ 3/8 pipeline-extract-selectors [agent working]` or `[marker received]`.
+- No new commands; existing 4 slash cmds fully support watcher lifecycle.
+- tsc clean; watcher re-use on restore prevents duplicate intervals (single-watch invariant).
+
+**Verification:** Compile + logic review; restore scenarios (running with/without artifact, paused_gate) covered in code.
+
+**Next:** Phase 4 (tests per PRD strategy, prompt/docs updates, full E2E run verification).
+
 ## Task List
 
 ### Phase 1: Foundation — Watcher, Types, Contract
