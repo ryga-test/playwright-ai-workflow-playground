@@ -37,6 +37,7 @@ interface PipelineState {
   status: "running" | "paused_gate" | "complete";
   gateApprovals: { step4: boolean; step5: boolean };
   originalBranch: string | null; // branch to return to on reset
+  stepMarkerReceived: boolean; // Phase 2: true when CompletionWatcher fired for currentStep
 }
 
 const STEP_NAMES: Record<number, string> = {
@@ -238,20 +239,8 @@ function getPrimaryArtifactPath(
 export default function (pi: ExtensionAPI) {
   let pipeline: PipelineState | null = null;
 
-  /**
-   * Tracking: set when we dispatch a pipeline step prompt.
-   * agent_end checks this to distinguish pipeline-driven turns from
-   * user-driven turns and to know which step just completed.
-   */
-  let pendingPipelineStep: number | null = null;
-
-  /**
-   * Tracking: set when /pipeline-continue sends "approved" to the agent.
-   * agent_end uses this to chain to the next real step after approval
-   * completes. Contains { nextDispatchStep } — the step to dispatch after
-   * the agent finishes processing the "approved" message.
-   */
-  let pendingGateApproval: { nextDispatchStep: number } | null = null;
+  // Phase 2: CompletionWatcher instance (created once per extension load)
+  let watcher: CompletionWatcher;
 
   // ── Persistence ──────────────────────────────────────────────────────────
 
@@ -260,6 +249,10 @@ export default function (pi: ExtensionAPI) {
       pi.appendEntry("pipeline-state", pipeline);
     }
   }
+
+  // Initialize watcher and wire onComplete (Phase 2)
+  watcher = new CompletionWatcher();
+  watcher.onComplete = onStepComplete;
 
   // ── Run ID extraction ────────────────────────────────────────────────────
 
@@ -300,11 +293,87 @@ export default function (pi: ExtensionAPI) {
     return null;
   }
 
-  // ── Step dispatch ────────────────────────────────────────────────────────
+  // ── Completion state machine (Phase 2) ─────────────────────────────────────
+
+  /**
+   * onStepComplete: called by CompletionWatcher when marker detected.
+   * Implements exact state machine from PRD. Replaces agent_end logic.
+   */
+  function onStepComplete(step: number, context: WatchContext) {
+    if (!pipeline || !watcher) {
+      if (watcher) watcher.unwatch();
+      return;
+    }
+
+    // 1. Stale watcher check
+    if (step !== pipeline.currentStep) {
+      console.warn(`[Pipeline] Ignoring stale marker for step ${step} (currentStep=${pipeline.currentStep})`);
+      return;
+    }
+
+    // 2. Step 1 runId verification (moved from agent_end)
+    if (step === 1 && pipeline.runId) {
+      // Use process.cwd() fallback; in practice ctx.cwd from dispatch context
+      const detectedRunId = findRunId(pipeline.app, pipeline.flowId, process.cwd());
+      if (detectedRunId) {
+        if (detectedRunId !== pipeline.runId) {
+          // Note: no ctx.ui here; in full use queued notify or accept
+          console.info(`[Pipeline] Run ID verified: ${detectedRunId}`);
+          if (pipeline.runId !== detectedRunId) {
+            pipeline.runId = detectedRunId;
+          }
+        }
+        persistState();
+      }
+    }
+
+    // 3. Mark received
+    pipeline.stepMarkerReceived = true;
+    persistState();
+
+    // 4. Next step
+    const nextStep = step + 1;
+    if (nextStep > TOTAL_STEPS) {
+      pipeline.status = "complete";
+      persistState();
+      watcher.unwatch();
+      // Notify would use ctx in real handler; console for Phase 2
+      console.log(`[Pipeline] COMPLETE: all steps done for ${pipeline.app}/${pipeline.flowId}/${pipeline.runId}`);
+      return;
+    }
+
+    pipeline.currentStep = nextStep;
+
+    // 7. Gated?
+    if (GATED_STEPS.has(nextStep)) {
+      pipeline.status = "paused_gate";
+      persistState();
+      watcher.unwatch();
+      console.log(`[Pipeline] GATED at step ${nextStep} — use /pipeline-continue`);
+      return;
+    }
+
+    // 8. Non-gated auto-advance
+    pipeline.stepMarkerReceived = false;
+    persistState();
+    watcher.unwatch();
+    const artifactPath = getPrimaryArtifactPath(
+      nextStep,
+      pipeline.app,
+      pipeline.flowId,
+      pipeline.runId!,
+      process.cwd()
+    );
+    watcher.watch({ artifactPath, step: nextStep, context: { runId: pipeline.runId!, app: pipeline.app, flowId: pipeline.flowId } });
+    dispatchStep(nextStep);
+  }
+
+  // ── Step dispatch (refactored Phase 2) ─────────────────────────────────────
 
   /**
    * Send a pipeline step prompt as a user message to the agent.
-   * Sets pendingPipelineStep so agent_end knows to chain.
+   * Always uses followUp, injects completion marker instruction + self-check,
+   * registers CompletionWatcher for primary artifact.
    */
   function dispatchStep(step: number, ctx?: any) {
     if (!pipeline) return;
@@ -333,7 +402,13 @@ export default function (pi: ExtensionAPI) {
       message = `/${stepName} ${app} ${runId}\n\n${flowContextLines(app, pipeline.flowId)}`;
     }
 
+    // Phase 2: inject explicit completion marker instruction + self-check (format-aware footer)
+    const markerInstruction =
+      `\n\n---\n**COMPLETION SIGNALING (MANDATORY):** Before finishing, verify the LAST LINE of your PRIMARY ARTIFACT contains exactly this marker (use the correct comment prefix for the file type):\n\n  <!-- @step-complete step=${step} runId=${runId} -->   (Markdown)\n  // @step-complete step=${step} runId=${runId}      (TypeScript)\n  # @step-complete step=${step} runId=${runId}       (YAML)\n\nIf the marker is not present, append it now as the final line of the file. Self-check before you stop.`;
+    message = message + markerInstruction;
+
     pipeline.currentStep = step;
+    pipeline.stepMarkerReceived = false;
     if (GATED_STEPS.has(step)) {
       pipeline.status = "paused_gate";
     } else {
@@ -341,14 +416,17 @@ export default function (pi: ExtensionAPI) {
     }
     persistState();
 
-    pendingPipelineStep = step;
+    // Always followUp (idle-guard removed in Phase 2)
+    pi.sendUserMessage(message, { streamingBehavior: "followUp" });
 
-    // Idle-aware: plain send triggers turn when idle (most agent_end cases); streamingBehavior only when busy.
-    if (ctx && typeof ctx.isIdle === "function" && !ctx.isIdle()) {
-      pi.sendUserMessage(message, { streamingBehavior: "followUp" });
-    } else {
-      pi.sendUserMessage(message, { streamingBehavior: "followUp" });
-    }
+    // Register watcher for primary artifact (push model from manifest primary_output)
+    const cwd = (ctx && ctx.cwd) || process.cwd();
+    const artifactPath = getPrimaryArtifactPath(step, app, pipeline.flowId, runId, cwd);
+    watcher.watch({
+      artifactPath,
+      step,
+      context: { runId, app, flowId: pipeline.flowId },
+    });
   }
 
   // ── Commands ─────────────────────────────────────────────────────────────
@@ -416,6 +494,7 @@ export default function (pi: ExtensionAPI) {
         flowId,
         gateApprovals: { step4: false, step5: false },
         originalBranch: origBranch,
+        stepMarkerReceived: false,
       };
       persistState();
 
@@ -458,14 +537,34 @@ export default function (pi: ExtensionAPI) {
 
       persistState();
 
-      pendingGateApproval = { nextDispatchStep };
-      // Plain send to trigger turn for "approved" processing + promotion
-      pi.sendUserMessage("approved");
+      // Phase 2/3: send approved (side-effect for promotion), then IMMEDIATELY advance
+      // Do not wait for agent_end; watcher + onStepComplete will handle non-gated
+      pi.sendUserMessage("approved", { streamingBehavior: "followUp" });
 
+      // Advance state, register watcher, dispatch or pause
+      pipeline.currentStep = nextDispatchStep;
+      pipeline.stepMarkerReceived = false;
+      if (GATED_STEPS.has(nextDispatchStep)) {
+        pipeline.status = "paused_gate";
+        watcher.unwatch();
+      } else {
+        pipeline.status = "running";
+        watcher.unwatch();
+        const cwd = ctx.cwd || process.cwd();
+        const artifactPath = getPrimaryArtifactPath(
+          nextDispatchStep,
+          pipeline.app,
+          pipeline.flowId,
+          pipeline.runId!,
+          cwd
+        );
+        watcher.watch({ artifactPath, step: nextDispatchStep, context: { runId: pipeline.runId!, app: pipeline.app, flowId: pipeline.flowId } });
+        dispatchStep(nextDispatchStep, ctx);
+      }
+      persistState();
 
       ctx.ui.notify(
-        `✅ Sent approval for step ${step}/8. Agent promoting artifacts, then ` +
-          `advancing to step ${nextDispatchStep}/8...`,
+        `✅ Sent approval for step ${step}/8. Advancing to step ${nextDispatchStep}/8...`,
         "success",
       );
     },
@@ -558,105 +657,14 @@ export default function (pi: ExtensionAPI) {
       }
 
       pipeline = null;
-      pendingPipelineStep = null;
-      pendingGateApproval = null;
+      watcher.destroy();
       pi.appendEntry("pipeline-state", null);
 
       ctx.ui.notify(`Pipeline for "${app}" reset.`, "info");
     },
   });
 
-  // ── Auto-advance on agent_end ─────────────────────────────────────────────
-
-  pi.on("agent_end", async (_event, ctx) => {
-    if (!pipeline) {
-      // Defensive: clear any stale pending flags so normal pi turns are never affected
-      pendingPipelineStep = null;
-      pendingGateApproval = null;
-      return;
-    }
-
-    // ── Case 1: Gate approval just completed ─────────────────────────────
-    if (pendingGateApproval) {
-      const { nextDispatchStep } = pendingGateApproval;
-      pendingGateApproval = null;
-
-      if (GATED_STEPS.has(nextDispatchStep)) {
-        ctx.ui.notify(
-          `⏸  Step ${nextDispatchStep}/8 (${STEP_NAMES[nextDispatchStep]}) is GATED — ` +
-            "review the output and use /pipeline-continue to proceed.",
-          "warning",
-        );
-      }
-
-      await new Promise((r) => setTimeout(r, 300));
-      dispatchStep(nextDispatchStep, ctx);
-      return;
-    }
-
-    // ── Case 2: A pipeline step turn just completed ──────────────────────
-    if (pendingPipelineStep === null) return;
-
-    const completedStep = pendingPipelineStep;
-    pendingPipelineStep = null;
-
-    if (pipeline.status === "paused_gate") {
-      return;
-    }
-
-    // After step 1, verify the run ID from the results directory
-    if (completedStep === 1 && pipeline.runId) {
-      const detectedRunId = findRunId(pipeline.app, pipeline.flowId, ctx.cwd);
-      if (detectedRunId) {
-        if (detectedRunId !== pipeline.runId) {
-          ctx.ui.notify(
-            `⚠️ Run ID mismatch: expected ${pipeline.runId}, found ${detectedRunId}. Using detected.`,
-            "warning",
-          );
-          pipeline.runId = detectedRunId;
-        } else {
-          ctx.ui.notify(`📍 Verified run ID: ${detectedRunId}`, "info");
-        }
-        persistState();
-      } else {
-        ctx.ui.notify(
-          "⚠️ Could not detect run ID from step 1 output. " +
-            "Pipeline paused. Check results/<app>/flows/<flow-id>/ and use /pipeline-run to restart.",
-          "warning",
-        );
-        pipeline.status = "paused_gate";
-        persistState();
-        return;
-      }
-    }
-
-    // Determine next step
-    const nextStep = completedStep + 1;
-    if (nextStep > TOTAL_STEPS) {
-      pipeline.status = "complete";
-      persistState();
-      ctx.ui.notify(
-        `🎉 Pipeline complete! All 8 steps finished.\n` +
-          `   Branch: pipeline/${pipeline.app}/${pipeline.flowId}/${pipeline.runId}\n` +
-          `   Original: ${pipeline.originalBranch}\n` +
-          `   Use \`git checkout ${pipeline.originalBranch}\` to go back, ` +
-          `or commit and merge from here.`,
-        "success",
-      );
-      return;
-    }
-
-    if (GATED_STEPS.has(nextStep)) {
-      ctx.ui.notify(
-        `⏸  Step ${nextStep}/8 (${STEP_NAMES[nextStep]}) is GATED — ` +
-          "review the output and use /pipeline-continue to proceed.",
-        "warning",
-      );
-    }
-
-    await new Promise((r) => setTimeout(r, 300));
-    dispatchStep(nextStep, ctx);
-  });
+  // ── Legacy agent_end removed in Phase 2 (replaced by CompletionWatcher + onStepComplete)
 
   // ── Restore pipeline state on session start ──────────────────────────────
 
@@ -671,6 +679,9 @@ export default function (pi: ExtensionAPI) {
         const data = entry.data as PipelineState | null | undefined;
         if (data && data.app && data.status && data.status !== "complete") {
           pipeline = data;
+          if (typeof pipeline.stepMarkerReceived !== "boolean") {
+            pipeline.stepMarkerReceived = false;
+          }
           ctx.ui.notify(
             `📋 Restored pipeline: "${pipeline.app}" at step ${pipeline.currentStep}/8 (${pipeline.status})\n` +
               `   Flow: ${pipeline.flowId}\n` +
@@ -678,6 +689,18 @@ export default function (pi: ExtensionAPI) {
               `   Original: ${pipeline.originalBranch ?? "(unknown)"}`,
             "info",
           );
+          // Basic watcher re-attach for running pipelines (Phase 2; enhanced in Phase 3)
+          if (pipeline.status === "running" && pipeline.currentStep > 0 && pipeline.runId) {
+            const cwd = ctx.cwd || process.cwd();
+            const artifactPath = getPrimaryArtifactPath(
+              pipeline.currentStep,
+              pipeline.app,
+              pipeline.flowId,
+              pipeline.runId,
+              cwd
+            );
+            watcher.watch({ artifactPath, step: pipeline.currentStep, context: { runId: pipeline.runId, app: pipeline.app, flowId: pipeline.flowId } });
+          }
         }
         break;
       }

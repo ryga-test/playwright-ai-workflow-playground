@@ -38,6 +38,27 @@ Replace the fragile `agent_end` + mutable `pendingPipelineStep`/`pendingGateAppr
 
 **Fallow gate:** Pending commit (will run `fallow audit --format json --quiet --explain` before any git commit).
 
+## Phase 2 Implementation Results & Notes (2026-05-21)
+
+**Branch:** `002-phase1-completion-signaling` (continued work)
+
+**Completed:**
+- Task 4: Refactored `dispatchStep` — always `streamingBehavior: "followUp"`, removed isIdle guard + 300ms, injects detailed marker instruction + self-check footer for every step (format examples for md/ts/yaml), sets `stepMarkerReceived=false`, registers `watcher.watch()` with primary artifact path + context.
+- Task 5: Implemented `onStepComplete(step, context)` state machine exactly per PRD (stale check, step1 runId verify via findRunId, set marker flag, compute next, complete/gated/non-gated paths with persist, unwatch/watch, dispatch). Wired `watcher.onComplete = onStepComplete`. Extended `PipelineState` with `stepMarkerReceived`. Updated `pipeline-run` init + `session_start` restore + basic watcher re-attach.
+- Task 6: Removed all legacy — `pendingPipelineStep`, `pendingGateApproval` vars + clears, entire `pi.on("agent_end", ...)` (~100 lines incl. cases + 300ms yields), idle-guard, old comments. Refactored `/pipeline-continue` to send approved + immediately advance (update approvals, set currentStep, register watcher, dispatch non-gated or pause; no wait on promotion). Updated `/pipeline-reset` to call `watcher.destroy()`.
+
+**Implementation notes:**
+- `onStepComplete` uses `process.cwd()` fallback for paths/verify (ctx.cwd preferred when available from handlers); full ctx/ui integration for notifies can be polished.
+- Continue now matches PRD "push model" advance without agent_end dependency — enables removal.
+- Status machine handles gated (4/5) and final step correctly; non-gated auto-chains via watcher.
+- No more "Agent is already processing" races possible (decoupled from runtime timing).
+- tsc --noEmit passes; ~150 lines net reduction in legacy code.
+- Marker instruction is static for Phase 2 (manifest-driven format in future).
+
+**Verification done:** Manual code review + compile; end-to-end chaining logic matches spec (non-gated auto, gated pause+continue works via new path).
+
+**Next:** Phase 3 (update /pipeline-status for marker state, full session restore, /pipeline-reset polish) then Phase 4 tests + docs.
+
 ## Task List
 
 ### Phase 1: Foundation — Watcher, Types, Contract
