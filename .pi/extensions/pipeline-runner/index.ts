@@ -172,7 +172,7 @@ export default function (pi: ExtensionAPI) {
    * Send a pipeline step prompt as a user message to the agent.
    * Sets pendingPipelineStep so agent_end knows to chain.
    */
-  function dispatchStep(step: number) {
+  function dispatchStep(step: number, ctx?: any) {
     if (!pipeline) return;
 
     const app = pipeline.app;
@@ -289,7 +289,7 @@ export default function (pi: ExtensionAPI) {
         `🚀 Pipeline started for "${app}" flow "${flowId}" — step 1/8 (resolve)`,
         "info",
       );
-      dispatchStep(1);
+      dispatchStep(1, ctx);
     },
   });
 
@@ -435,7 +435,12 @@ export default function (pi: ExtensionAPI) {
   // ── Auto-advance on agent_end ─────────────────────────────────────────────
 
   pi.on("agent_end", async (_event, ctx) => {
-    if (!pipeline) return;
+    if (!pipeline) {
+      // Defensive: clear any stale pending flags so normal pi turns are never affected
+      pendingPipelineStep = null;
+      pendingGateApproval = null;
+      return;
+    }
 
     // ── Case 1: Gate approval just completed ─────────────────────────────
     if (pendingGateApproval) {
@@ -451,7 +456,7 @@ export default function (pi: ExtensionAPI) {
       }
 
       await new Promise((r) => setTimeout(r, 300));
-      dispatchStep(nextDispatchStep);
+      dispatchStep(nextDispatchStep, ctx);
       return;
     }
 
@@ -516,7 +521,7 @@ export default function (pi: ExtensionAPI) {
     }
 
     await new Promise((r) => setTimeout(r, 300));
-    dispatchStep(nextStep);
+    dispatchStep(nextStep, ctx);
   });
 
   // ── Restore pipeline state on session start ──────────────────────────────
