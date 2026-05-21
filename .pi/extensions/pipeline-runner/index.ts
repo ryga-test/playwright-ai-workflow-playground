@@ -208,7 +208,7 @@ export default function (pi: ExtensionAPI) {
     persistState();
 
     pendingPipelineStep = step;
-    pi.sendUserMessage(message);
+    pi.sendUserMessage(message, { streamingBehavior: "followUp" });
   }
 
   // ── Commands ─────────────────────────────────────────────────────────────
@@ -319,7 +319,7 @@ export default function (pi: ExtensionAPI) {
       persistState();
 
       pendingGateApproval = { nextDispatchStep };
-      pi.sendUserMessage("approved");
+      pi.sendUserMessage("approved", { streamingBehavior: "followUp" });
 
       ctx.ui.notify(
         `✅ Sent approval for step ${step}/8. Agent promoting artifacts, then ` +
