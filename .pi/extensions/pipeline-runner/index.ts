@@ -208,7 +208,10 @@ export default function (pi: ExtensionAPI) {
     persistState();
 
     pendingPipelineStep = step;
-    pi.sendUserMessage(message, { deliverAs: "followUp" });
+    // Plain sendUserMessage (no deliverAs) because we are dispatching from agent_end
+    // (idle after turn) or command handler; triggers new agent turn for auto-chaining.
+    // followUp would only queue without auto-triggering when idle.
+    pi.sendUserMessage(message);
   }
 
   // ── Commands ─────────────────────────────────────────────────────────────
@@ -319,7 +322,9 @@ export default function (pi: ExtensionAPI) {
       persistState();
 
       pendingGateApproval = { nextDispatchStep };
-      pi.sendUserMessage("approved", { deliverAs: "followUp" });
+      // Plain send to trigger turn for "approved" processing + promotion
+      pi.sendUserMessage("approved");
+
 
       ctx.ui.notify(
         `✅ Sent approval for step ${step}/8. Agent promoting artifacts, then ` +

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-21 — Pipeline Runner Non-Gated Step Auto-Advance Fix
+
+### Fixed
+- **Non-gated pipeline steps now auto-chain reliably after each completion**: removed `deliverAs: "followUp"` option from `pi.sendUserMessage` calls inside `dispatchStep` (and the "approved" path). The followUp delivery only queues when idle and does not trigger an agent turn; plain `sendUserMessage` (called from `agent_end` or command handlers) now correctly starts the next pipeline step. Only the two hardcoded GATED_STEPS (4: draft page object, 5: draft tests) pause for human `/pipeline-continue` approval. Resolves the "agent stops after every finished step and waits for approval" symptom seen in the `automation-in-testing/room-search/2026-05-21T075403Z` run.
+- Added explanatory comments and kept the existing 300 ms yield + `pending*` tracking so the root-cause (one-turn assumption vs. multi-action steps) is documented.
+
 ## 2026-05-17 — Docker Runner Wiring for automation-in-testing
 
 ### Added
