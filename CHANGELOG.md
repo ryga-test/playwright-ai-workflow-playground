@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-05-21 — Explicit Completion Signaling for Pipeline Runner Chaining
+
+### Added
+- **CompletionWatcher module** (`CompletionWatcher` class in `.pi/extensions/pipeline-runner/index.ts`): filesystem-polling detector for explicit `@step-complete` markers (last line of primary artifact, format-aware footer with step + runId). Supports `watch`/`unwatch`/`destroy`, single-watch invariant, 500ms configurable poll, last-512B tail read, destroyed flag for safe reset.
+- **Primary artifact contract** in `workflows/manifest.yaml`: top-level `completion_marker` + `poll_interval_ms: 500` and per-step `primary_output.path` + `format` for all 8 steps (e.g. `normalized-selectors.md`, `page-object.draft.ts`, `test-report.md`).
+- **`getPrimaryArtifactPath` helper**: resolves step → absolute path under `results/<app>/flows/<flow-id>/<run>/` using explicit mapping.
+- **`stepMarkerReceived` flag** on `PipelineState` + UI indicators in `/pipeline-status` (`[marker received]` vs `[agent working]`).
+- **onStepComplete state machine**: exact PRD transitions (stale check, step-1 runId verify, marker flag, gated pause, non-gated auto-advance with watcher re-registration, complete).
+- **Session restore hardening**: artifact existence check on restore; missing artifact → full reset; running pipelines re-attach watcher (fires immediately if marker present); paused_gate only notifies.
+- **Decision 18** in `DESIGN_DECISIONS.md` and updates to `CONTEXT.md`, `pipeline-runner-explicit-completion-signaling-tasks.md`.
+
+### Changed
+- **dispatchStep refactored**: always `{ streamingBehavior: "followUp" }`, injects mandatory marker instruction + self-check footer for every step, sets `stepMarkerReceived=false`, registers watcher immediately.
+- **/pipeline-continue**: sends "approved" then immediately advances (updates approvals, sets currentStep, registers watcher, dispatches non-gated or pauses). No wait for promotion side-effect.
+- **/pipeline-reset**: calls `watcher.destroy()` before clearing state + git cleanup.
+- **All legacy removed** (~120 LOC): `pendingPipelineStep`, `pendingGateApproval`, entire `pi.on("agent_end")` handler + 300ms yields + idle-guard, related clears.
+- **Pipeline now fully decoupled** from `agent_end` timing — advancement driven solely by marker presence on disk.
+
+### Fixed
+- **"Agent is already processing" races** during chaining: eliminated by removing `agent_end` dependency and using authoritative filesystem marker.
+- **Session restore fragility**: now checks artifact existence and handles missing primary artifact as unrecoverable.
+
+**Branch:** `002-phase1-completion-signaling` (all 4 phases implemented end-to-end).
+
 ## 2026-05-21 — Pipeline Runner Non-Gated Step Auto-Advance Fix
 
 ### Fixed

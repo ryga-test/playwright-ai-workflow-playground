@@ -1,12 +1,22 @@
 version: "1.0"
 pipeline: ai-e2e-workflow
 
+# Phase 1: Explicit completion signaling contract
+completion_marker:
+  # Format-aware footer appended as LAST LINE of primary artifact
+  # Supported prefixes: <!-- (md), // (ts), # (yaml), etc. Regex ignores prefix.
+  regex: "@step-complete step=(\d+) runId=([\\w-]+T[\\w:]+Z?)"
+  poll_interval_ms: 500  # Configurable; watcher default matches this
+
 steps:
   - id: resolve
     name: Resolve Inputs
     order: 1
     gated: false
     description: Validate app profile, resolve environment variables, validate the selected flow file, generate run ID
+    primary_output:
+      path: results/{{app}}/flows/<flow-id>/{{run}}/step1-resolve/run-metadata.json
+      format: json
     inputs: []
     outputs:
       - name: run-metadata
@@ -24,6 +34,9 @@ steps:
     order: 2
     gated: false
     description: Capture Playwright ARIA snapshots for the selected flow start path and identify interactive elements
+    primary_output:
+      path: results/{{app}}/flows/<flow-id>/{{run}}/step2-discover/snapshot.yaml
+      format: yaml
     inputs:
       - name: run-metadata
         path: results/{{app}}/flows/<flow-id>/{{run}}/step1-resolve/run-metadata.json
@@ -50,6 +63,9 @@ steps:
     order: 3
     gated: false
     description: Normalize selector candidates with locator priority annotations, path provenance, and flow provenance
+    primary_output:
+      path: results/{{app}}/flows/<flow-id>/{{run}}/step3-extract-selectors/normalized-selectors.md
+      format: markdown
     inputs:
       - name: merged-snapshot
         path: results/{{app}}/flows/<flow-id>/{{run}}/step2-discover/snapshot.merged.yaml
@@ -67,6 +83,9 @@ steps:
     order: 4
     gated: true
     description: Generate one shared app-level TypeScript page object from normalized selectors
+    primary_output:
+      path: results/{{app}}/flows/<flow-id>/{{run}}/step4-draft-page-object/page-object.draft.ts
+      format: typescript
     inputs:
       - name: normalized-selectors
         path: results/{{app}}/flows/<flow-id>/{{run}}/step3-extract-selectors/normalized-selectors.md
@@ -81,6 +100,9 @@ steps:
     order: 5
     gated: true
     description: Generate Gherkin feature scenarios and scenario coverage for the selected flow
+    primary_output:
+      path: results/{{app}}/flows/<flow-id>/{{run}}/step5-draft-tests/test-drafts-index.md
+      format: markdown
     inputs:
       - name: page-object-draft
         path: results/{{app}}/flows/<flow-id>/{{run}}/step4-draft-page-object/page-object.draft.ts
@@ -107,6 +129,9 @@ steps:
     order: 6
     gated: false
     description: Promote the approved feature file and generate the selected flow Playwright spec from approved scenarios and page objects
+    primary_output:
+      path: results/{{app}}/flows/<flow-id>/{{run}}/flow-summary.md
+      format: markdown
     inputs:
       - name: test-scenarios
         path: results/{{app}}/flows/<flow-id>/{{run}}/test-scenarios.feature
@@ -130,6 +155,9 @@ steps:
     order: 7
     gated: false
     description: Execute the selected flow test, triage failures, fix script bugs only
+    primary_output:
+      path: results/{{app}}/flows/<flow-id>/{{run}}/step7-run-fix/test-report.md
+      format: markdown
     inputs:
       - name: spec
         path: tests/{{app}}/<flow-id>.spec.ts
@@ -156,6 +184,9 @@ steps:
     order: 8
     gated: false
     description: Write pipeline and flow summaries, update app knowledge with verified observations, and apply six-run archival pruning
+    primary_output:
+      path: results/{{app}}/flows/<flow-id>/{{run}}/pipeline-summary.md
+      format: markdown
     inputs:
       - name: test-report
         path: results/{{app}}/flows/<flow-id>/{{run}}/step7-run-fix/test-report.md
