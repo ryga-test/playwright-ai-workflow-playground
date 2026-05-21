@@ -30,6 +30,9 @@ The execution environment for browser-dependent pipeline steps. Two modes exist:
 ### Knowledge Files
 Per-app Markdown files under `knowledge/<app>/` that accumulate observations across runs. `knowledge.md` holds domain facts, `rules.md` holds verified locator/project rules, `selector-notes.md` holds selector-specific findings. Populated by step 8 (summarize) as append-only entries under `## Run <run-id>` headings.
 
+### Completion Marker
+An explicit, machine-readable signal that a Pipeline step has finished. Emitted as a structured footer on the step's primary Artifact (e.g., `@step-complete step=N runId=...`). Detected by a CompletionWatcher module that polls the Artifact file and fires an `onStepComplete` event consumed by the Pipeline Runner. Replaces implicit `agent_end`-based chaining. Every Pipeline step must produce one, including gated steps.
+
 ### Capability
 A neutral, app-and-agent-independent definition of WHAT a pipeline step does. Defined in `workflows/manifest.yaml`. Each adapter (e.g., `adapters/pi/capabilities.yaml`) maps capabilities to agent-specific command templates (HOW to execute).
 
@@ -41,6 +44,7 @@ The Playwright Agent CLI (`@playwright/cli`). A token-efficient command-line bro
 - An **App** has one or more **Flows**.
 - A **Run** targets exactly one **Flow** of one **App**.
 - A **Pipeline** produces **Artifacts** across 8 steps, some gated by **Approval Gates**.
+- Each Pipeline step that completes emits a **Completion Marker** on its primary Artifact, which the Pipeline Runner uses to chain to the next step.
 - A **Runner** (native or docker) determines how browser steps execute. Per-app, set in the app **Profile**.
 - **Knowledge Files** accumulate observations from multiple **Runs**.
 - A **Capability** is implemented by one **Adapter** per agent.

@@ -53,6 +53,113 @@ const STEP_NAMES: Record<number, string> = {
 const GATED_STEPS = new Set([4, 5]);
 const TOTAL_STEPS = 8;
 
+// ── CompletionWatcher (Phase 1 foundation) ───────────────────────────────────
+
+interface WatchContext {
+  runId: string;
+  app: string;
+  flowId: string;
+}
+
+interface WatchRequest {
+  artifactPath: string;
+  step: number;
+  context: WatchContext;
+  pollIntervalMs?: number;
+}
+
+/**
+ * CompletionWatcher polls the primary artifact file for the explicit
+ * @step-complete marker. Uses last-N-bytes read for efficiency.
+ * Enforces single-watch invariant and destroyed flag for safe reset.
+ */
+class CompletionWatcher {
+  private currentWatch: WatchRequest | null = null;
+  private interval: NodeJS.Timeout | null = null;
+  private destroyed = false;
+  private readonly defaultPollIntervalMs = 500;
+
+  /**
+   * Callback fired when a valid marker for the watched step is detected.
+   * Set by runner after construction.
+   */
+  onComplete: ((step: number, context: WatchContext) => void) | null = null;
+
+  /**
+   * Start watching the given artifact. Replaces any prior watch (unwatch first).
+   * Poll interval from req or default (will be manifest-driven later).
+   */
+  watch(req: WatchRequest): void {
+    if (this.destroyed) return;
+    this.unwatch(); // enforce single-watch invariant
+
+    this.currentWatch = { ...req };
+    const intervalMs = req.pollIntervalMs ?? this.defaultPollIntervalMs;
+
+    // Start polling; first check happens after first interval.
+    // (Immediate check could be added if needed for restore cases.)
+    this.interval = setInterval(() => this.poll(), intervalMs);
+  }
+
+  /** Stop polling and clear current watch. Idempotent. */
+  unwatch(): void {
+    if (this.interval !== null) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+    this.currentWatch = null;
+  }
+
+  /** Hard destroy: set flag, stop interval, clear callback. Called on /pipeline-reset. */
+  destroy(): void {
+    this.destroyed = true;
+    this.unwatch();
+    this.onComplete = null;
+  }
+
+  private poll(): void {
+    if (this.destroyed || !this.currentWatch || !this.onComplete) {
+      return;
+    }
+
+    const { artifactPath, step, context } = this.currentWatch;
+
+    try {
+      if (!fs.existsSync(artifactPath)) {
+        return; // keep polling for file creation
+      }
+
+      const stats = fs.statSync(artifactPath);
+      if (stats.size === 0) return;
+
+      const readSize = Math.min(512, stats.size);
+      const fd = fs.openSync(artifactPath, "r");
+      const buffer = Buffer.alloc(readSize);
+      fs.readSync(fd, buffer, 0, readSize, stats.size - readSize);
+      fs.closeSync(fd);
+
+      const tail = buffer.toString("utf8");
+      const lines = tail.trim().split(/\r?\n/);
+      const lastLine = lines[lines.length - 1]?.trim() || "";
+
+      // Match marker regardless of leading comment prefix (<!--, //, #, etc.)
+      const match = lastLine.match(/@step-complete step=(\d+) runId=([\w-]+T[\w:]+Z?)/);
+      if (match) {
+        const markerStep = parseInt(match[1], 10);
+        const markerRunId = match[2];
+        if (markerStep === step) {
+          // Detected — fire and let handler decide whether to unwatch
+          const cb = this.onComplete;
+          if (cb) cb(markerStep, context);
+        }
+      }
+    } catch (err) {
+      // Transient FS errors (e.g. during write) — keep polling
+      // console.debug("[CompletionWatcher] poll error (ignored):", err);
+    }
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Generate ISO 8601 run ID: YYYY-MM-DDTHHMMSSZ */
@@ -97,6 +204,33 @@ async function currentBranch(pi: ExtensionAPI): Promise<string | null> {
 async function branchExists(pi: ExtensionAPI, name: string): Promise<boolean> {
   const r = await pi.exec("git", ["branch", "--list", name]);
   return r.stdout.trim() !== "";
+}
+
+/**
+ * Phase 1: Step-to-primary-artifact path resolver.
+ * Returns absolute path to the designated primary artifact for the step.
+ * Uses explicit mapping (will be manifest-driven after Task 2).
+ * Templates use actual values, not placeholders.
+ */
+function getPrimaryArtifactPath(
+  step: number,
+  app: string,
+  flowId: string,
+  runId: string,
+  cwd: string
+): string {
+  const relTemplates: Record<number, string> = {
+    1: `results/${app}/flows/${flowId}/${runId}/step1-resolve/run-metadata.json`,
+    2: `results/${app}/flows/${flowId}/${runId}/step2-discover/snapshot.yaml`,
+    3: `results/${app}/flows/${flowId}/${runId}/step3-extract-selectors/normalized-selectors.md`,
+    4: `results/${app}/flows/${flowId}/${runId}/step4-draft-page-object/page-object.draft.ts`,
+    5: `results/${app}/flows/${flowId}/${runId}/step5-draft-tests/test-drafts-index.md`,
+    6: `results/${app}/flows/${flowId}/${runId}/flow-summary.md`,
+    7: `results/${app}/flows/${flowId}/${runId}/step7-run-fix/test-report.md`,
+    8: `results/${app}/flows/${flowId}/${runId}/step8-summarize/summary.md`,
+  };
+  const rel = relTemplates[step] ?? `results/${app}/flows/${flowId}/${runId}/step${step}/primary.md`;
+  return path.join(cwd, rel);
 }
 
 // ── Extension ────────────────────────────────────────────────────────────────
@@ -213,7 +347,7 @@ export default function (pi: ExtensionAPI) {
     if (ctx && typeof ctx.isIdle === "function" && !ctx.isIdle()) {
       pi.sendUserMessage(message, { streamingBehavior: "followUp" });
     } else {
-      pi.sendUserMessage(message);
+      pi.sendUserMessage(message, { streamingBehavior: "followUp" });
     }
   }
 
