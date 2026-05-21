@@ -143,3 +143,13 @@ Pipeline invocation requires singular `FLOW_ID=<flow-id>` and rejects omitted fl
 - Local apps (e.g., `example`) stay `runner: native` — sidesteps localhost-in-Docker networking.
 
 Pipeline invocation requires singular `FLOW_ID=<flow-id>` and rejects omitted flow IDs, comma-separated values, and legacy `FLOW_IDS`. New result artifacts live under `results/<app>/flows/<flow-id>/<run>/`. `flow-inventory.json` remains as a compatibility artifact with `selectedFlows`/`flows` arrays containing exactly one flow.
+
+### 18. Explicit Completion Signaling (Phase 4)
+**Choice:** Use filesystem-polling CompletionWatcher + `@step-complete` marker footer on primary artifacts instead of `agent_end` + mutable pending flags.
+
+- Eliminates all "Agent is already processing" races by decoupling from pi runtime timing.
+- Marker is format-aware last line (<!--, //, #) with step + runId; self-check instruction injected at dispatch.
+- Watcher: 500ms poll, last-512B read, single-watch invariant, destroy on reset.
+- State machine in onStepComplete handles gated/non-gated/complete; stepMarkerReceived flag for UI.
+- Full removal of ~120 LOC legacy (pending*, agent_end handler, 300ms yields, idle-guard).
+- Session restore checks artifact existence; missing = unrecoverable reset.

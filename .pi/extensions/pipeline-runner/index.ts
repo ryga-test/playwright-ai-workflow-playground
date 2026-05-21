@@ -297,7 +297,7 @@ export default function (pi: ExtensionAPI) {
 
   /**
    * onStepComplete: called by CompletionWatcher when marker detected.
-   * Implements exact state machine from PRD. Replaces agent_end logic.
+   * Implements exact state machine from PRD.
    */
   function onStepComplete(step: number, context: WatchContext) {
     if (!pipeline || !watcher) {
@@ -311,7 +311,7 @@ export default function (pi: ExtensionAPI) {
       return;
     }
 
-    // 2. Step 1 runId verification (moved from agent_end)
+    // 2. Step 1 runId verification
     if (step === 1 && pipeline.runId) {
       // Use process.cwd() fallback; in practice ctx.cwd from dispatch context
       const detectedRunId = findRunId(pipeline.app, pipeline.flowId, process.cwd());
@@ -538,7 +538,7 @@ export default function (pi: ExtensionAPI) {
       persistState();
 
       // Phase 2/3: send approved (side-effect for promotion), then IMMEDIATELY advance
-      // Do not wait for agent_end; watcher + onStepComplete will handle non-gated
+      // Send approved (promotion side-effect); advance immediately via watcher
       pi.sendUserMessage("approved", { streamingBehavior: "followUp" });
 
       // Advance state, register watcher, dispatch or pause
@@ -670,8 +670,6 @@ export default function (pi: ExtensionAPI) {
       ctx.ui.notify(`Pipeline for "${app}" reset.`, "info");
     },
   });
-
-  // ── Legacy agent_end removed in Phase 2 (replaced by CompletionWatcher + onStepComplete)
 
   // ── Restore pipeline state on session start ──────────────────────────────
 
