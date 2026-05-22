@@ -4,10 +4,30 @@ import { join } from 'node:path';
 import { chromium } from '@playwright/test';
 
 const runMetadataPath = process.argv[2] || join('results/automation-in-testing/flows/section-navigation/2026-05-17T100540Z', 'step1-resolve', 'run-metadata.json');
-const metadata = JSON.parse(readFileSync(runMetadataPath, 'utf8'));
+function readJsonTolerant(path) {
+  let lines = readFileSync(path, 'utf8').trim().split('\n');
+  // remove any trailing marker/comment lines for signaling
+  lines = lines.filter(l => !l.includes('@step-complete'));
+  let jsonText = lines.join('\n').trim();
+  jsonText = jsonText.replace(/,\s*}$/, '}');
+  return JSON.parse(jsonText);
+}
+const metadata = readJsonTolerant(runMetadataPath);
 
 const { app, flowId, runId, resultRoot, baseUrl } = metadata;
-const startPath = '/';
+
+// Load flow inventory for accurate startPath (room-search uses /#booking)
+let startPath = '/';
+let flowGoal = '';
+try {
+  const invPath = join(resultRoot, 'step1-resolve', 'flow-inventory.json');
+  const inv = JSON.parse(readFileSync(invPath, 'utf8'));
+  const flows = inv.selectedFlows || inv.flows || [];
+  if (flows.length > 0) {
+    startPath = flows[0].startPath || startPath;
+    flowGoal = flows[0].goal || '';
+  }
+} catch (e) { /* fallback */ }
 const url = `${baseUrl}${startPath}`;
 const discoverDir = join(resultRoot, 'step2-discover');
 const pathsDir = join(discoverDir, 'paths');
@@ -25,18 +45,19 @@ await page.waitForTimeout(2000);
 const ariaSnapshot = await page.locator('body').ariaSnapshot();
 const title = await page.title();
 
-// Path-level snapshot
+// Path-level snapshot (dynamic for flow startPath e.g. booking)
+const pathLabel = (startPath || '/').replace(/^\//, '').replace(/[^a-z0-9]/gi, '_') || 'home';
 const pathSnapshotYaml = [
   `path: ${startPath}`,
   `url: ${url}`,
   `title: ${title}`,
   'actions:',
-  '  - navigate to /',
+  `  - navigate to ${startPath}`,
   'snapshot:',
   ariaSnapshot.split('\n').map(l => `  ${l}`).join('\n'),
 ].join('\n');
 
-writeFileSync(join(pathsDir, 'home.snapshot.yaml'), pathSnapshotYaml);
+writeFileSync(join(pathsDir, `${pathLabel}.snapshot.yaml`), pathSnapshotYaml);
 
 // Merged snapshot
 const mergedYaml = [
@@ -48,10 +69,10 @@ const mergedYaml = [
   `url: ${url}`,
   `title: ${title}`,
   'paths:',
-  '  - path: /',
-  '    artifact: paths/home.snapshot.yaml',
-  '    actions:',
-  '      - navigate to /',
+  `  - path: ${startPath}`,
+  `    artifact: paths/${pathLabel}.snapshot.yaml`,
+  `    actions:`,
+  `      - navigate to ${startPath}`,
   'snapshot:',
   ariaSnapshot.split('\n').map(l => `  ${l}`).join('\n'),
 ].join('\n');
@@ -59,11 +80,11 @@ const mergedYaml = [
 writeFileSync(join(discoverDir, 'snapshot.yaml'), mergedYaml);
 
 // Selector candidates
-const candidates = `# Selector candidates: automation-in-testing / section-navigation
+const candidates = `# Selector candidates: automation-in-testing / ${flowId}
 
 Run ID: \`${runId}\`  
 Start path: \`${startPath}\`  
-Path provenance: \`${startPath}\` — home page, no interactions.
+Path provenance: \`${startPath}\` — ${flowGoal ? flowGoal.split('.').slice(0,1) : 'flow entry point'}.
 
 ## Preferred locators
 
@@ -71,7 +92,7 @@ Path provenance: \`${startPath}\` — home page, no interactions.
 |---|---|---:|---|---|
 | Logo/home link | \`page.getByRole('link', { name: 'Shady Meadows B&B' })\` | role | \`/\` | Navigates to home. |
 | Rooms nav link | \`page.getByRole('link', { name: 'Rooms' })\` | role | \`/\` | Hash anchor to /#rooms. |
-| Booking nav link | \`page.getByRole('link', { name: 'Booking' })\` | role | \`/\` | Hash anchor to /#booking. |
+| Booking nav link | \`page.getByRole('link', { name: 'Booking' })\` | role | \`/\` | Hash anchor to /#booking (room search entry). |
 | Amenities nav link | \`page.getByRole('link', { name: 'Amenities' })\` | role | \`/\` | Hash anchor to /#amenities. |
 | Location nav link | \`page.getByRole('link', { name: 'Location' })\` | role | \`/\` | Hash anchor to /#location. |
 | Contact nav link | \`page.getByRole('link', { name: 'Contact' })\` | role | \`/\` | Hash anchor to /#contact. |
@@ -83,6 +104,7 @@ Path provenance: \`${startPath}\` — home page, no interactions.
 - Do not click Book Now links; booking/checkout is out of scope.
 - Assert section visibility via heading presence after hash navigation.
 - Prefer \`getByRole\` for stable accessible selectors.
+- For room-search flow: interact with date pickers, check availability, view room options (no booking submit).
 `;
 
 writeFileSync(join(discoverDir, 'selector-candidates.md'), candidates);
@@ -96,9 +118,11 @@ const discoveryMeta = {
   baseUrl,
   selectedFlowIds: [flowId],
   startPaths: [startPath],
+  flowGoal,
+  pathLabel,
   artifacts: {
     mergedSnapshot: join(discoverDir, 'snapshot.yaml'),
-    pathSnapshots: [join(pathsDir, 'home.snapshot.yaml')],
+    pathSnapshots: [join(pathsDir, `${pathLabel}.snapshot.yaml`)],
     selectorCandidates: join(discoverDir, 'selector-candidates.md'),
   },
   discoveryStatus: 'completed',

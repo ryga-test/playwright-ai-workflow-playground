@@ -57,3 +57,12 @@
 - Flow: `room-search`
 - Result: 1/1 passed with 0 fix cycles
 - Artifacts: `results/automation-in-testing/flows/room-search/2026-05-17T155137Z/`
+
+## Run 2026-05-21T235545Z
+
+- Flow: `room-search`
+- Result: 3/3 tests passed (after 1 script_bug fix cycle)
+- Key fix: roomBookNowLinks visibility → singleRoomBookNowLink scoped expect
+- New artifacts: updated Gherkin with Scenario Outline + resolved dates 29/05/2026; full pipeline-summary.md
+- Notes: Confirmed read-only compliance, screencasts recorded in step7-run-fix/, typecheck clean
+- Artifacts: `results/automation-in-testing/flows/room-search/2026-05-21T235545Z/`
