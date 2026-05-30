@@ -232,6 +232,32 @@ function getPrimaryArtifactPath(
   return path.join(cwd, rel);
 }
 
+/**
+ * Exact completion-marker line for a given primary-artifact file, choosing the
+ * comment syntax from the file extension. Used to tell the agent precisely
+ * where and how to write the marker so it lands in the *watched* file — not a
+ * sibling/metadata sidecar (incident #5 root cause: watched-path vs marker-
+ * placement mismatch).
+ */
+function markerLineFor(filePath: string, step: number, runId: string): string {
+  const marker = `@step-complete step=${step} runId=${runId}`;
+  const ext = path.extname(filePath).toLowerCase();
+  switch (ext) {
+    case ".json":
+      return `"_stepComplete": "${marker}"   (add as the final top-level key, before the closing })`;
+    case ".ts":
+    case ".js":
+    case ".mts":
+    case ".cts":
+      return `// ${marker}`;
+    case ".yaml":
+    case ".yml":
+      return `# ${marker}`;
+    default: // .md, .feature / Gherkin, and any other text format
+      return `<!-- ${marker} -->`;
+  }
+}
+
 // ── Extension ────────────────────────────────────────────────────────────────
 
 export default function (pi: ExtensionAPI) {
@@ -400,9 +426,21 @@ export default function (pi: ExtensionAPI) {
       message = `/${stepName} ${app} ${runId}\n\n${flowContextLines(app, pipeline.flowId)}`;
     }
 
-    // Phase 2: inject explicit completion marker instruction + self-check (format-aware footer)
+    // Resolve the EXACT file the CompletionWatcher will poll, BEFORE building the
+    // instruction, so we can name that one file to the agent. Single source of
+    // truth: getPrimaryArtifactPath() drives both the watch and the instruction.
+    const cwd = (ctx && ctx.cwd) || process.cwd();
+    const artifactPath = getPrimaryArtifactPath(step, app, pipeline.flowId, runId, cwd);
+    const relArtifact = path.relative(cwd, artifactPath);
+    const markerLine = markerLineFor(relArtifact, step, runId);
+
+    // Phase 2 + incident #5 fix: name the single watched file and the exact
+    // marker line for its format. The watcher polls ONLY this file, so the
+    // marker must live here — never in a sibling, metadata, or sidecar file.
     const markerInstruction =
-      `\n\n---\n**COMPLETION SIGNALING (MANDATORY):** Before finishing, verify the PRIMARY ARTIFACT contains this marker (use the correct format for the file type):\n\n  <!-- @step-complete step=${step} runId=${runId} -->   (Markdown / Gherkin — last line)\n  // @step-complete step=${step} runId=${runId}         (TypeScript / JS — last line)\n  # @step-complete step=${step} runId=${runId}          (YAML — last line)\n  "_stepComplete": "@step-complete step=${step} runId=${runId}"  (JSON — last key before closing })\n\nIf the marker is not present, add it now. For JSON, add it as the final top-level key. For all other formats, append as the final line. Self-check before you stop.`;
+      `\n\n---\n**COMPLETION SIGNALING (MANDATORY):** The pipeline watcher polls exactly ONE file to detect this step's completion:\n\n  ${relArtifact}\n\n` +
+      `Before you finish, that exact file MUST contain this completion marker (do NOT put it in any other file, sidecar, or metadata JSON — the watcher will not see it there):\n\n  ${markerLine}\n\n` +
+      `For JSON files add it as the final top-level key; for all other formats append it as the final line using the comment syntax shown. Self-check that \`${relArtifact}\` contains the marker before you stop.`;
     message = message + markerInstruction;
 
     pipeline.currentStep = step;
@@ -413,9 +451,7 @@ export default function (pi: ExtensionAPI) {
     // Always followUp (idle-guard removed in Phase 2)
     pi.sendUserMessage(message, { deliverAs: "followUp" });
 
-    // Register watcher for primary artifact (push model from manifest primary_output)
-    const cwd = (ctx && ctx.cwd) || process.cwd();
-    const artifactPath = getPrimaryArtifactPath(step, app, pipeline.flowId, runId, cwd);
+    // Register watcher for the SAME primary artifact named in the instruction.
     watcher.watch({
       artifactPath,
       step,
