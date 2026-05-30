@@ -144,7 +144,7 @@ class CompletionWatcher {
       // Robust detection: search tail for marker for *this* step (anywhere in last 512 bytes).
       // Tolerates trailing newlines, extra text after marker, or non-last-line placement.
       // Matches manifest regex style; ignores comment prefix.
-      const markerRegex = new RegExp(`@step-complete step=${step} runId=([\w-]+T[\w:]+Z?)`);
+      const markerRegex = new RegExp(`@step-complete step=${step} runId=([\\w-]+T[\\w:]+Z?)`);
       const match = tail.match(markerRegex);
       if (match) {
         const markerRunId = match[1];
