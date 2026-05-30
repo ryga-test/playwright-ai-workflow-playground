@@ -220,3 +220,20 @@
 - 1 Gherkin-sourced `room-search` Playwright test passed against the public site.
 - The test traced to the approved "Visitor checks room availability without entering checkout" scenario.
 - No room reservation link was clicked, no booking was completed, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-05-30T120453Z
+
+### Verified UI Facts
+
+- The public home page at `/` loads and renders the h1 welcome heading "Welcome to Shady Meadows B&B".
+- The page exposes five public navigation links in the navigation landmark: Rooms (`/#rooms`), Booking (`/#booking`), Amenities (`/#amenities`), Location (`/#location`), Contact (`/#contact`).
+- The brand logo link "Shady Meadows B&B" is visible and navigates to `/`.
+- Default availability dates observed: Check In `30/05/2026`, Check Out `31/05/2026`.
+- Room reservation links for this run target `/reservation/1?checkin=2026-05-30&checkout=2026-05-31`, `/reservation/2?checkin=2026-05-30&checkout=2026-05-31`, and `/reservation/3?checkin=2026-05-30&checkout=2026-05-31`.
+- The shared page object selectors (P1 `getByRole`) remain stable and require zero changes.
+
+### Verified Test Coverage
+
+- 3 Gherkin-sourced `public-home` Playwright tests passed against the public site.
+- No retries were needed.
+- No admin link was clicked, no booking was initiated, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.

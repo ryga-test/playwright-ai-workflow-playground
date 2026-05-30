@@ -2,6 +2,7 @@
 // @provenance runId=2026-05-17T100540Z approvedAt=2026-05-17T10:05:40.000Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/section-navigation.yaml
 // @provenance runId=2026-05-17T120959Z approvedAt=2026-05-17T12:12:49.451Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
 // @provenance runId=2026-05-17T142233Z approvedAt=2026-05-17T14:28:54+00:00 gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
+// @provenance runId=2026-05-30T120453Z approvedAt=2026-05-30T12:11:00Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
 import { expect, type Locator, type Page } from '@playwright/test';
 
 const ROOM_SEARCH_EXPECTED_ROOM_HREFS = {

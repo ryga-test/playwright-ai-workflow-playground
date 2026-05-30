@@ -2,6 +2,9 @@
 # Run-ID: 2026-05-17T142233Z
 # Approved-at: 2026-05-17T14:28:54+00:00
 # Approved-step: test-draft-review
+# Run-ID: 2026-05-30T120453Z
+# Approved-at: 2026-05-30T12:11:00Z
+# Approved-step: test-draft-review
 
 @generated @smoke @public-demo @read-only @public-home
 Feature: Public home
