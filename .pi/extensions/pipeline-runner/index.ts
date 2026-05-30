@@ -411,7 +411,7 @@ export default function (pi: ExtensionAPI) {
     persistState();
 
     // Always followUp (idle-guard removed in Phase 2)
-    pi.sendUserMessage(message, { streamingBehavior: "followUp" });
+    pi.sendUserMessage(message, { deliverAs: "followUp" });
 
     // Register watcher for primary artifact (push model from manifest primary_output)
     const cwd = (ctx && ctx.cwd) || process.cwd();
@@ -533,7 +533,7 @@ export default function (pi: ExtensionAPI) {
 
       // Phase 2/3: send approved (side-effect for promotion), then IMMEDIATELY advance
       // Send approved (promotion side-effect); advance immediately via watcher
-      pi.sendUserMessage("approved", { streamingBehavior: "followUp" });
+      pi.sendUserMessage("approved", { deliverAs: "followUp" });
 
       // Advance: always dispatch next (may be gated or not). If gated, onStepComplete will pause after it finishes.
       // This ensures gated steps 4/5 execute to produce drafts, then pause only after their completion.
