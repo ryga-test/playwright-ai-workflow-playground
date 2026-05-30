@@ -402,7 +402,7 @@ export default function (pi: ExtensionAPI) {
 
     // Phase 2: inject explicit completion marker instruction + self-check (format-aware footer)
     const markerInstruction =
-      `\n\n---\n**COMPLETION SIGNALING (MANDATORY):** Before finishing, verify the LAST LINE of your PRIMARY ARTIFACT contains exactly this marker (use the correct comment prefix for the file type):\n\n  <!-- @step-complete step=${step} runId=${runId} -->   (Markdown)\n  // @step-complete step=${step} runId=${runId}      (TypeScript)\n  # @step-complete step=${step} runId=${runId}       (YAML)\n\nIf the marker is not present, append it now as the final line of the file. Self-check before you stop.`;
+      `\n\n---\n**COMPLETION SIGNALING (MANDATORY):** Before finishing, verify the PRIMARY ARTIFACT contains this marker (use the correct format for the file type):\n\n  <!-- @step-complete step=${step} runId=${runId} -->   (Markdown / Gherkin — last line)\n  // @step-complete step=${step} runId=${runId}         (TypeScript / JS — last line)\n  # @step-complete step=${step} runId=${runId}          (YAML — last line)\n  "_stepComplete": "@step-complete step=${step} runId=${runId}"  (JSON — last key before closing })\n\nIf the marker is not present, add it now. For JSON, add it as the final top-level key. For all other formats, append as the final line. Self-check before you stop.`;
     message = message + markerInstruction;
 
     pipeline.currentStep = step;

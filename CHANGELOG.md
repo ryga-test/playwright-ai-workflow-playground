@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-05-30 — Pipeline Auto-Chaining: JSON Completion Marker Fix
+
+### Fixed
+- **Step 1 auto-chaining failure on JSON primary artifacts**: the completion marker
+  instruction in `dispatchStep()` listed only comment-based formats (Markdown,
+  TypeScript, YAML). Step 1's primary artifact is JSON (`run-metadata.json`), which
+  cannot host inline comments. The agent correctly wrote the marker to `completion.md`,
+  but the CompletionWatcher polled only the JSON file. The entire auto-chaining chain
+  died at step 1, requiring manual intervention for all 8 steps.
+- **Root cause**: `_stepComplete` JSON key format was missing from the marker instruction.
+  Added: `"_stepComplete": "@step-complete step=N runId=..."` as the last top-level key
+  before the closing `}`. No regex change needed — the existing watcher substring scan
+  detects `@step-complete` inside JSON string values identically to comment-style markers.
+
+### Added
+- **`marker-regex.test.ts`**: 9 test cases covering all artifact formats (JSON `_stepComplete`,
+  Markdown `<!-- -->`, TypeScript `//`, YAML `#`, Gherkin) plus negative cases (missing marker,
+  wrong step). All pass against the unchanged watcher regex.
+- **Postmortem**: `docs/postmortems/2026-05-30-pipeline-chaining-failure-completion-marker-json.md`
+  documents the incident, root cause chain, timeline, and action items.
+
+### Updated files
+
+| File | Change |
+|------|--------|
+| `.pi/extensions/pipeline-runner/index.ts` | Added JSON format to completion marker instruction |
+| `.pi/extensions/pipeline-runner/marker-regex.test.ts` | New: 9 tests across all artifact formats |
+| `docs/postmortems/2026-05-30-pipeline-chaining-failure-completion-marker-json.md` | New: SRE-book postmortem |
+
 ## 2026-05-21 — Explicit Completion Signaling for Pipeline Runner Chaining
 
 ### Added
