@@ -83,6 +83,24 @@ const cases: TestCase[] = [
     content: "## Summary\n\n# @step-complete step=7 runId=2026-05-30T065319Z\n\n",
     expectMatch: true,
   },
+
+  // ── Incident #5 regression (run 2026-05-30T084514Z) ──
+  // The watcher polls step2-discover/snapshot.yaml. The agent wrote the marker
+  // into a sibling discovery-metadata.json, so the watched file ended with an
+  // ARIA-snapshot tail and no marker → onStepComplete(2) never fired.
+  {
+    name: "step 2 snapshot.yaml WITHOUT marker (the bug — watcher sees no marker)",
+    step: 2,
+    content: "    - text: \"-\"\n    - link \"Admin panel\":\n      - /url: /admin\n  - alert\n",
+    expectMatch: false,
+  },
+  {
+    // After the fix: the agent is told to append the marker to snapshot.yaml itself.
+    name: "step 2 snapshot.yaml WITH marker appended as final line (the fix)",
+    step: 2,
+    content: "  - alert\n# @step-complete step=2 runId=2026-05-30T084514Z\n",
+    expectMatch: true,
+  },
 ];
 
 function runTests() {
