@@ -140,19 +140,17 @@ class CompletionWatcher {
       fs.closeSync(fd);
 
       const tail = buffer.toString("utf8");
-      const lines = tail.trim().split(/\r?\n/);
-      const lastLine = lines[lines.length - 1]?.trim() || "";
 
-      // Match marker regardless of leading comment prefix (<!--, //, #, etc.)
-      const match = lastLine.match(/@step-complete step=(\d+) runId=([\w-]+T[\w:]+Z?)/);
+      // Robust detection: search tail for marker for *this* step (anywhere in last 512 bytes).
+      // Tolerates trailing newlines, extra text after marker, or non-last-line placement.
+      // Matches manifest regex style; ignores comment prefix.
+      const markerRegex = new RegExp(`@step-complete step=${step} runId=([\w-]+T[\w:]+Z?)`);
+      const match = tail.match(markerRegex);
       if (match) {
-        const markerStep = parseInt(match[1], 10);
-        const markerRunId = match[2];
-        if (markerStep === step) {
-          // Detected — fire and let handler decide whether to unwatch
-          const cb = this.onComplete;
-          if (cb) cb(markerStep, context);
-        }
+        const markerRunId = match[1];
+        // Detected — fire and let handler decide whether to unwatch
+        const cb = this.onComplete;
+        if (cb) cb(step, context);
       }
     } catch (err) {
       // Transient FS errors (e.g. during write) — keep polling
@@ -228,7 +226,7 @@ function getPrimaryArtifactPath(
     5: `results/${app}/flows/${flowId}/${runId}/step5-draft-tests/test-drafts-index.md`,
     6: `results/${app}/flows/${flowId}/${runId}/flow-summary.md`,
     7: `results/${app}/flows/${flowId}/${runId}/step7-run-fix/test-report.md`,
-    8: `results/${app}/flows/${flowId}/${runId}/step8-summarize/summary.md`,
+    8: `results/${app}/flows/${flowId}/${runId}/pipeline-summary.md`,
   };
   const rel = relTemplates[step] ?? `results/${app}/flows/${flowId}/${runId}/step${step}/primary.md`;
   return path.join(cwd, rel);
@@ -331,7 +329,18 @@ export default function (pi: ExtensionAPI) {
     pipeline.stepMarkerReceived = true;
     persistState();
 
-    // 4. Next step
+    // Gate decision: pause for approval ONLY after a gated step (4 or 5) completes.
+    // Non-gated steps auto-advance. Gated steps are dispatched normally (to produce drafts)
+    // but cause pause AFTER completion so human can approve before next.
+    if (GATED_STEPS.has(step)) {
+      pipeline.status = "paused_gate";
+      persistState();
+      watcher.unwatch();
+      console.log(`[Pipeline] GATED after step ${step} — use /pipeline-continue to approve`);
+      return;
+    }
+
+    // Non-gated step completed: auto-advance
     const nextStep = step + 1;
     if (nextStep > TOTAL_STEPS) {
       pipeline.status = "complete";
@@ -343,17 +352,6 @@ export default function (pi: ExtensionAPI) {
     }
 
     pipeline.currentStep = nextStep;
-
-    // 7. Gated?
-    if (GATED_STEPS.has(nextStep)) {
-      pipeline.status = "paused_gate";
-      persistState();
-      watcher.unwatch();
-      console.log(`[Pipeline] GATED at step ${nextStep} — use /pipeline-continue`);
-      return;
-    }
-
-    // 8. Non-gated auto-advance
     pipeline.stepMarkerReceived = false;
     persistState();
     watcher.unwatch();
@@ -409,11 +407,7 @@ export default function (pi: ExtensionAPI) {
 
     pipeline.currentStep = step;
     pipeline.stepMarkerReceived = false;
-    if (GATED_STEPS.has(step)) {
-      pipeline.status = "paused_gate";
-    } else {
-      pipeline.status = "running";
-    }
+    pipeline.status = "running";
     persistState();
 
     // Always followUp (idle-guard removed in Phase 2)
@@ -541,26 +535,22 @@ export default function (pi: ExtensionAPI) {
       // Send approved (promotion side-effect); advance immediately via watcher
       pi.sendUserMessage("approved", { streamingBehavior: "followUp" });
 
-      // Advance state, register watcher, dispatch or pause
+      // Advance: always dispatch next (may be gated or not). If gated, onStepComplete will pause after it finishes.
+      // This ensures gated steps 4/5 execute to produce drafts, then pause only after their completion.
       pipeline.currentStep = nextDispatchStep;
       pipeline.stepMarkerReceived = false;
-      if (GATED_STEPS.has(nextDispatchStep)) {
-        pipeline.status = "paused_gate";
-        watcher.unwatch();
-      } else {
-        pipeline.status = "running";
-        watcher.unwatch();
-        const cwd = ctx.cwd || process.cwd();
-        const artifactPath = getPrimaryArtifactPath(
-          nextDispatchStep,
-          pipeline.app,
-          pipeline.flowId,
-          pipeline.runId!,
-          cwd
-        );
-        watcher.watch({ artifactPath, step: nextDispatchStep, context: { runId: pipeline.runId!, app: pipeline.app, flowId: pipeline.flowId } });
-        dispatchStep(nextDispatchStep, ctx);
-      }
+      pipeline.status = "running";
+      watcher.unwatch();
+      const cwd = ctx.cwd || process.cwd();
+      const artifactPath = getPrimaryArtifactPath(
+        nextDispatchStep,
+        pipeline.app,
+        pipeline.flowId,
+        pipeline.runId!,
+        cwd
+      );
+      watcher.watch({ artifactPath, step: nextDispatchStep, context: { runId: pipeline.runId!, app: pipeline.app, flowId: pipeline.flowId } });
+      dispatchStep(nextDispatchStep, ctx);
       persistState();
 
       ctx.ui.notify(
