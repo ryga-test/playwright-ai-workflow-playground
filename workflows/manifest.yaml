@@ -129,8 +129,11 @@ steps:
     order: 6
     gated: false
     description: Promote the approved feature file and generate the selected flow Playwright spec from approved scenarios and page objects
+    # Completion artifact is a per-run report this step writes. The spec/feature it
+    # generates live under tests/ (committed); a marker there would persist/stale
+    # across runs, so completion is signalled via this throwaway per-run file instead.
     primary_output:
-      path: results/{{app}}/flows/<flow-id>/{{run}}/flow-summary.md
+      path: results/{{app}}/flows/<flow-id>/{{run}}/step6-write-spec/write-spec-report.md
       format: markdown
     inputs:
       - name: test-scenarios
@@ -143,6 +146,9 @@ steps:
         path: src/pages/{{app}}/{{app}}.page.ts
         format: typescript
     outputs:
+      - name: write-spec-report
+        path: results/{{app}}/flows/<flow-id>/{{run}}/step6-write-spec/write-spec-report.md
+        format: markdown
       - name: approved-feature
         path: tests/{{app}}/<flow-id>.feature
         format: gherkin

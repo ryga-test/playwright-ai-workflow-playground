@@ -211,7 +211,7 @@ async function branchExists(pi: ExtensionAPI, name: string): Promise<boolean> {
  * Uses explicit mapping (will be manifest-driven after Task 2).
  * Templates use actual values, not placeholders.
  */
-function getPrimaryArtifactPath(
+export function getPrimaryArtifactPath(
   step: number,
   app: string,
   flowId: string,
@@ -224,7 +224,12 @@ function getPrimaryArtifactPath(
     3: `results/${app}/flows/${flowId}/${runId}/step3-extract-selectors/normalized-selectors.md`,
     4: `results/${app}/flows/${flowId}/${runId}/step4-draft-page-object/page-object.draft.ts`,
     5: `results/${app}/flows/${flowId}/${runId}/step5-draft-tests/test-drafts-index.md`,
-    6: `results/${app}/flows/${flowId}/${runId}/flow-summary.md`,
+    // write-spec produces tests/<app>/<flow>.spec.ts (a committed file). To get a
+    // per-run, never-stale completion signal it also writes a write-spec report
+    // here; the prompt creates this file and the watcher polls it. (Was
+    // flow-summary.md — a step-7 output write-spec never creates → step 6 stalled,
+    // run 2026-05-30T120453Z.)
+    6: `results/${app}/flows/${flowId}/${runId}/step6-write-spec/write-spec-report.md`,
     7: `results/${app}/flows/${flowId}/${runId}/step7-run-fix/test-report.md`,
     8: `results/${app}/flows/${flowId}/${runId}/pipeline-summary.md`,
   };

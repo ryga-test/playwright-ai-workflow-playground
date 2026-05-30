@@ -1,5 +1,58 @@
 # Changelog
 
+## 2026-05-30 — Pipeline Auto-Chaining: Step 6 Watched-Artifact Fix (incident #3)
+
+### Fixed
+- **Step 6 auto-chaining stall on run `2026-05-30T120453Z`**: the pipeline advanced
+  through steps 1–5 and both gates, then stalled at step 6 (`write-spec`) instead of
+  auto-progressing through the non-gated tail 6→7→8. The CompletionWatcher for step 6
+  polled `results/.../flow-summary.md`, but `write-spec` never creates that file
+  (`flow-summary.md` is a step-7 output / step-8 input). The agent wrote the
+  `@step-complete step=6` marker into the file it actually produced (the spec), so
+  `onStepComplete(6)` never fired. Because the runner advances only via the watcher and
+  guards on `step === currentStep`, the stall cascaded — steps 7 and 8 had to be driven
+  manually (step 8's `pipeline-summary.md` was never produced as a result).
+- **Root cause**: third instance of the same class as incident #1 Bug #1 (JSON marker)
+  and incident #2 Bug #5 (step-2 sibling file) — **the watched file is not a file the
+  step produces**. Incident #5's "name the watched file" fix could not help here because
+  the named file (`flow-summary.md`) was one `write-spec` never writes. Step 6 is the only
+  step whose real deliverable is a *committed* file (`tests/<app>/<flow-id>.spec.ts`), so it
+  had no per-run completion artifact and the map fell back to an unrelated results file.
+
+### Changed
+- **Step 6 now signals completion via a per-run results file it creates**:
+  `getPrimaryArtifactPath(6)` and `workflows/manifest.yaml` now point at
+  `results/<app>/flows/<flow-id>/<run>/step6-write-spec/write-spec-report.md`, and
+  `pipeline-write-spec.md` gained a mandatory step 12 to write that report (spec path,
+  source feature, test count, overwrite/diff status, typecheck result). This keeps step 6
+  consistent with every other step (per-run results artifact) and avoids stale-marker
+  hazards from watching a committed file across runs.
+- **`getPrimaryArtifactPath` is now exported** from the extension so the path map is
+  unit-testable.
+
+### Added
+- **`artifact-path.test.ts`**: asserts every step's primary-artifact path and explicitly
+  guards that step 6 never watches `flow-summary.md` again. Failed on step 6 before the fix,
+  **9/9 after**. `marker-regex.test.ts` unchanged (**11/11**); `tsc --noEmit` clean.
+- **Postmortem**: `docs/postmortems/2026-05-30-pipeline-stall-step6-write-spec-wrong-primary-artifact.md`
+  documents the incident, the watched-path-vs-marker class history, timeline, and action items
+  (incl. an invariant test that each step's `primary_output` is a file that step actually writes).
+
+### Updated files
+
+| File | Change |
+|------|--------|
+| `.pi/extensions/pipeline-runner/index.ts` | `getPrimaryArtifactPath(6)` → per-run `step6-write-spec/write-spec-report.md`; exported helper |
+| `workflows/manifest.yaml` | `write-spec.primary_output` corrected; added `write-spec-report` output |
+| `.pi/prompts/pipeline-write-spec.md` | New step 12: write the per-run `write-spec-report.md` completion artifact |
+| `.pi/extensions/pipeline-runner/artifact-path.test.ts` | New: 9 path-mapping tests + step-6 regression guard |
+| `docs/postmortems/2026-05-30-pipeline-stall-step6-write-spec-wrong-primary-artifact.md` | New: SRE-book postmortem (incident #2026-05-30-003) |
+
+### Runtime confirmation pending
+- Extension does not hot-reload: restart the pi session and re-run
+  `/pipeline-run automation-in-testing FLOW_ID=public-home`, approve gates 4 & 5, and confirm
+  6→7→8 auto-advance and `pipeline-summary.md` is produced.
+
 ## 2026-05-30 — Pipeline Auto-Chaining: JSON Completion Marker Fix
 
 ### Fixed

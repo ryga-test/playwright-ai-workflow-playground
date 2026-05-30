@@ -22,5 +22,6 @@ Write Playwright specs after both review gates are approved:
 9. Overwrite the spec automatically after Step 5 approval; do not request another human approval in Step 6.
 10. Add/update provenance header: `// @provenance runId=$2 approvedAt=<now> gate=test-draft-review source=tests/$1/<flow-id>.feature flow=apps/$1/flows/<flow-id>.yaml`.
 11. Run `npm run typecheck` to verify compilation and fix errors before declaring step complete.
+12. Write a write-spec report to `results/$1/flows/<flow-id>/$2/step6-write-spec/write-spec-report.md` recording: the generated spec path, the source feature file, the number of tests generated, whether an existing spec was overwritten (and the `spec.diff` path if written), and the `npm run typecheck` result. This per-run file is this step's completion artifact — it must exist before you declare the step complete.
 
 Do not use legacy app-level mode for pipeline runs; a selected `FLOW_ID` is required.
