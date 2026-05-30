@@ -404,7 +404,7 @@ export default function (pi: ExtensionAPI) {
    * Always uses followUp, injects completion marker instruction + self-check,
    * registers CompletionWatcher for primary artifact.
    */
-  function dispatchStep(step: number, ctx?: any) {
+  function dispatchStep(step: number, ctx?: any, approvalPreamble?: string) {
     if (!pipeline) return;
 
     const app = pipeline.app;
@@ -447,6 +447,14 @@ export default function (pi: ExtensionAPI) {
       `Before you finish, that exact file MUST contain this completion marker (do NOT put it in any other file, sidecar, or metadata JSON — the watcher will not see it there):\n\n  ${markerLine}\n\n` +
       `For JSON files add it as the final top-level key; for all other formats append it as the final line using the comment syntax shown. Self-check that \`${relArtifact}\` contains the marker before you stop.`;
     message = message + markerInstruction;
+
+    // Incident #7: the gate-continue path folds its approval ("approved" +
+    // promote-the-draft) into THIS single dispatch instead of sending it as a
+    // separate, racing message. Prepend it so "approved" is the first thing the
+    // agent reads, while the step still produces its artifact + completion marker.
+    if (approvalPreamble) {
+      message = `${approvalPreamble}\n\n${message}`;
+    }
 
     pipeline.currentStep = step;
     pipeline.stepMarkerReceived = false;
@@ -572,30 +580,33 @@ export default function (pi: ExtensionAPI) {
 
       persistState();
 
-      // Phase 2/3: send approved (side-effect for promotion), then IMMEDIATELY advance
-      // Send approved (promotion side-effect); advance immediately via watcher
-      pi.sendUserMessage("approved", { deliverAs: "followUp" });
+      // Incident #7 fix: the gate-continue path must issue EXACTLY ONE
+      // sendUserMessage. It previously sent "approved" and then dispatched the
+      // next step as a SECOND back-to-back message in the same synchronous tick.
+      // The first send starts an agent turn; the second races the agent's
+      // transition into "processing" and is silently dropped (incident #1 Bug #4
+      // mechanism: prompt() throws "Agent is already processing", the un-awaited
+      // rejection is swallowed). The next step then never runs and the pipeline
+      // stalls at the gate. Because it is a race it is intermittent — the gate
+      // advanced on run 120453Z and dropped step 5 on run 132439Z.
+      //
+      // Fold the approval into the single next-step dispatch: one message to the
+      // (idle) agent — "approved" + a promote-the-draft preamble + the next
+      // /pipeline-* command + that step's completion-marker instruction — chained
+      // onward by the next step's watcher. This is the same one-message-to-idle
+      // pattern that non-gated auto-chaining already uses reliably; dispatchStep
+      // owns the state update + watcher registration, so no separate send.
+      const gateName = STEP_NAMES[step];
+      const approvalPreamble =
+        `approved\n\n` +
+        `The step-${step} (${gateName}) review gate is approved. First promote the ` +
+        `approved draft into the shared page object / test suite as that step requires, ` +
+        `then continue with the next step below — do not stop after promotion.`;
 
-      // Advance: always dispatch next (may be gated or not). If gated, onStepComplete will pause after it finishes.
-      // This ensures gated steps 4/5 execute to produce drafts, then pause only after their completion.
-      pipeline.currentStep = nextDispatchStep;
-      pipeline.stepMarkerReceived = false;
-      pipeline.status = "running";
-      watcher.unwatch();
-      const cwd = ctx.cwd || process.cwd();
-      const artifactPath = getPrimaryArtifactPath(
-        nextDispatchStep,
-        pipeline.app,
-        pipeline.flowId,
-        pipeline.runId!,
-        cwd
-      );
-      watcher.watch({ artifactPath, step: nextDispatchStep, context: { runId: pipeline.runId!, app: pipeline.app, flowId: pipeline.flowId } });
-      dispatchStep(nextDispatchStep, ctx);
-      persistState();
+      dispatchStep(nextDispatchStep, ctx, approvalPreamble);
 
       ctx.ui.notify(
-        `✅ Sent approval for step ${step}/8. Advancing to step ${nextDispatchStep}/8...`,
+        `✅ Approved step ${step}/8 and dispatched step ${nextDispatchStep}/8 in a single message.`,
         "success",
       );
     },
