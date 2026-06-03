@@ -177,3 +177,10 @@
 
 - **Rule**: The footer-scoped role locators for `Cookie-Policy` and `Privacy-Policy` links remain the canonical strategy for `policy-links` assertions.
 - **Rationale**: The 2026-06-03T075437Z run passed 1/1 with zero drift, confirming that footer-scoped role locators for policy links remain stable against the live public site. No selector changes were needed across 7 consecutive successful runs.
+
+## Run 2026-06-03T092756Z
+
+### R28 — Public-home selectors confirmed stable across 5 consecutive runs
+
+- **Rule**: The P1 `getByRole` selectors for public-home (welcome heading, nav links, brand link) remain the canonical strategy for public-home assertions.
+- **Rationale**: The 2026-06-03T092756Z run passed 3/3 with zero drift, confirming that role-based selectors for the public-home flow remain stable against the live public site. No selector changes were needed across 5 consecutive successful runs (2026-05-17T120959Z through 2026-06-03T092756Z).

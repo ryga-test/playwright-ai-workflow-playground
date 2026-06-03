@@ -21,3 +21,13 @@ No automated pruning has been applied yet.
 
 - Action: no pruning applied.
 - Reason: the `policy-links` flow observations reinforce existing verified facts (Cookie-Policy and Privacy-Policy links visible with `/cookie` and `/privacy` destinations). No entries are contradicted or superseded across the last six successful runs.
+
+## Run 2026-06-03T063055Z
+
+- Action: no pruning applied.
+- Reason: the `public-home` flow observations reinforce existing verified facts (welcome heading visible, public navigation links visible, brand link visible, all P1 getByRole selectors stable). No entries are contradicted or superseded across the last six successful runs. All selectors remain stable with zero drift.
+
+## Run 2026-06-03T070659Z
+
+- Action: no pruning applied.
+- Reason: the `policy-links` flow observations reinforce existing verified facts (Cookie-Policy and Privacy-Policy links visible with `/cookie` and `/privacy` destinations, footer-scoped role locators stable). No entries are contradicted or superseded across the last six successful runs. All selectors remain stable with zero drift.

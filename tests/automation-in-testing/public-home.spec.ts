@@ -1,3 +1,4 @@
+// @provenance runId=2026-06-03T092756Z approvedAt=2026-06-03T09:39:08Z gate=test-draft-review source=tests/automation-in-testing/public-home.feature flow=apps/automation-in-testing/flows/public-home.yaml
 // @provenance runId=2026-05-17T142233Z approvedAt=2026-05-17T14:31:18+00:00 gate=test-draft-review source=tests/automation-in-testing/public-home.feature flow=apps/automation-in-testing/flows/public-home.yaml
 // @provenance runId=2026-05-30T120453Z approvedAt=2026-05-30T12:11:00Z gate=test-draft-review source=tests/automation-in-testing/public-home.feature flow=apps/automation-in-testing/flows/public-home.yaml
 import { test, expect } from '@fixtures/base.fixture.js';

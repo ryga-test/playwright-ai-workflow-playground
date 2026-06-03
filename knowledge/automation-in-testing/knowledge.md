@@ -301,3 +301,20 @@
 - 1 Gherkin-sourced `policy-links` Playwright test passed against the public site.
 - The test traced to the approved "Visitor can see policy links and their destinations without leaving the home page" scenario.
 - No policy page was loaded, no booking was completed, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-06-03T092756Z
+
+### Verified UI Facts
+
+- The public home page at `/` loads and renders the h1 welcome heading "Welcome to Shady Meadows B&B".
+- The page exposes five public navigation links in the navigation landmark: Rooms (`/#rooms`), Booking (`/#booking`), Amenities (`/#amenities`), Location (`/#location`), Contact (`/#contact`).
+- The brand logo link "Shady Meadows B&B" is visible and navigates to `/`.
+- All selectors using P1 `getByRole` remain stable with zero drift from prior runs.
+- Default availability dates observed: Check In `03/06/2026`, Check Out `04/06/2026`.
+- Room reservation links for this run target `/reservation/1?checkin=2026-06-03&checkout=2026-06-04`, `/reservation/2?checkin=2026-06-03&checkout=2026-06-04`, and `/reservation/3?checkin=2026-06-03&checkout=2026-06-04`.
+
+### Verified Test Coverage
+
+- 3 Gherkin-sourced `public-home` Playwright tests passed against the public site.
+- No retries were needed.
+- No admin link was clicked, no booking was initiated, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.

@@ -1,3 +1,4 @@
+// @provenance runId=2026-06-03T092756Z approvedAt=2026-06-03T09:36:47Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
 // @provenance runId=2026-06-03T075437Z approvedAt=2026-06-03T07:58:00Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/policy-links.yaml
 // @provenance runId=2026-05-31T104819Z approvedAt=2026-05-31T10:50:00Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/policy-links.yaml
 // @provenance runId=2026-05-17T155137Z approvedAt=2026-05-17T15:56:16Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/room-search.yaml
