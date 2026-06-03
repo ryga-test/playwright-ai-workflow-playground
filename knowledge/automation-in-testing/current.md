@@ -53,10 +53,10 @@
 
 ## Latest Successful Run
 
-- Run: `2026-05-17T155137Z`
-- Flow: `room-search`
+- Run: `2026-06-03T075437Z`
+- Flow: `policy-links`
 - Result: 1/1 passed with 0 fix cycles
-- Artifacts: `results/automation-in-testing/flows/room-search/2026-05-17T155137Z/`
+- Artifacts: `results/automation-in-testing/flows/policy-links/2026-06-03T075437Z/`
 
 ## Run 2026-05-21T235545Z
 
@@ -66,3 +66,24 @@
 - New artifacts: updated Gherkin with Scenario Outline + resolved dates 29/05/2026; full pipeline-summary.md
 - Notes: Confirmed read-only compliance, screencasts recorded in step7-run-fix/, typecheck clean
 - Artifacts: `results/automation-in-testing/flows/room-search/2026-05-21T235545Z/`
+
+## Run 2026-06-03T063055Z
+
+- Flow: `public-home`
+- Result: 3/3 tests passed with 0 fix cycles
+- Notes: All P1 getByRole selectors confirmed stable with zero drift. Default dates: 03/06/2026 to 04/06/2026. No side effects.
+- Artifacts: `results/automation-in-testing/flows/public-home/2026-06-03T063055Z/`
+
+## Run 2026-06-03T070659Z
+
+- Flow: `policy-links`
+- Result: 1/1 tests passed with 0 fix cycles
+- Notes: All P1 getByRole selectors confirmed stable with zero drift. Policy links verified without navigation. No side effects.
+- Artifacts: `results/automation-in-testing/flows/policy-links/2026-06-03T070659Z/`
+
+## Run 2026-06-03T075437Z
+
+- Flow: `policy-links`
+- Result: 1/1 tests passed with 0 fix cycles
+- Notes: All P1 getByRole selectors confirmed stable with zero drift. Policy links verified without navigation. No side effects. 7th consecutive successful run.
+- Artifacts: `results/automation-in-testing/flows/policy-links/2026-06-03T075437Z/`
