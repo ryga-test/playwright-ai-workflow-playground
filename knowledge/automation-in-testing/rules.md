@@ -156,3 +156,24 @@
 
 - **Rule**: Continue using `section#booking`-scoped positional input locators for Check In and Check Out until stable labels or test ids are available.
 - **Rationale**: The booking inputs still require scoped fallback selectors and the current run confirmed they remain stable enough for the selected flow.
+
+## Run 2026-05-31T104819Z
+
+### R25 — Policy-link footer-scoped selectors confirmed stable across runs
+
+- **Rule**: The `contentinfo.getByRole('link', { name: 'Cookie-Policy' })` and `Privacy-Policy` locators from R16/R17 remain the canonical strategy for `policy-links` assertions.
+- **Rationale**: The 2026-05-31 run passed 1/1 with zero drift, confirming that footer-scoped role locators for policy links are stable against the live public site. No selector changes were needed.
+
+## Run 2026-06-03T070659Z
+
+### R26 — Policy-link selectors remain stable across multiple runs
+
+- **Rule**: The footer-scoped role locators for `Cookie-Policy` and `Privacy-Policy` links continue to be the canonical strategy for `policy-links` assertions.
+- **Rationale**: The 2026-06-03 run passed 1/1 with zero drift, confirming that footer-scoped role locators for policy links remain stable against the live public site. No selector changes were needed across 4 consecutive successful runs.
+
+## Run 2026-06-03T075437Z
+
+### R27 — Policy-link selectors confirmed stable across 7 consecutive runs
+
+- **Rule**: The footer-scoped role locators for `Cookie-Policy` and `Privacy-Policy` links remain the canonical strategy for `policy-links` assertions.
+- **Rationale**: The 2026-06-03T075437Z run passed 1/1 with zero drift, confirming that footer-scoped role locators for policy links remain stable against the live public site. No selector changes were needed across 7 consecutive successful runs.

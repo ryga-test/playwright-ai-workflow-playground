@@ -1,4 +1,4 @@
-// @provenance runId=2026-05-17T092115Z approvedAt=2026-05-17T09:30:34Z gate=test-draft-review source=tests/automation-in-testing/policy-links.feature flow=apps/automation-in-testing/flows/policy-links.yaml
+// @provenance runId=2026-05-31T104819Z gate=write-spec sourceFeature=tests/automation-in-testing/policy-links.feature sourceFlow=apps/automation-in-testing/flows/policy-links.yaml
 import { test, expect } from '@fixtures/base.fixture.js';
 import {
   AutomationInTestingPage,

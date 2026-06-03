@@ -161,3 +161,30 @@ Per constitutional Principle II, locators follow this priority order:
   - Suite room link href `/reservation/3?checkin=2026-05-24&checkout=2026-05-25`.
 - The booking date inputs remain positional CSS fallbacks scoped to `section#booking` because the ARIA snapshot still did not expose stable accessible names.
 - The shared page object's room-search constants now reflect the new resolved dates from this run.
+
+## Run 2026-05-31T104819Z
+
+- Confirmed selectors that passed in the `policy-links` flow:
+  - `page.getByRole('contentinfo').getByRole('link', { name: 'Cookie-Policy' })` — footer cookie policy link.
+  - `page.getByRole('contentinfo').getByRole('link', { name: 'Privacy-Policy' })` — footer privacy policy link.
+- Confirmed href assertions:
+  - Cookie policy link href `/cookie`.
+  - Privacy policy link href `/privacy`.
+- Footer-scoped role locators are the canonical strategy per R17; no CSS fallbacks needed.
+- Zero drift from prior `policy-links` runs — selectors, hrefs, and page structure all stable.
+
+## Run 2026-06-03T063055Z
+
+- Confirmed selectors that passed in the `public-home` flow:
+  - `page.getByRole('heading', { name: 'Welcome to Shady Meadows B&B', level: 1 })` — h1 welcome heading.
+  - `page.getByRole('link', { name: 'Shady Meadows B&B' })` — brand logo/home link.
+  - `page.locator('nav').getByRole('link', { name: 'Rooms' })` — navigation-scoped Rooms link.
+  - `page.locator('nav').getByRole('link', { name: 'Booking' })` — navigation-scoped Booking link.
+  - `page.locator('nav').getByRole('link', { name: 'Amenities' })` — navigation-scoped Amenities link.
+  - `page.locator('nav').getByRole('link', { name: 'Location' })` — navigation-scoped Location link.
+  - `page.locator('nav').getByRole('link', { name: 'Contact' })` — navigation-scoped Contact link.
+- All 7 selectors are P1 `getByRole` with zero CSS, XPath, or text fallbacks.
+- Navigation links are now navigation-scoped (`page.locator('nav').getByRole(...)`) for improved precision.
+- Zero drift from prior `public-home` runs — all selectors remain stable.
+- Default availability dates observed: Check In `03/06/2026`, Check Out `04/06/2026`.
+- Room reservation links target `/reservation/1?checkin=2026-06-03&checkout=2026-06-04`, `/reservation/2?checkin=2026-06-03&checkout=2026-06-04`, `/reservation/3?checkin=2026-06-03&checkout=2026-06-04`.

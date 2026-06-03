@@ -1,6 +1,6 @@
 # Source-flow: apps/automation-in-testing/flows/policy-links.yaml
-# Run-ID: 2026-05-17T092115Z
-# Approved-at: 2026-05-17T09:30:11Z
+# Run-ID: 2026-06-03T075437Z
+# Approved-at: 2026-06-03T07:59:00Z
 # Approved-step: test-draft-review
 
 @smoke @public-demo @read-only @generated @policy-links
