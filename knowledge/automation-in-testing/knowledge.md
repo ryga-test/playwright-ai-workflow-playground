@@ -318,3 +318,70 @@
 - 3 Gherkin-sourced `public-home` Playwright tests passed against the public site.
 - No retries were needed.
 - No admin link was clicked, no booking was initiated, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-06-06T025645Z
+
+### Verified UI Facts
+
+- Header navigation links (`Rooms`, `Booking`, `Amenities`, `Location`, `Contact`) are visible on the public home page and scoped to the `navigation` landmark.
+- Clicking `Rooms` scrolls to the "Our Rooms" heading (level 2).
+- Clicking `Booking` scrolls to the "Check Availability & Book Your Stay" heading (level 3).
+- Clicking `Location` scrolls to the "Our Location" heading (level 2).
+- Clicking `Contact` scrolls to the "Contact Information" heading (level 3).
+- All header navigation links and section headings use P1 `getByRole` selectors with zero drift from prior runs.
+- The existing shared page object already covered all section-navigation selectors; no new selectors were needed.
+
+### Verified Test Coverage
+
+- 4 Gherkin-sourced `section-navigation` Playwright tests passed against the public site.
+- Every test traced to one approved Gherkin scenario.
+- No admin link was clicked, no booking was initiated, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-06-06T035102Z
+
+### Verified UI Facts
+
+- The public home page at `/` loads and renders the h1 welcome heading "Welcome to Shady Meadows B&B".
+- The page exposes five public navigation links in the navigation landmark: Rooms (`/#rooms`), Booking (`/#booking`), Amenities (`/#amenities`), Location (`/#location`), Contact (`/#contact`).
+- The brand logo link "Shady Meadows B&B" is visible and navigates to `/`.
+- All selectors using P1 `getByRole` remain stable with zero drift from prior runs.
+- Default availability dates observed: Check In `06/06/2026`, Check Out `07/06/2026`.
+
+### Verified Test Coverage
+
+- 3 Gherkin-sourced `public-home` Playwright tests passed against the public site.
+- No retries were needed.
+- No admin link was clicked, no booking was initiated, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-06-07T005234Z
+
+### Verified UI Facts
+
+- The footer `Cookie-Policy` link remains visible on the public home page and exposes the app-relative destination `/cookie`.
+- The footer `Privacy-Policy` link remains visible on the public home page and exposes the app-relative destination `/privacy`.
+- The `policy-links` flow reconfirmed policy link destinations without clicking either policy link and without leaving the home page.
+- Footer-scoped role locators (`contentinfo.getByRole`) for `Cookie-Policy` and `Privacy-Policy` passed against the public site with zero drift from prior runs.
+- All selectors using P1 `getByRole` remain stable with zero drift from prior runs.
+
+### Verified Test Coverage
+
+- 2 Gherkin-sourced `policy-links` Playwright tests passed against the public site.
+- Every test traced to one approved Gherkin scenario.
+- No policy page was loaded, no booking was completed, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.
+
+## Run 2026-06-07T010736Z
+
+### Verified UI Facts
+
+- The public home page at `/` loads and renders the h1 welcome heading "Welcome to Shady Meadows B&B".
+- The page exposes five public navigation links in the navigation landmark: Rooms (`/#rooms`), Booking (`/#booking`), Amenities (`/#amenities`), Location (`/#location`), Contact (`/#contact`).
+- The brand logo link "Shady Meadows B&B" is visible and navigates to `/`.
+- All selectors using P1 `getByRole` remain stable with zero drift from prior runs.
+- Default availability dates observed: Check In `07/06/2026`, Check Out `08/06/2026`.
+- Room reservation links for this run target `/reservation/1?checkin=2026-06-07&checkout=2026-06-08`, `/reservation/2?checkin=2026-06-07&checkout=2026-06-08`, and `/reservation/3?checkin=2026-06-07&checkout=2026-06-08`.
+
+### Verified Test Coverage
+
+- 3 Gherkin-sourced `public-home` Playwright tests passed against the public site.
+- No retries were needed.
+- No admin link was clicked, no booking was initiated, no contact message was submitted, no credentials were entered, and no authenticated action was attempted.

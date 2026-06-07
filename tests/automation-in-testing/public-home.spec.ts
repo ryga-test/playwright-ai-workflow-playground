@@ -1,42 +1,40 @@
-// @provenance runId=2026-06-03T092756Z approvedAt=2026-06-03T09:39:08Z gate=test-draft-review source=tests/automation-in-testing/public-home.feature flow=apps/automation-in-testing/flows/public-home.yaml
-// @provenance runId=2026-05-17T142233Z approvedAt=2026-05-17T14:31:18+00:00 gate=test-draft-review source=tests/automation-in-testing/public-home.feature flow=apps/automation-in-testing/flows/public-home.yaml
-// @provenance runId=2026-05-30T120453Z approvedAt=2026-05-30T12:11:00Z gate=test-draft-review source=tests/automation-in-testing/public-home.feature flow=apps/automation-in-testing/flows/public-home.yaml
+// @provenance runId=2026-06-07T010736Z approvedAt=2026-06-07T01:12:00Z gate=test-draft-review source=tests/automation-in-testing/public-home.feature
+
 import { test, expect } from '@fixtures/base.fixture.js';
-import { AutomationInTestingPage } from '@pages/automation-in-testing/automation-in-testing.page.js';
+import { AutomationInTestingPage } from '../../src/pages/automation-in-testing/automation-in-testing.page.js';
 
-const tags = '@generated @smoke @public-demo @read-only @public-home';
+test.describe('Public home', () => {
+  let page: AutomationInTestingPage;
 
-// fallow-ignore-next-line code-duplication
-test.describe('Flow: public-home', () => {
-  let app: AutomationInTestingPage;
-
-  test.beforeEach(async ({ page }) => {
-    app = new AutomationInTestingPage(page);
-    await app.goto('/');
+  test.beforeEach(async ({ page: playwrightPage }) => {
+    page = new AutomationInTestingPage(playwrightPage);
+    await page.goto('/');
   });
 
-  test(`Visitor sees the welcome heading ${tags}`, async () => {
-    // Traceability: tests/automation-in-testing/public-home.feature
+  test('Visitor sees the welcome heading', async () => {
     // Scenario: Visitor sees the welcome heading
-    // Source-flow: apps/automation-in-testing/flows/public-home.yaml
-    await expect(app.welcomeHeading).toBeVisible();
+    // Then the welcome heading "Welcome to Shady Meadows B&B" is visible
+    await expect(page.welcomeHeading).toBeVisible();
   });
 
-  test(`Visitor sees public navigation options ${tags}`, async () => {
-    // Traceability: tests/automation-in-testing/public-home.feature
+  test('Visitor sees public navigation options', async () => {
     // Scenario: Visitor sees public navigation options
-    // Source-flow: apps/automation-in-testing/flows/public-home.yaml
-    await expect(app.navRoomsLink).toBeVisible();
-    await expect(app.navBookingLink).toBeVisible();
-    await expect(app.navAmenitiesLink).toBeVisible();
-    await expect(app.navLocationLink).toBeVisible();
-    await expect(app.navContactLink).toBeVisible();
+    // Then the following navigation links are visible:
+    //   | link     |
+    //   | Rooms    |
+    //   | Booking  |
+    //   | Amenities|
+    //   | Location |
+    //   | Contact  |
+    const navLinks = page.publicNavLinks();
+    for (const link of navLinks) {
+      await expect(link).toBeVisible();
+    }
   });
 
-  test(`Visitor sees the brand logo link ${tags}`, async () => {
-    // Traceability: tests/automation-in-testing/public-home.feature
+  test('Visitor sees the brand logo link', async () => {
     // Scenario: Visitor sees the brand logo link
-    // Source-flow: apps/automation-in-testing/flows/public-home.yaml
-    await expect(app.brandLink).toBeVisible();
+    // Then the brand logo link "Shady Meadows B&B" is visible
+    await expect(page.brandLink).toBeVisible();
   });
 });

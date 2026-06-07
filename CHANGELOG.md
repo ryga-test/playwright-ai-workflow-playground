@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-06-07 — Pipeline Agent for opencode
+
+### Added
+
+- **Dedicated `pipeline` opencode agent** (`.opencode/agents/pipeline.md`): a primary-mode agent that orchestrates the 8-step E2E test generation pipeline. Reads `adapters/opencode/capabilities.yaml` at runtime for step-specific instructions, auto-chains non-gated steps (1-3, 6-8), and hard-stops at gated steps (4, 5) for human approval.
+- **`/pipeline` command** in `opencode.json`: routes to the pipeline agent via the `agent` field. Invoked as `/pipeline <app> <flowId>`.
+- **Agent prompt sections**: Startup, Pipeline Sequence, Gating Rules (three-phase protocol), Auto-Chaining, Branch Management (`pipeline/<app>/<flowId>/<runId>` isolation), State Detection (filesystem-based resumption), Placeholder Resolution, Step Execution, Error Handling.
+- **Permission**: `read: allow` on the pipeline agent so `.env` and config files are read without prompting.
+- **Validation script** (`scripts/validate-pipeline-config.mjs`): structural tests for agent frontmatter, prompt coverage of all 8 steps, gating protocol, branch pattern, and opencode.json schema compliance. 21 checks, all passing.
+- **PRD**: `docs/prd-pipeline-agent.md` and GitHub issue #1 with `ready-for-agent` label.
+
+### Files
+
+| File | Change |
+|------|--------|
+| `.opencode/agents/pipeline.md` | New: pipeline agent definition with orchestration prompt |
+| `opencode.json` | New: command and agent registration |
+| `scripts/validate-pipeline-config.mjs` | New: structural validation script |
+| `docs/prd-pipeline-agent.md` | New: product requirements document |
+
 ## 2026-05-30 — Pipeline Auto-Chaining: Step 6 Watched-Artifact Fix (incident #3)
 
 ### Fixed
