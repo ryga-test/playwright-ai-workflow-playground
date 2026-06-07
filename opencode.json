@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "command": {
+    "pipeline": {
+      "description": "Run the E2E test generation pipeline: /pipeline <app> <flowId>",
+      "template": "Run the E2E pipeline for app {{arg1}}, flow {{arg2}}.\n\nFollow the pipeline agent instructions: read adapters/opencode/capabilities.yaml, resolve placeholders, create the git branch, and execute steps 1-8 with hard-stops at gated steps (4 and 5).",
+      "agent": "pipeline"
+    }
+  },
+  "agent": {
+    "pipeline": {
+      "description": "Run the E2E test generation pipeline for an app flow.",
+      "mode": "primary"
+    }
+  }
+}

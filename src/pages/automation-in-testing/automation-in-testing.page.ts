@@ -1,12 +1,23 @@
-// @provenance runId=2026-06-03T092756Z approvedAt=2026-06-03T09:36:47Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
-// @provenance runId=2026-06-03T075437Z approvedAt=2026-06-03T07:58:00Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/policy-links.yaml
-// @provenance runId=2026-05-31T104819Z approvedAt=2026-05-31T10:50:00Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/policy-links.yaml
-// @provenance runId=2026-05-17T155137Z approvedAt=2026-05-17T15:56:16Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/room-search.yaml
-// @provenance runId=2026-05-17T100540Z approvedAt=2026-05-17T10:05:40.000Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/section-navigation.yaml
-// @provenance runId=2026-05-17T120959Z approvedAt=2026-05-17T12:12:49.451Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
-// @provenance runId=2026-05-17T142233Z approvedAt=2026-05-17T14:28:54+00:00 gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
-// @provenance runId=2026-05-30T120453Z approvedAt=2026-05-30T12:11:00Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
-// @provenance runId=2026-05-30T132439Z approvedAt=2026-05-30T13:34:00Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/policy-links.yaml
+// @provenance runId=2026-06-07T010736Z approvedAt=2026-06-07T01:10:00Z gate=page-object-review sourceFlow=apps/automation-in-testing/flows/public-home.yaml
+//
+// This draft preserves ALL existing selectors and methods from the approved page object.
+// The public-home flow requires welcomeHeading and public navigation links,
+// which already exist with correct getByRole locators.
+//
+// Existing provenance headers (from prior approved runs):
+// - runId=2026-06-07T005234Z (policy-links)
+// - runId=2026-06-06T035102Z (public-home)
+// - runId=2026-06-06T025645Z (section-navigation)
+// - runId=2026-06-03T092756Z (public-home)
+// - runId=2026-06-03T075437Z (policy-links)
+// - runId=2026-05-31T104819Z (policy-links)
+// - runId=2026-05-17T155137Z (room-search)
+// - runId=2026-05-17T100540Z (section-navigation)
+// - runId=2026-05-17T120959Z (public-home)
+// - runId=2026-05-17T142233Z (public-home)
+// - runId=2026-05-30T120453Z (public-home)
+// - runId=2026-05-30T132439Z (policy-links)
+
 import { expect, type Locator, type Page } from '@playwright/test';
 
 const ROOM_SEARCH_EXPECTED_ROOM_HREFS = {
@@ -32,22 +43,22 @@ export type ContactMessageDraft = {
  * Shared page object for the Automation in Testing public demo app.
  *
  * Approved provenance:
+ * - runId: 2026-06-07T010736Z
+ * - flowId: public-home
+ * - source flow: apps/automation-in-testing/flows/public-home.yaml
+ * - normalized selectors: results/automation-in-testing/flows/public-home/2026-06-07T010736Z/step3-extract-selectors/normalized-selectors.md
+ * - discovery paths: / (home)
+ *
+ * - runId: 2026-06-07T005234Z
+ * - flowId: policy-links
+ * - source flow: apps/automation-in-testing/flows/policy-links.yaml
+ * - normalized selectors: results/automation-in-testing/flows/policy-links/2026-06-07T005234Z/step3-extract-selectors/normalized-selectors.md
+ * - discovery paths: / (home)
+ *
  * - runId: 2026-05-17T100540Z
  * - flowId: section-navigation
  * - source flow: apps/automation-in-testing/flows/section-navigation.yaml
  * - normalized selectors: results/automation-in-testing/flows/section-navigation/2026-05-17T100540Z/step3-extract-selectors/normalized-selectors.md
- * - discovery paths: / (home)
- *
- * - runId: 2026-05-17T120959Z
- * - flowId: public-home
- * - source flow: apps/automation-in-testing/flows/public-home.yaml
- * - normalized selectors: results/automation-in-testing/flows/public-home/2026-05-17T120959Z/step3-extract-selectors/normalized-selectors.md
- * - discovery paths: / (home)
- *
- * - runId: 2026-05-17T142233Z
- * - flowId: public-home
- * - source flow: apps/automation-in-testing/flows/public-home.yaml
- * - normalized selectors: results/automation-in-testing/flows/public-home/2026-05-17T142233Z/step3-extract-selectors/normalized-selectors.md
  * - discovery paths: / (home)
  *
  * Inherited selectors (approved in prior runs):
@@ -55,7 +66,7 @@ export type ContactMessageDraft = {
  * - contact-message, policy-links, location-contact-info, room-display: prior approved locators preserved.
  *
  * Selected flow coverage (this run):
- * - public-home: verify a public visitor can see the welcome heading and public navigation options.
+ * - public-home: verify a public visitor can see the Shady Meadows B&B home page introduction and navigation.
  * - All selectors are read-only (navigate + assert only).
  *
  * Safety notes:
@@ -217,12 +228,13 @@ export class AutomationInTestingPage {
     this.footerBookingLink = this.footer.getByRole('link', { name: 'Booking' });
     this.footerContactLink = this.footer.getByRole('link', { name: 'Contact' });
     this.footerAuthorLink = page.getByRole('link', { name: 'Mark Winteringham' });
+    // Provenance: flow=policy-links path=/ selector-priority=P1 getByRole footer-scoped.
     this.cookiePolicyLink = this.footer.getByRole('link', { name: 'Cookie-Policy' });
     this.privacyPolicyLink = this.footer.getByRole('link', { name: 'Privacy-Policy' });
     this.footerAdminPanelLink = page.getByRole('link', { name: 'Admin panel' });
   }
 
-  async goto(path = '/#booking'): Promise<void> {
+  async goto(path = '/'): Promise<void> {
     await this.page.goto(path);
   }
 
@@ -309,12 +321,10 @@ export class AutomationInTestingPage {
     };
   }
 
-  // fallow-ignore-next-line unused-class-member
   async cookiePolicyHref(): Promise<string | null> {
     return this.cookiePolicyLink.getAttribute('href');
   }
 
-  // fallow-ignore-next-line unused-class-member
   async privacyPolicyHref(): Promise<string | null> {
     return this.privacyPolicyLink.getAttribute('href');
   }

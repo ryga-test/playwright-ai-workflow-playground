@@ -13,7 +13,7 @@ Use this if you are:
 - evaluating AI-assisted E2E testing workflows
 - building Playwright conventions for multiple apps
 - comparing selector extraction, page object generation, and test generation quality
-- looking for a concrete pi slash-command workflow you can adapt
+- looking for a concrete pi slash-command or opencode agent workflow you can adapt
 - trying to keep generated test code reviewable instead of letting an agent edit everything at once
 
 If you only want a basic Playwright starter, this is probably more machinery than you need.
@@ -26,6 +26,8 @@ If you only want a basic Playwright starter, this is probably more machinery tha
 - An 8-step AI pipeline defined in `workflows/manifest.yaml`
 - pi slash-command prompts in `.pi/prompts/`
 - A pi pipeline runner extension in `.pi/extensions/pipeline-runner/`
+- An opencode pipeline agent (`.opencode/agents/pipeline.md`) with `/pipeline <app> <flowId>` command
+- Agent capability mappings in `adapters/opencode/capabilities.yaml`
 - Human approval gates for generated page objects and Gherkin test scenario drafts
 - Gherkin `.feature` scenario sources with scenario coverage mapping
 - Per-flow run artifacts under `results/<app>/flows/<flow-id>/<run>/`
@@ -39,9 +41,9 @@ If you only want a basic Playwright starter, this is probably more machinery tha
 - npm
 - Chromium installed through Playwright
 - Docker if you plan to run `runner: docker` apps (for example `automation-in-testing`)
-- A pi agent session if you want to run the AI pipeline
+- A pi agent session or an opencode session if you want to run the AI pipeline
 
-You can run the generated Playwright tests without pi. The 8-step AI pipeline requires pi because the workflow is implemented as slash-command prompts and a pi extension.
+You can run the generated Playwright tests without pi or opencode. The 8-step AI pipeline requires an agent session because the workflow is implemented as prompts and agent configuration.
 
 ## Get the example app running
 
@@ -103,6 +105,45 @@ Useful extension commands:
 | `/pipeline-reset` | Aborts the run, switches back, and deletes the pipeline branch |
 
 When the run finishes, you stay on the pipeline branch so you can inspect the diff before committing or merging.
+
+## Run the pipeline with opencode
+
+opencode is an alternative agent that runs the same 8-step pipeline. The pipeline agent reads `adapters/opencode/capabilities.yaml` for step definitions and orchestrates the workflow through its system prompt.
+
+```text
+/pipeline automation-in-testing public-home
+```
+
+Or switch to the pipeline agent and describe what to run:
+
+```text
+run the pipeline for automation-in-testing, flow public-home
+```
+
+The opencode pipeline agent follows the same gating protocol as pi:
+
+- Non-gated steps (1-3 and 6-8) auto-chain without pausing
+- Step 4 (page object draft) and step 5 (test scenarios) hard-stop for approval
+- Approve with "approved", "approve", "continue", or "lgtm"
+- Each run creates a git branch `pipeline/<app>/<flow-id>/<runId>`
+
+The agent detects existing run artifacts and can resume interrupted pipelines.
+
+### Requirements for opencode
+
+- opencode installed and configured (`opencode.json` at project root)
+- The `agent-browser` skill available for step 2 (discover)
+- Same `.env` and Playwright setup as the pi pipeline
+
+### opencode adapter architecture
+
+The pipeline agent uses a three-layer design:
+
+1. **`workflows/manifest.yaml`** — neutral step definitions (WHAT)
+2. **`adapters/opencode/capabilities.yaml`** — opencode-specific command templates (HOW)
+3. **`.opencode/agents/pipeline.md`** — orchestration prompt (sequencing, gating, state)
+
+This matches the pi adapter's separation of concerns. The manifest and capabilities files are shared concepts; only the orchestration layer differs between agents.
 
 ## The 8 pipeline steps
 
@@ -238,10 +279,12 @@ No framework source changes should be needed. App-specific output stays under:
 
 ```text
 apps/<app>/              App profiles and local example pages
-adapters/<agent>/        Agent capability mappings
+adapters/<agent>/        Agent capability mappings (pi, opencode)
 workflows/manifest.yaml  Agent-neutral 8-step workflow
 .pi/prompts/             pi slash-command prompts
 .pi/extensions/          pi automation extensions
+.opencode/agents/        opencode agent definitions
+opencode.json            opencode configuration (command + agent registration)
 src/pages/<app>/         Approved page objects
 src/fixtures/            Shared Playwright fixtures
 tests/<app>/             Approved .feature files and generated Playwright specs
@@ -281,6 +324,8 @@ Use the same run ID for every step.
 - Implementation plan: `specs/001-ai-e2e-framework/plan.md`
 - Design decisions: `DESIGN_DECISIONS.md`
 - pi adapter notes: `adapters/pi/README.md`
+- opencode adapter notes: `adapters/opencode/README.md`
+- Pipeline agent PRD: `docs/prd-pipeline-agent.md`
 - Gherkin guidelines: `docs/gherkin-guidelines.md`
 - Multi-flow pipeline design: `docs/multi-flow-pipeline.md`
 - Gherkin source ADR: `docs/adr/0001-gherkin-as-approved-scenario-source.md`

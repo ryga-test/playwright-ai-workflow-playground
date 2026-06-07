@@ -18,8 +18,6 @@
 - Primary navigation exposes Rooms, Booking, Amenities, Location, Contact, and Admin links.
 - The hero "Book Now" link reaches the availability search area.
 - Availability search can be initiated with editable stay dates while keeping room booking options visible and without completing a reservation.
-- The latest verified room-search run used `17/05/2026` to `18/05/2026`, stayed outside `/reservation/`, and showed Single, Double, and Suite options.
-- The approved room-search run `2026-05-17T155137Z` used `24/05/2026` to `25/05/2026`, stayed outside `/reservation/`, and again showed Single, Double, and Suite options with assertion-only `Book now` links.
 - Three `Book now` room links are visible as booking options after search; room-search treats them as assertion-only and does not click them.
 - Contact fields accept and retain obvious test data before submission.
 - The contact form Submit button is visible and enabled after filling all fields; not clicked.
@@ -28,8 +26,31 @@
 - Footer Cookie-Policy and Privacy-Policy links are visible on `/`, expose raw hrefs `/cookie` and `/privacy`, and can be verified without navigating away.
 - The public home page loads at `/` and renders the welcome heading plus public nav links for Rooms, Booking, Amenities, Location, and Contact.
 - The brand logo link "Shady Meadows B&B" is visible and navigates to `/`.
-- Default availability dates observed: Check In `03/06/2026`, Check Out `04/06/2026`.
-- Room reservation links target `/reservation/1?checkin=2026-06-03&checkout=2026-06-04`, `/reservation/2?checkin=2026-06-03&checkout=2026-06-04`, and `/reservation/3?checkin=2026-06-03&checkout=2026-06-04`.
+
+### Public Home (verified 2026-06-07T010736Z)
+
+- The h1 welcome heading "Welcome to Shady Meadows B&B" is visible on `/`.
+- Five public navigation links are visible in the navigation landmark: Rooms, Booking, Amenities, Location, Contact.
+- The brand logo link "Shady Meadows B&B" is visible and navigates to `/`.
+- All P1 `getByRole` selectors confirmed stable with zero drift across 8 consecutive runs.
+- Default availability dates observed: Check In `07/06/2026`, Check Out `08/06/2026`.
+
+### Section Navigation (verified 2026-06-06T025645Z)
+
+- Clicking header `Rooms` link scrolls to the "Our Rooms" heading (h2).
+- Clicking header `Booking` link scrolls to the "Check Availability & Book Your Stay" heading (h3).
+- Clicking header `Location` link scrolls to the "Our Location" heading (h2).
+- Clicking header `Contact` link scrolls to the "Contact Information" heading (h3).
+- All header nav links and section headings use P1 `getByRole` selectors — confirmed stable.
+
+### Policy Links (verified 2026-06-07T005234Z)
+
+- Footer `Cookie-Policy` link is visible on the public home page at `/`.
+- `Cookie-Policy` link exposes the app-relative destination `/cookie`.
+- Footer `Privacy-Policy` link is visible on the public home page at `/`.
+- `Privacy-Policy` link exposes the app-relative destination `/privacy`.
+- Footer-scoped role locators (`contentinfo.getByRole`) for policy links remain stable.
+- All P1 `getByRole` selectors confirmed stable with zero drift across 8 consecutive runs.
 
 ### Location Section (verified 2026-05-14T130209Z)
 
@@ -52,15 +73,46 @@
 - Define `#location`-scoped locators on the shared page object to keep specs clean and avoid `.first()` workarounds (R15).
 - For `public-home`, use the home route `/` explicitly and keep assertions read-only with `getByRole` visibility checks.
 - Expose `welcomeHeading` and `brandLink` aliases on the shared page object for the `public-home` spec.
+- Navigation-scoped `getByRole('link')` for header nav links and `getByRole('heading')` for section headings are the canonical strategy for `section-navigation` (R29).
+- Public-home P1 `getByRole` selectors confirmed stable across 8 consecutive runs (R32).
+- Policy-link footer-scoped role locators confirmed stable across 8 consecutive runs (R31).
 
 ## Latest Successful Run
 
-- Run: `2026-06-03T092756Z`
+- Run: `2026-06-07T010736Z`
 - Flow: `public-home`
 - Result: 3/3 passed with 0 fix cycles
-- Artifacts: `results/automation-in-testing/flows/public-home/2026-06-03T092756Z/`
+- Artifacts: `results/automation-in-testing/flows/public-home/2026-06-07T010736Z/`
 
 ## Recent Runs
+
+### Run 2026-06-07T010736Z
+
+- Flow: `public-home`
+- Result: 3/3 tests passed with 0 fix cycles
+- Notes: All P1 getByRole selectors confirmed stable with zero drift. Default dates: 07/06/2026 to 08/06/2026. No side effects. 8th consecutive successful run for public-home.
+- Artifacts: `results/automation-in-testing/flows/public-home/2026-06-07T010736Z/`
+
+### Run 2026-06-07T005234Z
+
+- Flow: `policy-links`
+- Result: 2/2 tests passed with 0 fix cycles
+- Notes: All P1 getByRole selectors confirmed stable with zero drift. Policy links verified without navigation. No side effects. 8th consecutive successful run for policy-links.
+- Artifacts: `results/automation-in-testing/flows/policy-links/2026-06-07T005234Z/`
+
+### Run 2026-06-06T035102Z
+
+- Flow: `public-home`
+- Result: 3/3 tests passed with 0 fix cycles
+- Notes: All P1 getByRole selectors confirmed stable with zero drift. Default dates: 06/06/2026 to 07/06/2026. No side effects.
+- Artifacts: `results/automation-in-testing/flows/public-home/2026-06-06T035102Z/`
+
+### Run 2026-06-06T025645Z
+
+- Flow: `section-navigation`
+- Result: 4/4 tests passed with 0 fix cycles
+- Notes: All P1 getByRole selectors confirmed stable with zero drift. Header nav click-to-section navigation verified. No side effects.
+- Artifacts: `results/automation-in-testing/flows/section-navigation/2026-06-06T025645Z/`
 
 ### Run 2026-06-03T092756Z
 
@@ -82,10 +134,3 @@
 - Result: 1/1 tests passed with 0 fix cycles
 - Notes: All P1 getByRole selectors confirmed stable with zero drift. Policy links verified without navigation. No side effects.
 - Artifacts: `results/automation-in-testing/flows/policy-links/2026-06-03T070659Z/`
-
-### Run 2026-06-03T063055Z
-
-- Flow: `public-home`
-- Result: 3/3 tests passed with 0 fix cycles
-- Notes: All P1 getByRole selectors confirmed stable with zero drift. Default dates: 03/06/2026 to 04/06/2026. No side effects.
-- Artifacts: `results/automation-in-testing/flows/public-home/2026-06-03T063055Z/`

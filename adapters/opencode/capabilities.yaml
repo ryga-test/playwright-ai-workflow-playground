@@ -1,0 +1,190 @@
+adapter: opencode
+
+# Each pipeline run targets exactly one flow, creates its own git branch
+# (pipeline/<app>/<flow-id>/<runId>), and switches to it. All pipeline artifacts
+# are produced under results/<app>/flows/<flow-id>/<runId>/ on that branch.
+#
+# GATING RULE (steps 4 and 5):
+# Gated steps MUST stop the pipeline after writing the draft artifact.
+# The agent must NOT proceed to the next step until the human explicitly approves.
+# Approval signal: human says "approved", "approve", "continue", or "lgtm".
+# After approval, promote the artifact, write an .approved marker, and proceed.
+#
+# APPROVAL MARKERS:
+# Gated steps write `.approved` files to the run-specific results directory.
+# Steps after gates check for these markers — NOT the promoted artifact location.
+# This prevents the agent from skipping gates when promoted artifacts exist from prior runs.
+#
+# IMPORTANT: Gated steps ALWAYS write a fresh draft. The existence of a promoted
+# artifact from a prior run does NOT count as approval for this run.
+
+capabilities:
+  - step: resolve
+    command_template: |
+      Run the resolve step for app **{{app}}** with run ID **{{run}}** and flow **{{flowId}}**:
+
+      1. Read `apps/{{app}}/profile.yaml` and validate required fields (name, baseUrlEnvVar).
+      2. Read `.env` and confirm `{{baseUrlEnvVar}}` is set.
+      3. Read `apps/{{app}}/flows/{{flowId}}.yaml` and validate against `contracts/flow.schema.yaml`.
+      4. Use the exact run ID **{{run}}** — do not generate a new one.
+      5. Create directory `results/{{app}}/flows/{{flowId}}/{{run}}/step1-resolve/`.
+      6. Write `run-metadata.json` with: appName, baseUrlEnvVar, flowId, runId, startedAt (ISO 8601).
+      7. Write `flow-inventory.json` with: selectedFlows array containing exactly one entry with the flow id, name, goal, startPath, and mergedTags.
+      8. If the flow defines `testData`, resolve relative-date and synthetic-email strategies and write `resolved-test-data.json` to `results/{{app}}/flows/{{flowId}}/{{run}}/`.
+      9. Create git branch `pipeline/{{app}}/{{flowId}}/{{run}}` and switch to it.
+
+  - step: discover
+    command_template: |
+      Run the discover step for app **{{app}}** with run ID **{{run}}** and flow **{{flowId}}**:
+
+      1. Read `results/{{app}}/flows/{{flowId}}/{{run}}/step1-resolve/run-metadata.json` to get the base URL env var.
+      2. Load the base URL from the environment variable `{{baseUrlEnvVar}}` in `.env`.
+      3. Read `apps/{{app}}/flows/{{flowId}}.yaml` to get `startPath`.
+      4. Use the agent-browser skill to navigate to `<baseUrl><startPath>` and capture a full Playwright ARIA snapshot.
+      5. Create directory `results/{{app}}/flows/{{flowId}}/{{run}}/step2-discover/`.
+      6. Write the ARIA snapshot to `snapshot.yaml`.
+      7. If the flow has multiple paths (e.g., startPath plus additional sections), capture per-path snapshots to `paths/<path-label>.snapshot.yaml`.
+      8. Write a merged snapshot combining all path snapshots to `snapshot.merged.yaml`.
+      9. Identify all interactive elements (links, buttons, inputs, form controls) and write them as selector candidates to `selector-candidates.md`.
+      10. Annotate each candidate with locator priority: getByRole > getByTestId > getByLabel > getByPlaceholder > getByText > CSS/XPath.
+
+  - step: extract-selectors
+    command_template: |
+      Run the extract-selectors step for app **{{app}}** with run ID **{{run}}** and flow **{{flowId}}**:
+
+      1. Read `results/{{app}}/flows/{{flowId}}/{{run}}/step2-discover/snapshot.merged.yaml`.
+      2. Read `results/{{app}}/flows/{{flowId}}/{{run}}/step2-discover/selector-candidates.md`.
+      3. Normalize selectors using Playwright locator priority (getByRole > getByTestId > getByLabel > getByPlaceholder > getByText > CSS/XPath).
+      4. Annotate each selector with: priority level, rationale, path provenance (which discovery path it came from), and flow provenance.
+      5. Create directory `results/{{app}}/flows/{{flowId}}/{{run}}/step3-extract-selectors/`.
+      6. Write normalized selectors to `normalized-selectors.md`.
+
+  - step: draft-page-object
+    gated: true
+    command_template: |
+      Run the draft-page-object step for app **{{app}}** with run ID **{{run}}** and flow **{{flowId}}**:
+
+      You MUST execute ALL of the following sub-steps IN ORDER. Do NOT skip any sub-step.
+
+      --- SUB-STEP 4a: Write draft ---
+      1. Read `results/{{app}}/flows/{{flowId}}/{{run}}/step3-extract-selectors/normalized-selectors.md`.
+      2. If `src/pages/{{app}}/{{app}}.page.ts` exists, read it to understand existing selectors and preserve them in the draft.
+      3. Generate a TypeScript page object class using `@playwright/test` Page, Locator types.
+      4. Use normalized selectors with proper locator methods. Preserve existing approved selectors from prior runs.
+      5. Create directory `results/{{app}}/flows/{{flowId}}/{{run}}/step4-draft-page-object/`.
+      6. Write the draft to `results/{{app}}/flows/{{flowId}}/{{run}}/step4-draft-page-object/page-object.draft.ts`.
+
+      --- SUB-STEP 4b: STOP and wait ---
+      After writing the draft, you MUST output the following message and then STOP.
+      Do NOT promote anything. Do NOT proceed to step 5. Do NOT write any files after this message.
+
+      Output this exact message:
+      "Draft page object written to `results/{{app}}/flows/{{flowId}}/{{run}}/step4-draft-page-object/page-object.draft.ts`. Review the draft. Reply 'approved' to promote and continue, or provide feedback to revise."
+
+      Then STOP. Wait for the human to reply. Do NOT take any further action.
+
+      --- SUB-STEP 4c: Promote on approval ---
+      Only after the human replies with "approved", "approve", "continue", or "lgtm":
+      1. Read the draft from `results/{{app}}/flows/{{flowId}}/{{run}}/step4-draft-page-object/page-object.draft.ts`.
+      2. Promote it to `src/pages/{{app}}/{{app}}.page.ts` with provenance header:
+         `// @provenance runId={{run}} approvedAt=<ISO> gate=page-object-review sourceFlow=apps/{{app}}/flows/{{flowId}}.yaml`
+      3. Write an approval marker file: `results/{{app}}/flows/{{flowId}}/{{run}}/step4-draft-page-object/.approved`
+         Content: `approvedAt=<ISO> gate=page-object-review`
+      4. Now proceed to step 5.
+
+  - step: draft-tests
+    gated: true
+    command_template: |
+      Run the draft-tests step for app **{{app}}** with run ID **{{run}}** and flow **{{flowId}}**:
+
+      You MUST execute ALL of the following sub-steps IN ORDER. Do NOT skip any sub-step.
+
+      --- SUB-STEP 5a: Check prerequisite ---
+      Check that `results/{{app}}/flows/{{flowId}}/{{run}}/step4-draft-page-object/.approved` exists.
+      If it does NOT exist, STOP and say: "Step 4 (draft-page-object) has not been approved for this run. The pipeline cannot proceed until step 4 is approved."
+      Do NOT proceed until the `.approved` marker file exists.
+
+      --- SUB-STEP 5b: Write draft ---
+      1. Read the approved page object from `src/pages/{{app}}/{{app}}.page.ts`.
+      2. Read `knowledge/{{app}}/knowledge.md` and `knowledge/{{app}}/rules.md` for app context and selector rules.
+      3. Read `apps/{{app}}/flows/{{flowId}}.yaml` for the flow goal, success criteria, allowed/forbidden actions, and out-of-scope items.
+      4. Generate user-goal-focused Gherkin scenarios.
+      5. Create directory `results/{{app}}/flows/{{flowId}}/{{run}}/step5-draft-tests/`.
+      6. Write the scenarios to `results/{{app}}/flows/{{flowId}}/{{run}}/step5-draft-tests/test-scenarios.feature`.
+      7. Write `results/{{app}}/flows/{{flowId}}/{{run}}/step5-draft-tests/scenario-coverage.md` mapping each scenario (or Scenario Outline example row) to discovered interactive elements; list intentionally uncovered elements with rationale.
+      8. Validate: Feature present; at least one Scenario or Scenario Outline; Given/When/Then used; no CSS/XPath, Playwright locators, page-object method names, or implementation mechanics in Gherkin.
+
+      --- SUB-STEP 5c: STOP and wait ---
+      After writing the draft, you MUST output the following message and then STOP.
+      Do NOT promote anything. Do NOT proceed to step 6. Do NOT write any files after this message.
+
+      Output this exact message:
+      "Draft test scenarios written to `results/{{app}}/flows/{{flowId}}/{{run}}/step5-draft-tests/test-scenarios.feature`. Review the scenarios. Reply 'approved' to promote and continue, or provide feedback to revise."
+
+      Then STOP. Wait for the human to reply. Do NOT take any further action.
+
+      --- SUB-STEP 5d: Promote on approval ---
+      Only after the human replies with "approved", "approve", "continue", or "lgtm":
+      1. Read the scenarios from `results/{{app}}/flows/{{flowId}}/{{run}}/step5-draft-tests/test-scenarios.feature`.
+      2. Promote to `tests/{{app}}/{{flowId}}.feature` with Gherkin comment provenance:
+         `# Run-ID: {{run}}`
+         `# Approved-at: <ISO>`
+         `# Approved-step: test-draft-review`
+      3. Write an approval marker file: `results/{{app}}/flows/{{flowId}}/{{run}}/step5-draft-tests/.approved`
+         Content: `approvedAt=<ISO> gate=test-draft-review`
+      4. Now proceed to step 6.
+
+  - step: write-spec
+    command_template: |
+      Run the write-spec step for app **{{app}}** with run ID **{{run}}** and flow **{{flowId}}**:
+
+      PREREQUISITE: Check that `results/{{app}}/flows/{{flowId}}/{{run}}/step5-draft-tests/.approved` exists.
+      If it does NOT exist, STOP and say: "Step 5 (draft-tests) has not been approved for this run. The pipeline cannot proceed until step 5 is approved."
+      Do NOT proceed until the `.approved` marker file exists.
+
+      1. Read the approved feature file from `tests/{{app}}/{{flowId}}.feature`.
+      2. Read scenario coverage from `results/{{app}}/flows/{{flowId}}/{{run}}/step5-draft-tests/scenario-coverage.md`.
+      3. Read the approved page object from `src/pages/{{app}}/{{app}}.page.ts`.
+      4. Re-validate the approved feature and coverage mapping; stop and ask for correction if invalid or if any scenario/example row lacks coverage mapping.
+      5. Generate a complete Playwright spec with one test per approved Scenario or Scenario Outline example row, preserving traceability in the test title/comment and appending allowed Gherkin tags to the Playwright test title.
+         IMPORTANT: Import `test` and `expect` from `@fixtures/base.fixture.js` (not from `@playwright/test`) to enable screencast video recording.
+         Example: `import { test, expect } from '@fixtures/base.fixture.js';`
+      6. Write the spec to `tests/{{app}}/{{flowId}}.spec.ts`.
+      7. Add provenance header: `// @provenance runId={{run}} approvedAt=<now> gate=test-draft-review source=tests/{{app}}/{{flowId}}.feature`
+      8. Run `npm run typecheck` to verify compilation.
+      9. Create directory `results/{{app}}/flows/{{flowId}}/{{run}}/step6-write-spec/` and write `write-spec-report.md`.
+
+  - step: run-fix
+    command_template: |
+      Run the run-fix step for app **{{app}}** with run ID **{{run}}** and flow **{{flowId}}**:
+
+      PREREQUISITE: Check that `tests/{{app}}/{{flowId}}.spec.ts` exists (written in step 6). If it does not exist, STOP and tell the human that step 6 must complete first.
+
+      1. Set environment variables: `APP_NAME={{app}}`, `PLAYWRIGHT_RUN_ID={{run}}`, `FLOW_ID={{flowId}}`.
+      2. Run: `APP_NAME={{app}} PLAYWRIGHT_RUN_ID={{run}} FLOW_ID={{flowId}} npx playwright test tests/{{app}}/{{flowId}}.spec.ts --reporter=html`
+      3. The base fixture auto-records per-test screencast video with action annotations into `results/{{app}}/flows/{{flowId}}/{{run}}/step7-run-fix/<test-name>.webm`.
+      4. For each failure, classify as:
+         - `script_bug`: fix the spec code and re-run
+         - `app_bug`: report only, do not modify
+         - `blocker`: report and mark step blocked
+      5. Fix script bugs and re-run (max 3 fix cycles).
+      6. Create directory `results/{{app}}/flows/{{flowId}}/{{run}}/step7-run-fix/`.
+      7. Write test report to `test-report.md`.
+      8. Write flow summary to `results/{{app}}/flows/{{flowId}}/{{run}}/flow-summary.md`.
+      9. Concatenate per-test screencast videos into a single `screencast.webm` using ffmpeg if available.
+      10. Ensure HTML report, traces, screenshots, and screencast video are in `results/{{app}}/flows/{{flowId}}/{{run}}/step7-run-fix/`.
+
+  - step: summarize
+    command_template: |
+      Run the summarize step for app **{{app}}** with run ID **{{run}}** and flow **{{flowId}}**:
+
+      1. Read `results/{{app}}/flows/{{flowId}}/{{run}}/step7-run-fix/test-report.md`.
+      2. Read `results/{{app}}/flows/{{flowId}}/{{run}}/flow-summary.md`.
+      3. Write pipeline summary to `results/{{app}}/flows/{{flowId}}/{{run}}/pipeline-summary.md`.
+      4. Extract verified observations (selectors that produced passing tests).
+      5. Append verified observations to `knowledge/{{app}}/knowledge.md` under `## Run {{run}}`.
+      6. Append actionable rules to `knowledge/{{app}}/rules.md` under `## Run {{run}}`.
+      7. Do NOT modify content under `## Human-Curated`.
+      8. Do NOT duplicate observations already present in the file.
+      9. Apply `knowledge/PRUNING_POLICY.md`: if an entry has been contradicted or superseded by the last six successful runs, move it from active knowledge files to `knowledge/{{app}}/archive.md` and record the action in `knowledge/{{app}}/prune-log.md`. Absence from recent runs alone is not enough to prune.
+      10. Regenerate `knowledge/{{app}}/current.md` as the compact active summary.

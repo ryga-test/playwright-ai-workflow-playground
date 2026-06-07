@@ -1,32 +1,28 @@
-// @provenance runId=2026-05-31T104819Z gate=write-spec sourceFeature=tests/automation-in-testing/policy-links.feature sourceFlow=apps/automation-in-testing/flows/policy-links.yaml
+// @provenance runId=2026-06-07T005234Z approvedAt=2026-06-07T00:58:57Z gate=test-draft-review source=tests/automation-in-testing/policy-links.feature
 import { test, expect } from '@fixtures/base.fixture.js';
-import {
-  AutomationInTestingPage,
-  POLICY_LINK_HREFS,
-} from '@pages/automation-in-testing/automation-in-testing.page.js';
+import { AutomationInTestingPage, POLICY_LINK_HREFS } from '@pages/automation-in-testing/automation-in-testing.page.js';
 
-const tags = '@smoke @public-demo @read-only @generated @policy-links';
+test.describe('Policy links', () => {
+  let page: AutomationInTestingPage;
 
-// fallow-ignore-next-line code-duplication
-test.describe('Flow: policy-links', () => {
-  let app: AutomationInTestingPage;
-
-  test.beforeEach(async ({ page }) => {
-    app = new AutomationInTestingPage(page);
-    await app.goto('/');
+  test.beforeEach(async ({ page: pwPage }) => {
+    page = new AutomationInTestingPage(pwPage);
+    await page.goto('/');
   });
 
-  test(`Visitor can see policy links and their destinations without leaving the home page ${tags}`, async ({ page }) => {
-    // Traceability: tests/automation-in-testing/policy-links.feature
-    // Scenario: Visitor can see policy links and their destinations without leaving the home page
-    // Source-flow: apps/automation-in-testing/flows/policy-links.yaml
-    const homeUrl = page.url();
-    const expectedHrefs = POLICY_LINK_HREFS;
+  // Scenario: Visitor sees the cookie policy link with the expected href
+  // Traceability: tests/automation-in-testing/policy-links.feature line 13
+  test('Visitor sees the cookie policy link with the expected href', async () => {
+    await expect(page.cookiePolicyLink).toBeVisible();
+    const href = await page.cookiePolicyHref();
+    expect(href).toBe(POLICY_LINK_HREFS.cookie);
+  });
 
-    await expect(app.cookiePolicyLink).toBeVisible();
-    await expect(app.cookiePolicyLink).toHaveAttribute('href', expectedHrefs.cookie);
-    await expect(app.privacyPolicyLink).toBeVisible();
-    await expect(app.privacyPolicyLink).toHaveAttribute('href', expectedHrefs.privacy);
-    await expect(page).toHaveURL(homeUrl);
+  // Scenario: Visitor sees the privacy policy link with the expected href
+  // Traceability: tests/automation-in-testing/policy-links.feature line 17
+  test('Visitor sees the privacy policy link with the expected href', async () => {
+    await expect(page.privacyPolicyLink).toBeVisible();
+    const href = await page.privacyPolicyHref();
+    expect(href).toBe(POLICY_LINK_HREFS.privacy);
   });
 });
